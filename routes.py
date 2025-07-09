@@ -66,6 +66,26 @@ def logout():
 def index():
     return redirect(url_for('dashboard'))
 
+@app.route('/site-info')
+def site_info():
+    """Show direct URL for opening in new tab"""
+    return """
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px;">
+        <h2>🌐 Viana e Moura - Acesso Direto</h2>
+        <p>Para abrir o site em uma nova aba, use o URL direto:</p>
+        <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <strong>URL: </strong><span id="direct-url">Carregando...</span>
+        </div>
+        <p><a href="/login" style="color: #B93A3E; text-decoration: none;">← Voltar para Login</a></p>
+        
+        <script>
+            const url = window.location.protocol + '//' + window.location.host;
+            document.getElementById('direct-url').innerHTML = 
+                '<a href="' + url + '" target="_blank" style="color: #B93A3E;">' + url + '</a>';
+        </script>
+    </div>
+    """
+
 @app.route('/dashboard')
 @login_required
 def dashboard():
