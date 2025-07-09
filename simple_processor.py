@@ -2,14 +2,24 @@
 """
 Simple and reliable processor for AI analysis
 """
-import threading
+import os
 import time
-import logging
+import threading
 from datetime import datetime
+from openai import OpenAI
+
+# Set environment
+os.environ['DATABASE_URL'] = 'postgresql://postgres.bndkpowgvagtlxwmthma:5585858Vini%40@aws-0-sa-east-1.pooler.supabase.com:6543/postgres'
+
 from app import app, db
 from models import Candidate
-from ai_service import generate_score_only, generate_summary_and_analysis, extract_skills_from_text, estimate_experience_years, determine_education_level
 from file_processor import extract_text_from_file
+
+# Configure OpenAI client
+client = OpenAI(
+    api_key="sk-08e53165834948c8b96fe8ec44a12baf",
+    base_url="https://api.deepseek.com/v1"
+)
 
 def process_candidate_simple(candidate_id):
     """
@@ -17,61 +27,69 @@ def process_candidate_simple(candidate_id):
     """
     try:
         with app.app_context():
-            candidate = Candidate.query.get(candidate_id)
+            candidate = db.session.get(Candidate, candidate_id)
             if not candidate:
+                print(f"Candidate {candidate_id} not found")
                 return False
+            
+            print(f"Processing candidate {candidate_id}: {candidate.name}")
             
             # Update status
             candidate.analysis_status = 'processing'
             db.session.commit()
             
-            logging.info(f"Processing candidate {candidate_id}: {candidate.name}")
-            
             # Extract resume text
             resume_text = extract_text_from_file(candidate.file_path, candidate.file_type)
-            if len(resume_text) > 3000:
-                resume_text = resume_text[:3000]
+            if len(resume_text) > 2000:
+                resume_text = resume_text[:2000]
             
-            # Generate basic score (most important)
+            # Generate score
+            score_response = client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[{
+                    "role": "user",
+                    "content": f"Avalie este currículo para a vaga '{candidate.job.title}' de 0 a 10. Responda apenas a nota (ex: 7.5):\n\n{resume_text}"
+                }],
+                max_tokens=20,
+                temperature=0.3
+            )
+            
+            score_text = score_response.choices[0].message.content.strip()
             try:
-                score = generate_score_only(resume_text, candidate.job)
-                logging.info(f"Generated score {score} for candidate {candidate_id}")
-            except Exception as e:
-                logging.error(f"Failed to generate score for candidate {candidate_id}: {e}")
-                score = 5.0  # Default score
+                score = float(score_text.replace(":", "").strip())
+            except:
+                score = 5.0
             
-            # Generate summary and analysis
-            try:
-                summary, analysis = generate_summary_and_analysis(resume_text, candidate.job)
-                logging.info(f"Generated summary and analysis for candidate {candidate_id}")
-            except Exception as e:
-                logging.error(f"Failed to generate summary for candidate {candidate_id}: {e}")
-                summary = f"Currículo de {candidate.name}"
-                analysis = "Análise não disponível devido a erro no processamento"
+            # Generate analysis
+            analysis_response = client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[{
+                    "role": "user",
+                    "content": f"Resumo do candidato {candidate.name} para vaga '{candidate.job.title}' (máximo 200 palavras):\n\n{resume_text}"
+                }],
+                max_tokens=300,
+                temperature=0.5
+            )
             
-            # Extract additional info (offline processing)
-            skills = extract_skills_from_text(resume_text)
-            experience_years = estimate_experience_years(resume_text)
-            education_level = determine_education_level(resume_text)
+            analysis = analysis_response.choices[0].message.content.strip()
             
-            # Update candidate with all results
+            # Update candidate
             candidate.ai_score = score
-            candidate.ai_summary = summary
-            candidate.ai_analysis = analysis
-            candidate.set_skills_list(skills)
+            candidate.ai_summary = analysis
+            candidate.ai_analysis = f"Score: {score}/10. {analysis}"
             candidate.analysis_status = 'completed'
             candidate.analyzed_at = datetime.utcnow()
             
             db.session.commit()
             
-            logging.info(f"Successfully processed candidate {candidate_id} with score {score}")
+            print(f"✓ Completed: {candidate.name} - Score: {score}")
             return True
             
     except Exception as e:
-        logging.error(f"Error processing candidate {candidate_id}: {str(e)}")
+        print(f"✗ Error processing candidate {candidate_id}: {str(e)}")
         try:
             with app.app_context():
-                candidate = Candidate.query.get(candidate_id)
+                candidate = db.session.get(Candidate, candidate_id)
                 if candidate:
                     candidate.analysis_status = 'failed'
                     candidate.ai_summary = f'Erro na análise: {str(e)}'
@@ -85,28 +103,26 @@ def process_all_pending():
     """
     Process all pending candidates one by one
     """
-    with app.app_context():
-        pending_candidates = Candidate.query.filter_by(analysis_status='pending').all()
-        
-        if not pending_candidates:
-            print("No pending candidates found")
-            return
-        
-        print(f"Processing {len(pending_candidates)} pending candidates...")
-        
-        success_count = 0
-        for candidate in pending_candidates:
-            print(f"Processing {candidate.name}...")
-            if process_candidate_simple(candidate.id):
-                success_count += 1
-                print(f"✓ Completed: {candidate.name}")
-            else:
-                print(f"✗ Failed: {candidate.name}")
+    try:
+        with app.app_context():
+            pending_candidates = Candidate.query.filter_by(analysis_status='pending').all()
             
-            # Small delay between candidates
-            time.sleep(2)
-        
-        print(f"Processing complete! {success_count}/{len(pending_candidates)} successful")
+            print(f"Found {len(pending_candidates)} pending candidates")
+            
+            for candidate in pending_candidates:
+                success = process_candidate_simple(candidate.id)
+                if success:
+                    print(f"   ✓ Processed: {candidate.name}")
+                else:
+                    print(f"   ✗ Failed: {candidate.name}")
+                
+                # Small delay between requests
+                time.sleep(2)
+            
+            print("All pending candidates processed!")
+            
+    except Exception as e:
+        print(f"Error processing all candidates: {e}")
 
 def start_simple_background_processing(candidate_ids):
     """
@@ -114,15 +130,22 @@ def start_simple_background_processing(candidate_ids):
     """
     def simple_worker():
         try:
-            with app.app_context():
-                for candidate_id in candidate_ids:
-                    candidate = Candidate.query.get(candidate_id)
-                    if candidate and candidate.analysis_status == 'pending':
-                        process_candidate_simple(candidate_id)
-                        time.sleep(1)  # Small delay between candidates
-                        
+            print(f"Starting background processing for {len(candidate_ids)} candidates...")
+            
+            for candidate_id in candidate_ids:
+                success = process_candidate_simple(candidate_id)
+                if success:
+                    print(f"   ✓ Processed candidate {candidate_id}")
+                else:
+                    print(f"   ✗ Failed candidate {candidate_id}")
+                
+                # Small delay between requests
+                time.sleep(2)
+            
+            print("Background processing completed!")
+            
         except Exception as e:
-            logging.error(f"Simple background processing error: {str(e)}")
+            print(f"Error in background processing: {e}")
     
     thread = threading.Thread(target=simple_worker, daemon=True)
     thread.start()
@@ -132,22 +155,19 @@ def reset_processing_candidates():
     """
     Reset candidates stuck in processing
     """
-    with app.app_context():
-        processing_candidates = Candidate.query.filter_by(analysis_status='processing').all()
-        reset_count = 0
-        
-        for candidate in processing_candidates:
-            candidate.analysis_status = 'pending'
-            reset_count += 1
-            print(f"Reset {candidate.name} to pending")
-        
-        db.session.commit()
-        return reset_count
+    try:
+        with app.app_context():
+            stuck_candidates = Candidate.query.filter_by(analysis_status='processing').all()
+            for candidate in stuck_candidates:
+                candidate.analysis_status = 'pending'
+            db.session.commit()
+            print(f"Reset {len(stuck_candidates)} stuck candidates")
+    except Exception as e:
+        print(f"Error resetting candidates: {e}")
 
 if __name__ == "__main__":
-    # Reset stuck candidates
-    reset_count = reset_processing_candidates()
-    print(f"Reset {reset_count} candidates")
+    # Reset any stuck candidates
+    reset_processing_candidates()
     
-    # Process all pending
+    # Process all pending candidates
     process_all_pending()

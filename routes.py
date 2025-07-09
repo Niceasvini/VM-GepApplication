@@ -269,8 +269,8 @@ def upload_resume(job_id):
     # Start parallel AI analysis for all uploaded candidates
     if candidate_ids:
         logging.info(f"Starting parallel analysis for {len(candidate_ids)} candidates")
-        from fast_processor import start_fast_background_processing
-        start_fast_background_processing(candidate_ids)
+        from async_processor import start_background_processing
+        start_background_processing(candidate_ids)
         flash(f'{len(candidate_ids)} currículos enviados! A análise da IA está sendo processada em paralelo.', 'success')
     else:
         flash('Nenhum arquivo válido foi enviado.', 'warning')
@@ -349,8 +349,8 @@ def bulk_upload_process(job_id):
     # Start parallel AI analysis for all uploaded candidates
     if candidate_ids:
         logging.info(f"Starting parallel analysis for {len(candidate_ids)} candidates")
-        from fast_processor import start_fast_background_processing
-        start_fast_background_processing(candidate_ids)
+        from async_processor import start_background_processing
+        start_background_processing(candidate_ids)
     
     return jsonify({
         'success': True,
@@ -478,5 +478,23 @@ def api_job_processing_status(job_id):
     except Exception as e:
         logging.error(f"Error getting processing status: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/process-pending')
+@login_required
+def api_process_pending():
+    """Manually trigger processing of pending candidates"""
+    try:
+        from simple_processor import process_all_pending
+        import threading
+        
+        def background_process():
+            process_all_pending()
+        
+        thread = threading.Thread(target=background_process, daemon=True)
+        thread.start()
+        
+        return jsonify({'success': True, 'message': 'Processamento iniciado para candidatos pendentes'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 from datetime import datetime

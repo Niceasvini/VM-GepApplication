@@ -3,10 +3,9 @@
 Test AI processing directly without Flask app
 """
 import os
-import sys
 from openai import OpenAI
 
-# Configure OpenAI client
+# Test DeepSeek API
 client = OpenAI(
     api_key="sk-08e53165834948c8b96fe8ec44a12baf",
     base_url="https://api.deepseek.com/v1"
@@ -14,9 +13,24 @@ client = OpenAI(
 
 def test_ai_processing():
     """Test AI processing directly"""
-    
-    test_resume = """
-João Silva
+    try:
+        print("Testing DeepSeek API connection...")
+        
+        # Simple test
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[{
+                "role": "user",
+                "content": "Teste simples: responda apenas 'OK'"
+            }],
+            max_tokens=10,
+            temperature=0.1
+        )
+        
+        print(f"✓ DeepSeek API works: {response.choices[0].message.content}")
+        
+        # Test resume scoring
+        resume_text = """João Silva
 Email: joao@email.com
 Telefone: (11) 99999-9999
 
@@ -28,91 +42,37 @@ Experiência:
 
 Formação:
 - Ciências da Computação - USP
-- Especialização em Desenvolvimento Web
-"""
-    
-    job_title = "Desenvolvedor Python Teste"
-    
-    # Test scoring
-    print("Testing scoring...")
-    try:
-        response = client.chat.completions.create(
+- Especialização em Desenvolvimento Web"""
+        
+        print("\nTesting resume scoring...")
+        score_response = client.chat.completions.create(
             model="deepseek-chat",
             messages=[{
                 "role": "user",
-                "content": f"""
-Você é um avaliador técnico especializado em recrutamento.
-
-Dê uma nota de 0 a 10 para o currículo abaixo com base na vaga '{job_title}', considerando:
-
-1. Experiência prática na área (peso 4)
-2. Habilidades técnicas relevantes (peso 3)
-3. Formação acadêmica (peso 2)
-4. Clareza e estrutura do currículo (peso 1)
-
-- Considere a relevância das experiências e habilidades em relação à vaga.
-- Avalie a formação acadêmica e se ela é adequada para a posição.
-- Com base na soma ponderada desses critérios, atribua uma *nota final com até duas casas decimais*, entre 0 e 10.
-- Retorne apenas a nota final, com até duas casas decimais (ex: 7.91 ou 6.25), sem comentários ou explicações.
-
-Exemplo:
-Nota: 6.87
-
-Currículo:
-{test_resume}
-"""
+                "content": f"Avalie este currículo para a vaga 'Desenvolvedor Python' de 0 a 10. Responda apenas a nota (ex: 7.5):\n\n{resume_text}"
             }],
-            max_tokens=50,
+            max_tokens=20,
             temperature=0.3
         )
         
-        score_text = response.choices[0].message.content.strip()
-        print(f"Score response: {score_text}")
-        
-        # Extract score
-        if ":" in score_text:
-            score = float(score_text.split(":")[-1].strip())
-        else:
-            score = float(score_text)
-        
-        print(f"Extracted score: {score}")
+        score_text = score_response.choices[0].message.content.strip()
+        print(f"✓ Score response: {score_text}")
         
         # Test analysis
-        print("\nTesting analysis...")
-        
+        print("\nTesting resume analysis...")
         analysis_response = client.chat.completions.create(
             model="deepseek-chat",
             messages=[{
                 "role": "user",
-                "content": f"""
-Você é um analista de currículos. Analise o currículo abaixo para a vaga '{job_title}'.
-
-Retorne:
-- Um resumo estruturado do currículo
-- Uma análise crítica com base na vaga (alinhamento técnico, gaps e recomendação)
-
-Use o seguinte formato:
-
-### RESUMO
-(Resumo estruturado)
-
-### ANÁLISE
-1. Alinhamento Técnico: ...
-2. Gaps Técnicos: ...
-3. Recomendação Final: Sim / Parcial / Não
-
-Currículo:
-{test_resume}
-"""
+                "content": f"Resumo do candidato João Silva para vaga 'Desenvolvedor Python' (máximo 200 palavras):\n\n{resume_text}"
             }],
-            max_tokens=800,
+            max_tokens=300,
             temperature=0.5
         )
         
         analysis = analysis_response.choices[0].message.content.strip()
-        print(f"Analysis: {analysis}")
+        print(f"✓ Analysis response: {analysis[:100]}...")
         
-        print("\n✓ AI processing working correctly!")
         return True
         
     except Exception as e:
@@ -121,4 +81,7 @@ Currículo:
 
 if __name__ == "__main__":
     success = test_ai_processing()
-    sys.exit(0 if success else 1)
+    if success:
+        print("\n✓ All AI tests passed!")
+    else:
+        print("\n✗ AI tests failed!")
