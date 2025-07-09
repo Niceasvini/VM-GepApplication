@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Criar Usuário - Viana e Moura{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-lg">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <h2 class="text-primary-custom">Criar Novo Usuário</h2>
+                        <p class="text-muted">Adicione um novo membro à equipe</p>
+                    </div>
+                    
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Nome de Usuário</label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Senha</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="role" class="form-label">Função</label>
+                            <select class="form-select" id="role" name="role">
+                                <option value="recruiter">Recrutador</option>
+                                {% if current_user.is_admin() %}
+                                <option value="admin">Administrador</option>
+                                {% endif %}
+                            </select>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary me-md-2">
+                                <i class="fas fa-arrow-left me-2"></i>Voltar
+                            </a>
+                            <button type="submit" class="btn btn-primary-custom">
+                                <i class="fas fa-user-plus me-2"></i>Criar Usuário
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

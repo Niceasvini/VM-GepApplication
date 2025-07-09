@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Vagas - Viana e Moura{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="text-primary-custom">Gerenciamento de Vagas</h1>
+        <a href="{{ url_for('create_job') }}" class="btn btn-primary-custom">
+            <i class="fas fa-plus me-2"></i>Nova Vaga
+        </a>
+    </div>
+    
+    {% if jobs %}
+        <div class="row g-4">
+            {% for job in jobs %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card job-card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h5 class="card-title">{{ job.title }}</h5>
+                            <span class="badge bg-{{ 'success' if job.status == 'active' else 'secondary' }}">
+                                {{ 'Ativa' if job.status == 'active' else 'Fechada' }}
+                            </span>
+                        </div>
+                        
+                        <p class="card-text text-muted">{{ job.description[:100] }}...</p>
+                        
+                        <div class="mb-3">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>{{ job.created_at.strftime('%d/%m/%Y') }}
+                            </small>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="candidate-stats">
+                                <span class="badge bg-primary-custom">{{ job.candidates|length }} candidatos</span>
+                                {% set analyzed = job.candidates|selectattr('analysis_status', 'equalto', 'completed')|list|length %}
+                                {% if analyzed > 0 %}
+                                <span class="badge bg-success">{{ analyzed }} analisados</span>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('job_detail', job_id=job.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ url_for('edit_job', job_id=job.id) }}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% if current_user.is_admin() %}
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ job.id }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Delete Modal -->
+            {% if current_user.is_admin() %}
+            <div class="modal fade" id="deleteModal{{ job.id }}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Confirmar Exclusão</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Tem certeza que deseja excluir a vaga "<strong>{{ job.title }}</strong>"?</p>
+                            <p class="text-danger"><small>Esta ação não pode ser desfeita e todos os candidatos associados serão perdidos.</small></p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <form method="POST" action="{{ url_for('delete_job', job_id=job.id) }}" class="d-inline">
+                                <button type="submit" class="btn btn-danger">Excluir</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-briefcase fa-4x text-muted mb-4"></i>
+            <h3 class="text-muted">Nenhuma vaga criada ainda</h3>
+            <p class="text-muted mb-4">Comece criando sua primeira vaga de emprego</p>
+            <a href="{{ url_for('create_job') }}" class="btn btn-primary-custom">
+                <i class="fas fa-plus me-2"></i>Criar Primeira Vaga
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

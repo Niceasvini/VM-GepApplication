@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Candidatos - Viana e Moura{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="text-primary-custom">Todos os Candidatos</h1>
+        <div class="d-flex gap-2">
+            <select class="form-select" id="statusFilter" onchange="filterCandidates()">
+                <option value="">Todos os Status</option>
+                <option value="pending">Pendente</option>
+                <option value="interested">Interessado</option>
+                <option value="rejected">Reprovado</option>
+                <option value="interview">Entrevista</option>
+            </select>
+            <input type="number" class="form-control" id="minScoreFilter" 
+                   placeholder="Score mínimo" min="0" max="10" step="0.5" onchange="filterCandidates()">
+        </div>
+    </div>
+    
+    {% if candidates %}
+        <div class="row g-4">
+            {% for candidate in candidates %}
+            <div class="col-md-6 col-lg-4 candidate-card" data-status="{{ candidate.status }}" data-score="{{ candidate.ai_score or 0 }}">
+                <div class="card candidate-card-item border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h5 class="card-title">{{ candidate.name }}</h5>
+                            {% if candidate.ai_score %}
+                                <span class="badge bg-{{ 'success' if candidate.ai_score >= 7 else 'warning' if candidate.ai_score >= 5 else 'danger' }} fs-6">
+                                    {{ "%.1f"|format(candidate.ai_score) }}
+                                </span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-briefcase me-1"></i>{{ candidate.job.title }}
+                            </p>
+                            {% if candidate.email %}
+                            <p class="text-muted mb-1">
+                                <i class="fas fa-envelope me-1"></i>{{ candidate.email }}
+                            </p>
+                            {% endif %}
+                            {% if candidate.phone %}
+                            <p class="text-muted mb-1">
+                                <i class="fas fa-phone me-1"></i>{{ candidate.phone }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <span class="badge bg-{{ 'primary' if candidate.status == 'pending' else 'success' if candidate.status == 'interested' else 'danger' if candidate.status == 'rejected' else 'info' }} me-2">
+                                {% if candidate.status == 'pending' %}Pendente
+                                {% elif candidate.status == 'interested' %}Interessado
+                                {% elif candidate.status == 'rejected' %}Reprovado
+                                {% elif candidate.status == 'interview' %}Entrevista
+                                {% else %}{{ candidate.status }}{% endif %}
+                            </span>
+                            <span class="badge bg-{{ 'success' if candidate.analysis_status == 'completed' else 'warning' if candidate.analysis_status == 'processing' else 'danger' if candidate.analysis_status == 'failed' else 'secondary' }}">
+                                {% if candidate.analysis_status == 'completed' %}Analisado
+                                {% elif candidate.analysis_status == 'processing' %}Processando
+                                {% elif candidate.analysis_status == 'failed' %}Falhou
+                                {% else %}Pendente{% endif %}
+                            </span>
+                        </div>
+                        
+                        {% if candidate.ai_summary %}
+                        <p class="card-text text-muted small">{{ candidate.ai_summary[:100] }}...</p>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>{{ candidate.uploaded_at.strftime('%d/%m/%Y') }}
+                            </small>
+                            <a href="{{ url_for('candidate_detail', candidate_id=candidate.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye me-1"></i>Ver Detalhes
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-users fa-4x text-muted mb-4"></i>
+            <h3 class="text-muted">Nenhum candidato encontrado</h3>
+            <p class="text-muted mb-4">Faça upload de currículos nas vagas para começar</p>
+            <a href="{{ url_for('jobs_list') }}" class="btn btn-primary-custom">
+                <i class="fas fa-briefcase me-2"></i>Ver Vagas
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function filterCandidates() {
+    const statusFilter = document.getElementById('statusFilter').value;
+    const minScoreFilter = parseFloat(document.getElementById('minScoreFilter').value) || 0;
+    const cards = document.querySelectorAll('.candidate-card');
+    
+    cards.forEach(card => {
+        const status = card.getAttribute('data-status');
+        const score = parseFloat(card.getAttribute('data-score')) || 0;
+        
+        let showCard = true;
+        
+        if (statusFilter && status !== statusFilter) {
+            showCard = false;
+        }
+        
+        if (minScoreFilter > 0 && score < minScoreFilter) {
+            showCard = false;
+        }
+        
+        card.style.display = showCard ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}

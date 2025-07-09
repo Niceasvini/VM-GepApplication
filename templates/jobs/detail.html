@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}{{ job.title }} - Viana e Moura{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Job Header -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h1 class="text-primary-custom mb-2">{{ job.title }}</h1>
+                    <div class="mb-3">
+                        <span class="badge bg-{{ 'success' if job.status == 'active' else 'secondary' }} me-2">
+                            {{ 'Ativa' if job.status == 'active' else 'Fechada' }}
+                        </span>
+                        <small class="text-muted">
+                            <i class="fas fa-calendar me-1"></i>Criada em {{ job.created_at.strftime('%d/%m/%Y') }}
+                        </small>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('edit_job', job_id=job.id) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-edit me-2"></i>Editar
+                    </a>
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                        <i class="fas fa-upload me-2"></i>Carregar Currículos
+                    </button>
+                </div>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-md-8">
+                    <h5>Descrição</h5>
+                    <p class="text-muted">{{ job.description }}</p>
+                    
+                    <h5>Requisitos</h5>
+                    <p class="text-muted">{{ job.requirements }}</p>
+                    
+                    {% if job.dcf_content %}
+                    <h5>DCF - Documento de Conteúdo Funcional</h5>
+                    <p class="text-muted">{{ job.dcf_content }}</p>
+                    {% endif %}
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light border-0">
+                        <div class="card-body">
+                            <h6 class="card-title">Estatísticas</h6>
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <div class="stat-number text-primary-custom">{{ candidates|length }}</div>
+                                    <small class="text-muted">Candidatos</small>
+                                </div>
+                                <div class="col-6">
+                                    {% set analyzed = candidates|selectattr('analysis_status', 'equalto', 'completed')|list|length %}
+                                    <div class="stat-number text-success">{{ analyzed }}</div>
+                                    <small class="text-muted">Analisados</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Candidates Section -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-users me-2"></i>Candidatos
+                </h5>
+                <div class="d-flex gap-2">
+                    <select class="form-select form-select-sm" id="statusFilter" onchange="filterCandidates()">
+                        <option value="">Todos os Status</option>
+                        <option value="pending">Pendente</option>
+                        <option value="interested">Interessado</option>
+                        <option value="rejected">Reprovado</option>
+                        <option value="interview">Entrevista</option>
+                    </select>
+                    <input type="number" class="form-control form-control-sm" id="minScoreFilter" 
+                           placeholder="Score mín." min="0" max="10" step="0.5" onchange="filterCandidates()">
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if candidates %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Candidato</th>
+                                <th>Score IA</th>
+                                <th>Status</th>
+                                <th>Análise</th>
+                                <th>Upload</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="candidatesTable">
+                            {% for candidate in candidates %}
+                            <tr class="candidate-row" data-status="{{ candidate.status }}" data-score="{{ candidate.ai_score or 0 }}">
+                                <td>
+                                    <div>
+                                        <strong>{{ candidate.name }}</strong>
+                                        {% if candidate.email %}
+                                        <br><small class="text-muted">
+                                            <i class="fas fa-envelope me-1"></i>{{ candidate.email }}
+                                        </small>
+                                        {% endif %}
+                                        {% if candidate.phone %}
+                                        <br><small class="text-muted">
+                                            <i class="fas fa-phone me-1"></i>{{ candidate.phone }}
+                                        </small>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if candidate.ai_score %}
+                                        <span class="badge bg-{{ 'success' if candidate.ai_score >= 7 else 'warning' if candidate.ai_score >= 5 else 'danger' }} fs-6">
+                                            {{ "%.1f"|format(candidate.ai_score) }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'primary' if candidate.status == 'pending' else 'success' if candidate.status == 'interested' else 'danger' if candidate.status == 'rejected' else 'info' }}">
+                                        {% if candidate.status == 'pending' %}Pendente
+                                        {% elif candidate.status == 'interested' %}Interessado
+                                        {% elif candidate.status == 'rejected' %}Reprovado
+                                        {% elif candidate.status == 'interview' %}Entrevista
+                                        {% else %}{{ candidate.status }}{% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if candidate.analysis_status == 'completed' else 'warning' if candidate.analysis_status == 'processing' else 'danger' if candidate.analysis_status == 'failed' else 'secondary' }}">
+                                        {% if candidate.analysis_status == 'completed' %}Concluída
+                                        {% elif candidate.analysis_status == 'processing' %}Processando
+                                        {% elif candidate.analysis_status == 'failed' %}Falhou
+                                        {% else %}Pendente{% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    <small class="text-muted">{{ candidate.uploaded_at.strftime('%d/%m/%Y') }}</small>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('candidate_detail', candidate_id=candidate.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-users fa-4x text-muted mb-4"></i>
+                    <h5 class="text-muted">Nenhum candidato ainda</h5>
+                    <p class="text-muted mb-4">Faça upload de currículos para começar a análise</p>
+                    <button type="button" class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                        <i class="fas fa-upload me-2"></i>Carregar Currículos
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Carregar Currículos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('upload_resume', job_id=job.id) }}" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="resumes" class="form-label">Selecione os currículos</label>
+                        <input type="file" class="form-control" id="resumes" name="resumes" multiple 
+                               accept=".pdf,.docx,.txt" required>
+                        <div class="form-text">
+                            Formatos aceitos: PDF, DOCX, TXT. Você pode selecionar múltiplos arquivos.
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Os currículos serão automaticamente analisados pela IA após o upload.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary-custom">
+                        <i class="fas fa-upload me-2"></i>Carregar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function filterCandidates() {
+    const statusFilter = document.getElementById('statusFilter').value;
+    const minScoreFilter = parseFloat(document.getElementById('minScoreFilter').value) || 0;
+    const rows = document.querySelectorAll('.candidate-row');
+    
+    rows.forEach(row => {
+        const status = row.getAttribute('data-status');
+        const score = parseFloat(row.getAttribute('data-score')) || 0;
+        
+        let showRow = true;
+        
+        if (statusFilter && status !== statusFilter) {
+            showRow = false;
+        }
+        
+        if (minScoreFilter > 0 && score < minScoreFilter) {
+            showRow = false;
+        }
+        
+        row.style.display = showRow ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}

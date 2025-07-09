@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}{{ candidate.name }} - Viana e Moura{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Candidate Header -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <h1 class="text-primary-custom mb-2">{{ candidate.name }}</h1>
+                    <p class="text-muted mb-3">
+                        <i class="fas fa-briefcase me-1"></i>Candidato para: <strong>{{ candidate.job.title }}</strong>
+                    </p>
+                    
+                    <div class="row">
+                        {% if candidate.email %}
+                        <div class="col-md-6">
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-envelope me-2"></i>{{ candidate.email }}
+                            </p>
+                        </div>
+                        {% endif %}
+                        {% if candidate.phone %}
+                        <div class="col-md-6">
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-phone me-2"></i>{{ candidate.phone }}
+                            </p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <small class="text-muted">
+                            <i class="fas fa-calendar me-1"></i>Upload: {{ candidate.uploaded_at.strftime('%d/%m/%Y às %H:%M') }}
+                            {% if candidate.analyzed_at %}
+                                | Analisado: {{ candidate.analyzed_at.strftime('%d/%m/%Y às %H:%M') }}
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+                <div class="col-md-4 text-end">
+                    {% if candidate.ai_score %}
+                        <div class="score-display mb-3">
+                            <h2 class="text-{{ 'success' if candidate.ai_score >= 7 else 'warning' if candidate.ai_score >= 5 else 'danger' }}">
+                                {{ "%.1f"|format(candidate.ai_score) }}/10
+                            </h2>
+                            <small class="text-muted">Score IA</small>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <span class="badge bg-{{ 'primary' if candidate.status == 'pending' else 'success' if candidate.status == 'interested' else 'danger' if candidate.status == 'rejected' else 'info' }} me-2">
+                            {% if candidate.status == 'pending' %}Pendente
+                            {% elif candidate.status == 'interested' %}Interessado
+                            {% elif candidate.status == 'rejected' %}Reprovado
+                            {% elif candidate.status == 'interview' %}Entrevista
+                            {% else %}{{ candidate.status }}{% endif %}
+                        </span>
+                        <br>
+                        <span class="badge bg-{{ 'success' if candidate.analysis_status == 'completed' else 'warning' if candidate.analysis_status == 'processing' else 'danger' if candidate.analysis_status == 'failed' else 'secondary' }}">
+                            {% if candidate.analysis_status == 'completed' %}Análise Concluída
+                            {% elif candidate.analysis_status == 'processing' %}Processando
+                            {% elif candidate.analysis_status == 'failed' %}Análise Falhou
+                            {% else %}Análise Pendente{% endif %}
+                        </span>
+                    </div>
+                    
+                    <!-- Status Update Form -->
+                    <form method="POST" action="{{ url_for('update_candidate_status', candidate_id=candidate.id) }}">
+                        <div class="d-flex gap-2">
+                            <select class="form-select form-select-sm" name="status">
+                                <option value="pending" {{ 'selected' if candidate.status == 'pending' else '' }}>Pendente</option>
+                                <option value="interested" {{ 'selected' if candidate.status == 'interested' else '' }}>Interessado</option>
+                                <option value="rejected" {{ 'selected' if candidate.status == 'rejected' else '' }}>Reprovado</option>
+                                <option value="interview" {{ 'selected' if candidate.status == 'interview' else '' }}>Entrevista</option>
+                            </select>
+                            <button type="submit" class="btn btn-sm btn-primary-custom">
+                                <i class="fas fa-save"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- AI Analysis Results -->
+        <div class="col-md-8">
+            {% if candidate.analysis_status == 'completed' %}
+                {% if candidate.ai_summary %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-transparent">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-robot me-2"></i>Resumo Executivo
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">{{ candidate.ai_summary }}</p>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if candidate.ai_analysis %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-transparent">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-line me-2"></i>Análise Detalhada
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-muted">{{ candidate.ai_analysis|replace('\n', '<br>')|safe }}</div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if candidate.get_skills_list() %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-transparent">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-cogs me-2"></i>Habilidades Identificadas
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for skill in candidate.get_skills_list() %}
+                            <span class="badge bg-secondary">{{ skill }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            {% elif candidate.analysis_status == 'processing' %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Carregando...</span>
+                        </div>
+                        <h5 class="mt-3 text-muted">Analisando currículo...</h5>
+                        <p class="text-muted">A IA está processando o currículo. Isso pode levar alguns minutos.</p>
+                    </div>
+                </div>
+            {% elif candidate.analysis_status == 'failed' %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                        <h5 class="text-danger">Falha na Análise</h5>
+                        <p class="text-muted">Houve um erro ao analisar o currículo. Tente novamente mais tarde.</p>
+                    </div>
+                </div>
+            {% else %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-clock fa-3x text-warning mb-3"></i>
+                        <h5 class="text-warning">Análise Pendente</h5>
+                        <p class="text-muted">O currículo ainda não foi analisado pela IA.</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-md-4">
+            <!-- File Information -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-file me-2"></i>Informações do Arquivo
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <th>Nome:</th>
+                            <td>{{ candidate.filename }}</td>
+                        </tr>
+                        <tr>
+                            <th>Tipo:</th>
+                            <td>{{ candidate.file_type.upper() }}</td>
+                        </tr>
+                        <tr>
+                            <th>Upload:</th>
+                            <td>{{ candidate.uploaded_at.strftime('%d/%m/%Y') }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Comments Section -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-comments me-2"></i>Comentários
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <!-- Add Comment Form -->
+                    <form method="POST" action="{{ url_for('add_comment', candidate_id=candidate.id) }}" class="mb-4">
+                        <div class="mb-3">
+                            <textarea class="form-control" name="content" rows="3" placeholder="Adicione um comentário..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-primary-custom">
+                            <i class="fas fa-plus me-1"></i>Adicionar
+                        </button>
+                    </form>
+                    
+                    <!-- Comments List -->
+                    {% if comments %}
+                        <div class="comments-list">
+                            {% for comment in comments %}
+                            <div class="comment-item mb-3 pb-3 border-bottom">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <strong class="text-primary-custom">{{ comment.user.username }}</strong>
+                                    <small class="text-muted">{{ comment.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                                </div>
+                                <p class="mb-0 text-muted">{{ comment.content }}</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-comments fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">Nenhum comentário ainda</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Auto-refresh for processing status
+{% if candidate.analysis_status == 'processing' %}
+setTimeout(function() {
+    location.reload();
+}, 30000); // Refresh every 30 seconds
+{% endif %}
+</script>
+{% endblock %}
