@@ -269,8 +269,8 @@ def upload_resume(job_id):
     # Start parallel AI analysis for all uploaded candidates
     if candidate_ids:
         logging.info(f"Starting parallel analysis for {len(candidate_ids)} candidates")
-        from simple_processor import start_simple_background_processing
-        start_simple_background_processing(candidate_ids)
+        from fast_processor import start_fast_background_processing
+        start_fast_background_processing(candidate_ids)
         flash(f'{len(candidate_ids)} currículos enviados! A análise da IA está sendo processada em paralelo.', 'success')
     else:
         flash('Nenhum arquivo válido foi enviado.', 'warning')
@@ -349,8 +349,8 @@ def bulk_upload_process(job_id):
     # Start parallel AI analysis for all uploaded candidates
     if candidate_ids:
         logging.info(f"Starting parallel analysis for {len(candidate_ids)} candidates")
-        from simple_processor import start_simple_background_processing
-        start_simple_background_processing(candidate_ids)
+        from fast_processor import start_fast_background_processing
+        start_fast_background_processing(candidate_ids)
     
     return jsonify({
         'success': True,
