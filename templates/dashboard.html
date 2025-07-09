@@ -5,62 +5,66 @@
 {% block content %}
 <div class="container py-5">
     <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <h1 class="text-primary-custom">Dashboard de Recrutamento</h1>
-            <p class="text-muted">Visão geral do processo de recrutamento inteligente</p>
+    <div class="dashboard-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="dashboard-title">Dashboard de Recrutamento</h1>
+                <p class="dashboard-subtitle">Visão geral do processo de recrutamento inteligente com IA</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="btn-group" role="group">
+                    <a href="{{ url_for('create_job') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Nova Vaga
+                    </a>
+                    <a href="{{ url_for('jobs_list') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-briefcase me-2"></i>Ver Vagas
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
     
     <!-- Statistics Cards -->
     <div class="row g-4 mb-5">
-        <div class="col-md-3">
-            <div class="card stat-card border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <div class="stat-icon bg-primary-custom text-white rounded-circle mx-auto mb-3">
-                        <i class="fas fa-briefcase"></i>
-                    </div>
-                    <h3 class="stat-number text-primary-custom">{{ total_jobs }}</h3>
-                    <p class="text-muted mb-0">Vagas Ativas</p>
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card fade-in">
+                <div class="stat-icon">
+                    <i class="fas fa-briefcase"></i>
                 </div>
+                <div class="stat-number">{{ total_jobs }}</div>
+                <div class="stat-label">Vagas Ativas</div>
             </div>
         </div>
         
-        <div class="col-md-3">
-            <div class="card stat-card border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <div class="stat-icon bg-success text-white rounded-circle mx-auto mb-3">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <h3 class="stat-number text-success">{{ total_candidates }}</h3>
-                    <p class="text-muted mb-0">Total Candidatos</p>
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card fade-in">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
                 </div>
+                <div class="stat-number">{{ total_candidates }}</div>
+                <div class="stat-label">Total Candidatos</div>
             </div>
         </div>
         
-        <div class="col-md-3">
-            <div class="card stat-card border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <div class="stat-icon bg-info text-white rounded-circle mx-auto mb-3">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <h3 class="stat-number text-info">{{ analyzed_candidates }}</h3>
-                    <p class="text-muted mb-0">Análises Concluídas</p>
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card fade-in">
+                <div class="stat-icon">
+                    <i class="fas fa-chart-line"></i>
                 </div>
+                <div class="stat-number">{{ analyzed_candidates }}</div>
+                <div class="stat-label">Análises Concluídas</div>
             </div>
         </div>
         
-        <div class="col-md-3">
-            <div class="card stat-card border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <div class="stat-icon bg-warning text-white rounded-circle mx-auto mb-3">
-                        <i class="fas fa-percentage"></i>
-                    </div>
-                    <h3 class="stat-number text-warning">
-                        {{ "%.0f"|format((analyzed_candidates / total_candidates * 100) if total_candidates > 0 else 0) }}%
-                    </h3>
-                    <p class="text-muted mb-0">Taxa de Análise</p>
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card fade-in">
+                <div class="stat-icon">
+                    <i class="fas fa-percentage"></i>
                 </div>
+                <div class="stat-number">
+                    {{ "%.0f"|format((analyzed_candidates / total_candidates * 100) if total_candidates > 0 else 0) }}%
+                </div>
+                <div class="stat-label">Taxa de Análise</div>
             </div>
         </div>
     </div>
@@ -68,28 +72,26 @@
     <!-- Charts Section -->
     <div class="row mb-5">
         <div class="col-md-8">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-transparent">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-chart-bar me-2"></i>Distribuição de Pontuações
+            <div class="chart-container">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2 text-gradient"></i>Distribuição de Pontuações
                     </h5>
+                    <div class="badge badge-primary">{{ total_candidates }} candidatos</div>
                 </div>
-                <div class="card-body">
-                    <canvas id="scoreChart" width="400" height="200"></canvas>
-                </div>
+                <canvas id="scoreChart" width="400" height="200"></canvas>
             </div>
         </div>
         
         <div class="col-md-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-transparent">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-chart-pie me-2"></i>Status dos Candidatos
+            <div class="chart-container">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie me-2 text-gradient"></i>Status dos Candidatos
                     </h5>
+                    <div class="badge badge-accent">{{ analyzed_candidates }} analisados</div>
                 </div>
-                <div class="card-body">
-                    <canvas id="statusChart" width="400" height="200"></canvas>
-                </div>
+                <canvas id="statusChart" width="400" height="200"></canvas>
             </div>
         </div>
     </div>
