@@ -65,6 +65,37 @@
                                     <small class="text-muted">Analisados</small>
                                 </div>
                             </div>
+                            
+                            <!-- Progress Bar for AI Analysis -->
+                            <div id="analysisProgress" class="mt-3" style="display: none;">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <small class="text-muted">Processamento IA</small>
+                                    <small class="text-muted" id="progressText">0%</small>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 0%" 
+                                         aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="progressBar">
+                                    </div>
+                                </div>
+                                <div class="row mt-2 text-center">
+                                    <div class="col-3">
+                                        <small class="text-warning" id="processingCount">0</small>
+                                        <br><small class="text-muted">Processando</small>
+                                    </div>
+                                    <div class="col-3">
+                                        <small class="text-success" id="completedCount">0</small>
+                                        <br><small class="text-muted">Concluído</small>
+                                    </div>
+                                    <div class="col-3">
+                                        <small class="text-danger" id="failedCount">0</small>
+                                        <br><small class="text-muted">Falhou</small>
+                                    </div>
+                                    <div class="col-3">
+                                        <small class="text-secondary" id="pendingCount">0</small>
+                                        <br><small class="text-muted">Pendente</small>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -108,7 +139,7 @@
                         </thead>
                         <tbody id="candidatesTable">
                             {% for candidate in candidates %}
-                            <tr class="candidate-row" data-status="{{ candidate.status }}" data-score="{{ candidate.ai_score or 0 }}">
+                            <tr class="candidate-row" data-status="{{ candidate.status }}" data-score="{{ candidate.ai_score or 0 }}" data-candidate-id="{{ candidate.id }}" data-analysis-status="{{ candidate.analysis_status }}">
                                 <td>
                                     <div>
                                         <strong>{{ candidate.name }}</strong>
@@ -124,7 +155,7 @@
                                         {% endif %}
                                     </div>
                                 </td>
-                                <td>
+                                <td class="ai-score">
                                     {% if candidate.ai_score %}
                                         <span class="badge bg-{{ 'success' if candidate.ai_score >= 7 else 'warning' if candidate.ai_score >= 5 else 'danger' }} fs-6">
                                             {{ "%.1f"|format(candidate.ai_score) }}
@@ -142,7 +173,7 @@
                                         {% else %}{{ candidate.status }}{% endif %}
                                     </span>
                                 </td>
-                                <td>
+                                <td class="analysis-status">
                                     <span class="badge bg-{{ 'success' if candidate.analysis_status == 'completed' else 'warning' if candidate.analysis_status == 'processing' else 'danger' if candidate.analysis_status == 'failed' else 'secondary' }}">
                                         {% if candidate.analysis_status == 'completed' %}Concluída
                                         {% elif candidate.analysis_status == 'processing' %}Processando
@@ -285,5 +316,112 @@ function confirmDeleteCandidate(candidateId, candidateName) {
         form.submit();
     }
 }
+
+// Real-time progress monitoring
+let progressInterval;
+let jobId = {{ job.id }};
+
+function startProgressMonitoring() {
+    const progressDiv = document.getElementById('analysisProgress');
+    progressDiv.style.display = 'block';
+    
+    progressInterval = setInterval(function() {
+        fetch(`/api/jobs/${jobId}/processing_status`)
+            .then(response => response.json())
+            .then(data => {
+                updateProgressDisplay(data);
+                
+                // Stop monitoring if all processing is complete
+                if (data.status_counts.processing === 0 && data.status_counts.pending === 0) {
+                    stopProgressMonitoring();
+                    // Reload page to show updated results
+                    setTimeout(() => location.reload(), 2000);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching progress:', error);
+            });
+    }, 3000); // Update every 3 seconds
+}
+
+function stopProgressMonitoring() {
+    if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+    }
+    
+    const progressDiv = document.getElementById('analysisProgress');
+    setTimeout(() => {
+        progressDiv.style.display = 'none';
+    }, 5000); // Hide after 5 seconds
+}
+
+function updateProgressDisplay(data) {
+    const { status_counts, progress_percentage } = data;
+    
+    // Update progress bar
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    
+    progressBar.style.width = progress_percentage + '%';
+    progressBar.setAttribute('aria-valuenow', progress_percentage);
+    progressText.textContent = progress_percentage + '%';
+    
+    // Update counters
+    document.getElementById('processingCount').textContent = status_counts.processing;
+    document.getElementById('completedCount').textContent = status_counts.completed;
+    document.getElementById('failedCount').textContent = status_counts.failed;
+    document.getElementById('pendingCount').textContent = status_counts.pending;
+    
+    // Update table rows in real-time
+    data.candidates.forEach(candidate => {
+        const row = document.querySelector(`tr[data-candidate-id="${candidate.id}"]`);
+        if (row) {
+            const statusCell = row.querySelector('.analysis-status');
+            const scoreCell = row.querySelector('.ai-score');
+            
+            if (statusCell) {
+                let statusBadge = '';
+                switch(candidate.analysis_status) {
+                    case 'completed':
+                        statusBadge = '<span class="badge bg-success">Concluída</span>';
+                        break;
+                    case 'processing':
+                        statusBadge = '<span class="badge bg-warning">Processando</span>';
+                        break;
+                    case 'failed':
+                        statusBadge = '<span class="badge bg-danger">Falhou</span>';
+                        break;
+                    default:
+                        statusBadge = '<span class="badge bg-secondary">Pendente</span>';
+                }
+                statusCell.innerHTML = statusBadge;
+            }
+            
+            if (scoreCell && candidate.ai_score) {
+                const scoreBadge = candidate.ai_score >= 7 ? 'success' : 
+                                 candidate.ai_score >= 5 ? 'warning' : 'danger';
+                scoreCell.innerHTML = `<span class="badge bg-${scoreBadge} fs-6">${candidate.ai_score.toFixed(1)}</span>`;
+            }
+        }
+    });
+}
+
+// Check if there are any pending/processing candidates on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const candidateRows = document.querySelectorAll('.candidate-row');
+    let hasProcessing = false;
+    
+    candidateRows.forEach(row => {
+        const status = row.getAttribute('data-status');
+        if (status === 'processing' || status === 'pending') {
+            hasProcessing = true;
+        }
+    });
+    
+    if (hasProcessing) {
+        startProgressMonitoring();
+    }
+});
 </script>
 {% endblock %}

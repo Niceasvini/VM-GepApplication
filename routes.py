@@ -6,6 +6,7 @@ from app import app, db
 from models import User, Job, Candidate, CandidateComment
 from ai_service import analyze_resume
 from file_processor import process_uploaded_file
+from async_processor import start_background_processing, get_processing_status
 import logging
 
 # Authentication routes
@@ -224,6 +225,7 @@ def upload_resume(job_id):
         return redirect(url_for('job_detail', job_id=job_id))
     
     files = request.files.getlist('resumes')
+    candidate_ids = []
     
     for file in files:
         if file and file.filename:
@@ -262,31 +264,16 @@ def upload_resume(job_id):
             
             db.session.add(candidate)
             db.session.commit()
-            
-            # Start AI analysis in background (simplified for demo)
-            try:
-                candidate.analysis_status = 'processing'
-                db.session.commit()
-                
-                # Analyze resume
-                analysis_result = analyze_resume(file_path, file_ext, job)
-                
-                # Update candidate with results
-                candidate.ai_score = analysis_result['score']
-                candidate.ai_summary = analysis_result['summary']
-                candidate.ai_analysis = analysis_result['analysis']
-                candidate.set_skills_list(analysis_result['skills'])
-                candidate.analysis_status = 'completed'
-                candidate.analyzed_at = datetime.utcnow()
-                
-                db.session.commit()
-                
-            except Exception as e:
-                logging.error(f"Error analyzing resume {filename}: {e}")
-                candidate.analysis_status = 'failed'
-                db.session.commit()
+            candidate_ids.append(candidate.id)
     
-    flash('Currículos enviados com sucesso!', 'success')
+    # Start parallel AI analysis for all uploaded candidates
+    if candidate_ids:
+        logging.info(f"Starting parallel analysis for {len(candidate_ids)} candidates")
+        start_background_processing(candidate_ids)
+        flash(f'{len(candidate_ids)} currículos enviados! A análise da IA está sendo processada em paralelo.', 'success')
+    else:
+        flash('Nenhum arquivo válido foi enviado.', 'warning')
+    
     return redirect(url_for('job_detail', job_id=job_id))
 
 @app.route('/jobs/<int:job_id>/bulk-upload')
@@ -295,6 +282,81 @@ def bulk_upload_page(job_id):
     """Page for bulk resume upload"""
     job = Job.query.get_or_404(job_id)
     return render_template('jobs/bulk_upload.html', job=job)
+
+@app.route('/jobs/<int:job_id>/bulk-upload', methods=['POST'])
+@login_required
+def bulk_upload_process(job_id):
+    """Process bulk resume upload with parallel AI analysis"""
+    job = Job.query.get_or_404(job_id)
+    
+    if 'files' not in request.files:
+        return jsonify({'error': 'Nenhum arquivo enviado'}), 400
+    
+    files = request.files.getlist('files')
+    if not files or all(not f.filename for f in files):
+        return jsonify({'error': 'Nenhum arquivo válido enviado'}), 400
+    
+    candidate_ids = []
+    processed_count = 0
+    errors = []
+    
+    for file in files:
+        if file and file.filename:
+            try:
+                filename = secure_filename(file.filename)
+                file_ext = filename.rsplit('.', 1)[1].lower()
+                
+                if file_ext not in ['pdf', 'docx', 'txt']:
+                    errors.append(f'Formato não suportado: {filename}')
+                    continue
+                
+                # Save file
+                file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+                file.save(file_path)
+                
+                # Process file to extract basic info
+                try:
+                    name, email, phone = process_uploaded_file(file_path, file_ext)
+                except Exception as e:
+                    logging.error(f"Error processing file {filename}: {e}")
+                    name = filename.rsplit('.', 1)[0]
+                    email = None
+                    phone = None
+                
+                # Create candidate record
+                candidate = Candidate(
+                    name=name,
+                    email=email,
+                    phone=phone,
+                    filename=filename,
+                    file_path=file_path,
+                    file_type=file_ext,
+                    job_id=job_id,
+                    status='pending',
+                    analysis_status='pending'
+                )
+                
+                db.session.add(candidate)
+                db.session.commit()
+                candidate_ids.append(candidate.id)
+                processed_count += 1
+                
+            except Exception as e:
+                logging.error(f"Error processing file {file.filename}: {e}")
+                errors.append(f'Erro ao processar {file.filename}: {str(e)}')
+    
+    # Start parallel AI analysis for all uploaded candidates
+    if candidate_ids:
+        logging.info(f"Starting parallel analysis for {len(candidate_ids)} candidates")
+        start_background_processing(candidate_ids)
+    
+    return jsonify({
+        'success': True,
+        'processed_count': processed_count,
+        'candidate_ids': candidate_ids,
+        'errors': errors,
+        'message': f'{processed_count} currículos processados. Análise IA iniciada em paralelo.'
+    })
 
 # Candidate management
 @app.route('/candidates')
@@ -377,5 +439,42 @@ def api_candidate_status(candidate_id):
         'ai_score': candidate.ai_score,
         'status': candidate.status
     })
+
+@app.route('/api/jobs/<int:job_id>/processing_status')
+@login_required
+def api_job_processing_status(job_id):
+    """Get processing status for all candidates in a job"""
+    try:
+        job = Job.query.get_or_404(job_id)
+        candidates = Candidate.query.filter_by(job_id=job_id).all()
+        
+        status_counts = {
+            'pending': 0,
+            'processing': 0,
+            'completed': 0,
+            'failed': 0,
+            'total': len(candidates)
+        }
+        
+        candidate_details = []
+        
+        for candidate in candidates:
+            status_counts[candidate.analysis_status] += 1
+            candidate_details.append({
+                'id': candidate.id,
+                'name': candidate.name,
+                'analysis_status': candidate.analysis_status,
+                'ai_score': candidate.ai_score,
+                'analyzed_at': candidate.analyzed_at.isoformat() if candidate.analyzed_at else None
+            })
+        
+        return jsonify({
+            'status_counts': status_counts,
+            'candidates': candidate_details,
+            'progress_percentage': round((status_counts['completed'] + status_counts['failed']) / max(status_counts['total'], 1) * 100, 1)
+        })
+    except Exception as e:
+        logging.error(f"Error getting processing status: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 from datetime import datetime
