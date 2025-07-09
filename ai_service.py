@@ -7,9 +7,9 @@ from file_processor import extract_text_from_file
 # do not change this unless explicitly requested by the user
 from openai import OpenAI
 
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("OPENAI_API_KEY")
 openai = OpenAI(
-    api_key=OPENAI_API_KEY,
+    api_key=DEEPSEEK_API_KEY,
     base_url="https://api.deepseek.com/v1"
 )
 
@@ -19,8 +19,16 @@ def analyze_resume(file_path, file_type, job):
     Returns a dictionary with score, summary, analysis, and skills
     """
     try:
+        logging.info(f"Starting analysis for file: {file_path}")
+        
         # Extract text from the resume
         resume_text = extract_text_from_file(file_path, file_type)
+        logging.info(f"Resume text extracted successfully, length: {len(resume_text)}")
+        
+        # Check if API key is available
+        if not DEEPSEEK_API_KEY:
+            logging.error("DeepSeek API key not found in environment variables")
+            raise Exception("API key not configured")
         
         # Prepare the analysis prompt
         prompt = f"""
@@ -51,6 +59,8 @@ def analyze_resume(file_path, file_type, job):
         Seja preciso, profissional e focado na adequação do candidato à vaga específica.
         """
         
+        logging.info("Sending request to DeepSeek API...")
+        
         response = openai.chat.completions.create(
             model="deepseek-chat",
             messages=[
@@ -67,7 +77,10 @@ def analyze_resume(file_path, file_type, job):
             temperature=0.3
         )
         
+        logging.info("Response received from DeepSeek API")
+        
         result = json.loads(response.choices[0].message.content)
+        logging.info(f"API response parsed successfully: {result}")
         
         # Validate and clean the result
         analysis_result = {
@@ -81,6 +94,7 @@ def analyze_resume(file_path, file_type, job):
             'recommendations': result.get('recommendations', [])
         }
         
+        logging.info(f"Analysis completed successfully with score: {analysis_result['score']}")
         return analysis_result
         
     except Exception as e:
