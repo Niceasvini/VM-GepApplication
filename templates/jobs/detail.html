@@ -29,6 +29,11 @@
                     <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#uploadModal">
                         <i class="fas fa-upload me-2"></i>Carregar Individual
                     </button>
+                    {% if current_user.is_admin() %}
+                    <button type="button" class="btn btn-danger" onclick="confirmDeleteJob({{ job.id }}, '{{ job.title }}')">
+                        <i class="fas fa-trash me-2"></i>Excluir Vaga
+                    </button>
+                    {% endif %}
                 </div>
             </div>
             
@@ -149,9 +154,14 @@
                                     <small class="text-muted">{{ candidate.uploaded_at.strftime('%d/%m/%Y') }}</small>
                                 </td>
                                 <td>
-                                    <a href="{{ url_for('candidate_detail', candidate_id=candidate.id) }}" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
+                                    <div class="d-flex gap-1">
+                                        <a href="{{ url_for('candidate_detail', candidate_id=candidate.id) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDeleteCandidate({{ candidate.id }}, '{{ candidate.name }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -230,6 +240,50 @@ function filterCandidates() {
         
         row.style.display = showRow ? '' : 'none';
     });
+}
+
+function confirmDeleteJob(jobId, jobTitle) {
+    if (confirm(`Tem certeza que deseja excluir a vaga "${jobTitle}"?\n\nEsta ação não pode ser desfeita e todos os candidatos associados também serão excluídos.`)) {
+        // Create form to submit DELETE request
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/jobs/${jobId}/delete`;
+        
+        // Add CSRF token if available
+        const csrfToken = document.querySelector('meta[name="csrf-token"]');
+        if (csrfToken) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrf_token';
+            csrfInput.value = csrfToken.content;
+            form.appendChild(csrfInput);
+        }
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function confirmDeleteCandidate(candidateId, candidateName) {
+    if (confirm(`Tem certeza que deseja excluir o candidato "${candidateName}"?\n\nEsta ação não pode ser desfeita.`)) {
+        // Create form to submit DELETE request
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/candidates/${candidateId}/delete`;
+        
+        // Add CSRF token if available
+        const csrfToken = document.querySelector('meta[name="csrf-token"]');
+        if (csrfToken) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrf_token';
+            csrfInput.value = csrfToken.content;
+            form.appendChild(csrfInput);
+        }
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
 }
 </script>
 {% endblock %}

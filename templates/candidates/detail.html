@@ -69,7 +69,7 @@
                     
                     <!-- Status Update Form -->
                     <form method="POST" action="{{ url_for('update_candidate_status', candidate_id=candidate.id) }}">
-                        <div class="d-flex gap-2">
+                        <div class="d-flex gap-2 mb-2">
                             <select class="form-select form-select-sm" name="status">
                                 <option value="pending" {{ 'selected' if candidate.status == 'pending' else '' }}>Pendente</option>
                                 <option value="interested" {{ 'selected' if candidate.status == 'interested' else '' }}>Interessado</option>
@@ -81,6 +81,11 @@
                             </button>
                         </div>
                     </form>
+                    
+                    <!-- Delete Button -->
+                    <button type="button" class="btn btn-sm btn-danger" onclick="confirmDeleteCandidate({{ candidate.id }}, '{{ candidate.name }}')">
+                        <i class="fas fa-trash me-1"></i>Excluir Candidato
+                    </button>
                 </div>
             </div>
         </div>
@@ -240,5 +245,27 @@ setTimeout(function() {
     location.reload();
 }, 30000); // Refresh every 30 seconds
 {% endif %}
+
+function confirmDeleteCandidate(candidateId, candidateName) {
+    if (confirm(`Tem certeza que deseja excluir o candidato "${candidateName}"?\n\nEsta ação não pode ser desfeita.`)) {
+        // Create form to submit DELETE request
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/candidates/${candidateId}/delete`;
+        
+        // Add CSRF token if available
+        const csrfToken = document.querySelector('meta[name="csrf-token"]');
+        if (csrfToken) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrf_token';
+            csrfInput.value = csrfToken.content;
+            form.appendChild(csrfInput);
+        }
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
 </script>
 {% endblock %}

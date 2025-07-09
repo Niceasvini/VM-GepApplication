@@ -345,6 +345,27 @@ def add_comment(candidate_id):
     flash('Comentário adicionado com sucesso!', 'success')
     return redirect(url_for('candidate_detail', candidate_id=candidate_id))
 
+@app.route('/candidates/<int:candidate_id>/delete', methods=['POST'])
+@login_required
+def delete_candidate(candidate_id):
+    candidate = Candidate.query.get_or_404(candidate_id)
+    job_id = candidate.job_id
+    
+    # Delete the physical file if it exists
+    try:
+        if os.path.exists(candidate.file_path):
+            os.remove(candidate.file_path)
+    except Exception as e:
+        logging.warning(f"Could not delete file {candidate.file_path}: {e}")
+    
+    # Delete candidate from database
+    candidate_name = candidate.name
+    db.session.delete(candidate)
+    db.session.commit()
+    
+    flash(f'Candidato "{candidate_name}" excluído com sucesso!', 'success')
+    return redirect(url_for('job_detail', job_id=job_id))
+
 # API endpoints for real-time updates
 @app.route('/api/candidate/<int:candidate_id>/status')
 @login_required
