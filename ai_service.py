@@ -1,7 +1,10 @@
 import json
 import os
 import logging
+import time
+import hashlib
 from file_processor import extract_text_from_file
+from cache_service import analysis_cache
 
 # the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
 # do not change this unless explicitly requested by the user
@@ -26,6 +29,12 @@ def analyze_resume(file_path, file_type, job):
         resume_text = extract_text_from_file(file_path, file_type)
         logging.info(f"Resume text extracted successfully, length: {len(resume_text)}")
         
+        # Check cache first to avoid redundant API calls
+        cached_result = analysis_cache.get_cached_analysis(resume_text, job.id)
+        if cached_result:
+            logging.info("Using cached analysis result")
+            return cached_result
+        
         # Check if API key is available
         if not DEEPSEEK_API_KEY:
             logging.error("DeepSeek API key not found in environment variables")
@@ -36,26 +45,43 @@ def analyze_resume(file_path, file_type, job):
             resume_text = resume_text[:8000] + "..."
             logging.info("Resume text truncated to fit token limits")
         
-        # Prepare a more concise prompt
+        # Create unique identifier for this analysis
+        text_hash = hashlib.md5(resume_text.encode()).hexdigest()[:8]
+        timestamp = int(time.time())
+        
+        # Enhanced prompt with context for uniqueness
         prompt = f"""
-        Analise este currículo para a vaga "{job.title}" e responda em JSON:
-        
-        VAGA: {job.title}
-        REQUISITOS: {job.requirements[:400]}...
-        
-        CURRÍCULO: {resume_text}
-        
-        Responda apenas com JSON válido:
-        {{
-            "score": 7.5,
-            "summary": "Resumo do candidato em 2 frases",
-            "analysis": "Análise detalhada da adequação à vaga",
-            "skills": ["skill1", "skill2", "skill3"],
-            "experience_years": 5,
-            "education_level": "Graduação",
-            "match_reasons": ["razão1", "razão2"],
-            "recommendations": ["recomendação1", "recomendação2"]
-        }}
+[ANÁLISE #{timestamp}-{text_hash}]
+
+Você é um especialista em recrutamento analisando um currículo específico para uma vaga. 
+Cada análise deve ser única e personalizada baseada no conteúdo específico do currículo.
+
+CONTEXTO DA VAGA:
+Título: {job.title}
+Descrição: {job.description[:500]}...
+Requisitos: {job.requirements[:500]}...
+
+CURRÍCULO ESPECÍFICO PARA ANÁLISE:
+{resume_text}
+
+INSTRUÇÕES IMPORTANTES:
+1. Analise ESPECIFICAMENTE este currículo individual
+2. Identifique detalhes únicos do candidato (nome, experiências específicas, projetos)
+3. Avalie compatibilidade real com os requisitos da vaga
+4. Forneça insights personalizados baseados no conteúdo específico
+5. Use escala de 0-10 com incrementos de 0.5
+
+RESPONDA EM JSON VÁLIDO:
+{{
+    "score": float,
+    "summary": "resumo personalizado mencionando nome e experiências específicas",
+    "analysis": "análise detalhada das qualificações específicas do candidato",
+    "skills": ["lista de habilidades identificadas no currículo"],
+    "experience_years": int,
+    "education_level": "nível educacional específico",
+    "match_reasons": ["motivos específicos baseados no currículo"],
+    "recommendations": ["recomendações personalizadas para este candidato"]
+}}
         """
         
         logging.info("Sending request to DeepSeek API...")
@@ -94,6 +120,10 @@ def analyze_resume(file_path, file_type, job):
         }
         
         logging.info(f"Analysis completed successfully with score: {analysis_result['score']}")
+        
+        # Cache the result for future use
+        analysis_cache.cache_analysis(resume_text, job.id, analysis_result)
+        
         return analysis_result
         
     except Exception as e:

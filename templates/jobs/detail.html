@@ -23,8 +23,11 @@
                     <a href="{{ url_for('edit_job', job_id=job.id) }}" class="btn btn-outline-primary">
                         <i class="fas fa-edit me-2"></i>Editar
                     </a>
+                    <a href="{{ url_for('bulk_upload_page', job_id=job.id) }}" class="btn btn-warning">
+                        <i class="fas fa-rocket me-2"></i>Upload em Lote
+                    </a>
                     <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#uploadModal">
-                        <i class="fas fa-upload me-2"></i>Carregar Currículos
+                        <i class="fas fa-upload me-2"></i>Carregar Individual
                     </button>
                 </div>
             </div>

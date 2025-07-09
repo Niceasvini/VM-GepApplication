@@ -289,6 +289,13 @@ def upload_resume(job_id):
     flash('Currículos enviados com sucesso!', 'success')
     return redirect(url_for('job_detail', job_id=job_id))
 
+@app.route('/jobs/<int:job_id>/bulk-upload')
+@login_required
+def bulk_upload_page(job_id):
+    """Page for bulk resume upload"""
+    job = Job.query.get_or_404(job_id)
+    return render_template('jobs/bulk_upload.html', job=job)
+
 # Candidate management
 @app.route('/candidates')
 @login_required
