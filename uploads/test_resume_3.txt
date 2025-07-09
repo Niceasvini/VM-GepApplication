@@ -1,0 +1,13 @@
+Carlos Oliveira
+Email: carlos@email.com
+Telefone: (11) 77777-7777
+
+Experiência:
+- Desenvolvedor Frontend - 2 anos
+- React, JavaScript, HTML/CSS
+- Conhecimento básico em backend
+- Interesse em aprender Python
+
+Formação:
+- Análise e Desenvolvimento de Sistemas - FIAP
+- Bootcamp Fullstack
