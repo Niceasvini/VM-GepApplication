@@ -1,0 +1,123 @@
+DEBUG:httpcore.connection:connect_tcp.started host='api.deepseek.com' port=443 local_address=None timeout=5.0 socket_options=None
+DEBUG:httpcore.connection:connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x7fd21daa52d0>
+DEBUG:httpcore.connection:start_tls.started ssl_context=<ssl.SSLContext object at 0x7fd21ea50170> server_hostname='api.deepseek.com' timeout=5.0
+DEBUG:httpcore.connection:start_tls.complete return_value=<httpcore._backends.sync.SyncStream object at 0x7fd21daa5290>
+DEBUG:httpcore.http11:send_request_headers.started request=<Request [b'POST']>
+DEBUG:httpcore.http11:send_request_headers.complete
+DEBUG:httpcore.http11:send_request_body.started request=<Request [b'POST']>
+DEBUG:httpcore.http11:send_request_body.complete
+DEBUG:httpcore.http11:receive_response_headers.started request=<Request [b'POST']>
+DEBUG:httpcore.http11:receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Date', b'Wed, 09 Jul 2025 00:38:53 GMT'), (b'Content-Type', b'application/json'), (b'Transfer-Encoding', b'chunked'), (b'Connection', b'keep-alive'), (b'vary', b'origin, access-control-request-method, access-control-request-headers'), (b'access-control-allow-credentials', b'true'), (b'x-ds-trace-id', b'a8a2ce22972bcb8b9728baa18bff2534'), (b'Strict-Transport-Security', b'max-age=31536000; includeSubDomains; preload'), (b'X-Content-Type-Options', b'nosniff'), (b'cf-cache-status', b'DYNAMIC'), (b'Set-Cookie', b'__cf_bm=evdGmn_GAfG5BKsK_15CSc9_i6t3Cppmk3VdJJyYw_Y-1752021533-1.0.1.1-vmR_kdvQ00moypUY1YRVh.YzWHsfcGCbq95CrlKpD7ywDu6LRZ5AJgD4dxJPKvTriyxiD57f7ptTh_8CTIOnwCNH7m7rx_u3oalg3T8yufw; path=/; expires=Wed, 09-Jul-25 01:08:53 GMT; domain=.deepseek.com; HttpOnly; Secure; SameSite=None'), (b'Server', b'cloudflare'), (b'CF-RAY', b'95c3c2d6a9e3eb40-SEA'), (b'Content-Encoding', b'gzip')])
+INFO:httpx:HTTP Request: POST https://api.deepseek.com/v1/chat/completions "HTTP/1.1 200 OK"
+DEBUG:httpcore.http11:receive_response_body.started request=<Request [b'POST']>
+DEBUG:httpcore.http11:receive_response_body.complete
+DEBUG:httpcore.http11:response_closed.started
+DEBUG:httpcore.http11:response_closed.complete
+DEBUG:openai._base_client:HTTP Response: POST https://api.deepseek.com/v1/chat/completions "200 OK" Headers({'date': 'Wed, 09 Jul 2025 00:38:53 GMT', 'content-type': 'application/json', 'transfer-encoding': 'chunked', 'connection': 'keep-alive', 'vary': 'origin, access-control-request-method, access-control-request-headers', 'access-control-allow-credentials': 'true', 'x-ds-trace-id': 'a8a2ce22972bcb8b9728baa18bff2534', 'strict-transport-security': 'max-age=31536000; includeSubDomains; preload', 'x-content-type-options': 'nosniff', 'cf-cache-status': 'DYNAMIC', 'set-cookie': '__cf_bm=evdGmn_GAfG5BKsK_15CSc9_i6t3Cppmk3VdJJyYw_Y-1752021533-1.0.1.1-vmR_kdvQ00moypUY1YRVh.YzWHsfcGCbq95CrlKpD7ywDu6LRZ5AJgD4dxJPKvTriyxiD57f7ptTh_8CTIOnwCNH7m7rx_u3oalg3T8yufw; path=/; expires=Wed, 09-Jul-25 01:08:53 GMT; domain=.deepseek.com; HttpOnly; Secure; SameSite=None', 'server': 'cloudflare', 'cf-ray': '95c3c2d6a9e3eb40-SEA', 'content-encoding': 'gzip'})
+DEBUG:openai._base_client:request_id: None
+INFO:root:Response received from DeepSeek API
+INFO:root:API response parsed successfully: {'score': 2.0, 'summary': 'Candidata com experiência em áreas contábeis e administrativas, mas sem menção a conhecimentos em Python e Power BI, requisitos essenciais para a vaga.', 'analysis': 'A candidata possui uma sólida experiência em áreas contábeis e administrativas, com habilidades em conciliação bancária, organização de documentos fiscais e cálculos de impostos. No entanto, não há menção a conhecimentos em Python e Power BI, que são requisitos essenciais para a vaga de Assistente de Dados. Sua formação acadêmica em Ciências Contábeis e experiência profissional não se alinham diretamente com as necessidades técnicas da posição.', 'skills': ['Contas contábeis', 'Fiscal', 'Conciliação bancária', 'Organização de documentos fiscais', 'Cálculos de impostos', 'Atendimento ao cliente', 'Vendas', 'Administrativo'], 'experience_years': 15, 'education_level': 'Graduação em Ciências Contábeis', 'match_reasons': ['Experiência em áreas administrativas e contábeis', 'Habilidade com cálculos e organização'], 'recommendations': ['Considerar para vagas na área contábil ou administrativa', 'Se houver interesse da candidata em transição de carreira, sugerir capacitação em Python e Power BI']}
+INFO:root:Analysis completed successfully with score: 2.0
+INFO:root:Starting analysis for file: uploads/CurriculoEwertonDiasdaSilva_1.pdf
+INFO:root:Resume text extracted successfully, length: 5603
+INFO:root:Sending request to DeepSeek API...
+DEBUG:openai._base_client:Request options: {'method': 'post', 'url': '/chat/completions', 'files': None, 'idempotency_key': 'stainless-python-retry-3f49e0b8-8e52-481f-901f-e82aca841931', 'json_data': {'messages': [{'role': 'system', 'content': 'Você é um especialista em recrutamento com 15 anos de experiência. Analise currículos de forma objetiva e profissional, fornecendo insights práticos para decisões de contratação. Sempre responda em português brasileiro.'}, {'role': 'user', 'content': '\n        Você é um especialista em recrutamento da empresa "Viana e Moura". \n        Analise o currículo abaixo para a vaga especificada e forneça uma avaliação completa.\n        \n        VAGA:\n        Título: Assistente de Dados\n        Descrição: possuir conhecimento python e power bi \n        Requisitos: possuir conhecimento python e power bi \n        \n        \n        CURRÍCULO:\n        Ewerton Dias da Silva  \n \nBrasileiro, solteiro, 11/04/1999 – 26 anos  \n \nR. Industrial Antônio Carlos Menezes  –– Curado –– CEP: 50940 -550 –– Recife/PE  \n \nTel./Cel. (81) 9 8442 -9196 – E-mail: ewertondiass24@gmail.com  \n \nOBJETIVO  \nAtuar de forma proativa na empresa, contribuindo com soluções eficientes e seguras, \nalinhadas aos objetivos organizacionais. Busco constante desenvolvimento profissional, com \nfoco em superar desafios, alcançar metas e agregar valor por meio de compromisso,  inovação \ne resultados.  \nQUALIFICAÇÃO  \n \nGraduação em Ciências Contábeis concluída em 2024.2 pela Universidade Católica de \nPernambuco (UNICAP), Recife, turno da noite.  \nTécnico em Administração, pela escola técnica: Colégio Agrícola Dom Agostinho Ikas \n– CODAI / UFRPE.  \n \nCURSOS  \n \nFundação Bradesco  \nWord – Avançado  \n \nFundação Bradesco  \nExcel – Avançado  \n \nUnidade de Tecnologia na Educação Cidadania – UTEC  \nSistema operacional Linux, editores de texto, internet, imagens e apresentação.  \n \nFundação Bradesco  \nContabilidade Empresarial  \n \nFunda ção Bradesco  \nComunicação Empresarial  \n \nCIEE – Centro de Integração Empresa e Escola de Pernambuco  \nCurso de qualificação profissional em ocupações administrativas.  \n \nSENAI – PE \nAssistente de controle de qualida de  \n \nGERDAU  \nPrograma de aprendizagem de iniciação profissional. Programa social – Unidade Projeto \nPescar, Gerdau – aço norte, Recife;  \n \nColetivo Jove m \nPrograma de preparação de técnica de marketing, vendas e comunicação  \n \nFundação Bradesco  \nEDUCAÇÃO FINANCEIRA, com carga horária de 4 hora(s), no período de 21/02/2023 a \n06/03/2023.  \n \nGEP TREINAMENTOS  \nSAPIÊNCIA - ORGANIZAÇÃO NO TRABALHO realizado no GEP (Global E -learning \nPlatform) de 50 minutos de duração com a data 27/02/2023  \n \nGEP TREINAMENTOS  \nSAPIÊNCIA -TÉCNICAS DE APRESENTAÇÃO realizado no GEP (Global E -learning \nPlatform) de 1 hora de duração com a data 27/02/2023  \n \nGEP TREINAMENTOS  \nCOLABORAÇÃO ÁGIL E FACILITAÇÃO realizado no GEP (Global E -learning Platform)de 30 \nminutos de duração com a data 04/05/2022  \n \nGEP TREINAMENTOS  \nMINDSET DIGITAL: SEJA O PROFISSIONAL QUE O MERCADO PRECISA realizado no  \nGEP (Global E -learning Platform) de 30 minutos de duração com a data 07/04/2022  \n \nGEP TREINAMENTOS  \nPRATIQUE A EMPATIA: COMO SE CONECTAR E ESCUTAR MELHOR OS SEUS \nCLIENTE  realizado no GEP (Global E -learning Platform) de 30 minutos de duração com a \ndata 27/02/2023  \n \nGEP TREINAMENTOS  \nSAPIÊNCIA – AUTODESENVOLVIMENTO realizado no GEP (Global E -learning Platform) de \n1 hora de duração com a data 09/02/2023  \n \nE-Hive  \nCONTABILIDADE DO TERCEIRO SETOR - AGENTE DO TERCEIRO SETOR  \n \nIPED - Instituto Politécnico de Ensino a Distância  \nFLUXO DE CAIXA NA PRÁTIC A \n \n \nEXPERIÊNCIA PROFISSIONAL  \n \nGERDAU  \nCargo: Jovem aprendiz de manutenção.  \nPrincipais atividades: Verificação e inspeção de materiais e ferramentas, suporte \nadministrativo aos mecânicos, conservação e preservação do local de trabalho e auxílio  \nnas demais rotinas do setor de linha de produção da empresa.  \nPeríodo: 06/03/2017 a 16/02/2018  \n \nGERDAU  \nCargo: Operador de Máquinas.  \n \nPrincipais atividades: Auxiliar na manutenção, operação e manuseio das máquinas de  \nprodução e demais equipamentos mecânicos . \nPeríodo: 19/02/2018 a 11/06/2019  \n \n \nJL Bebidas e Alimentos  \nCargo: Jovem Aprendiz Assistente  \n \nPrincipais atividades: Arquivamento e controle dos documentos de admissão e demissão, \nauxiliar no setor financeiro, suporte na expedição com entradas e saídas de notas fiscais e \ncoleta de pontos dos funcionários.  \nPeríodo: 05/11/2019 a 19/03/2021  \n \nUniversidade Católica de Pernambuc o \nCargo: Bolsista de iniciação científica.  \n \nPrincipais atividades: Pesquisas e relatórios com as conclusões parciais e finais do projeto. \nAssim sendo, as pesquisas foram relacionadas ao aprendizado do meu curso, com teorias e \nexplicações, bem como aplicação da pesquisa de campo.  \n1° Semestre 2021.1 até o 04/07/2024  \n \nNeoenergia Pernambuco  \nCargo: Estagiário de tributos Federal  \n \nPrincipais atividades: Apuração de tributos; registro fiscal; preenchimento das guias de \npagamento; controle dos prazos para quitação de pagamentos de tributos entre outras \natividades voltadas ao setor tributário e fiscal.  \nPeríodo: Novembro de 2021 a Setembro de 2023  \n \nGrupo Ser Educacional  \nCargo: Assistente de Compliance Fiscal  \n \nPrincipais atividades: Controle e execução de trabalhos relacionados com a área contábil e \nfiscal, com procedimentos para garantir o cumprimento das obrigações tributárias e dos \nprocessos fiscais da legislação, buscando manter a conformidade com as leis.  \nPeríodo: Novembro de 2023 a Julho de 2024.  \n \nLopes, Machado Auditores e Consultores - Independent Member of BKR internacional \nCargo: Auditor Junior C  \n \nPrincipais atividades: Revisão das demonstrações financeiras e processos contábeis de \nempresas clientes para garantir que estejam em conformidade com normas contábeis e \nregulatórias, como CPC, IFRS e normas da CVM . \nPeríodo: 24/09/2024 a 06/05/2025  \n \n \nINFORMAÇÕES ADICIONAIS  \nInglês – Intermediário.  \nAprovado no Exame de Suficiência Contábil (CFC 2024.2) – Em processo de obtenção do \nregistro profissional junto ao CRC.  \nPrograma de Cidadania Integral: Totalizando 12 anos de atividades em formação cidadã e \ncapacitação socioprofissional, entre os anos de 2006 a 2018.  \nVoluntário no Instituto Solidário, ajudando na formação de programas de \nassistência social de forma continuada, dirigidos a crianças, adolescentes e jovens \nem situação de vulnerabilidade e risco socia l. \n\n        \n        Forneça sua análise no formato JSON com os seguintes campos:\n        {\n            "score": [pontuação de 0.0 a 10.0, múltiplos de 0.5],\n            "summary": "[resumo executivo do candidato em 2-3 frases]",\n            "analysis": "[análise detalhada incluindo pontos fortes, fracos e adequação à vaga]",\n            "skills": ["lista", "de", "habilidades", "técnicas", "identificadas"],\n            "experience_years": [número estimado de anos de experiência],\n            "education_level": "[nível educacional identificado]",\n            "match_reasons": ["razões", "específicas", "para", "a", "pontuação"],\n            "recommendations": ["recomendações", "para", "próximos", "passos"]\n        }\n        \n        Seja preciso, profissional e focado na adequação do candidato à vaga específica.\n        '}], 'model': 'deepseek-chat', 'max_tokens': 2000, 'response_format': {'type': 'json_object'}, 'temperature': 0.3}}
+DEBUG:openai._base_client:Sending HTTP Request: POST https://api.deepseek.com/v1/chat/completions
+DEBUG:httpcore.http11:send_request_headers.started request=<Request [b'POST']>
+DEBUG:httpcore.http11:send_request_headers.complete
+DEBUG:httpcore.http11:send_request_body.started request=<Request [b'POST']>
+DEBUG:httpcore.http11:send_request_body.complete
+DEBUG:httpcore.http11:receive_response_headers.started request=<Request [b'POST']>
+DEBUG:httpcore.http11:receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Date', b'Wed, 09 Jul 2025 00:39:09 GMT'), (b'Content-Type', b'application/json'), (b'Transfer-Encoding', b'chunked'), (b'Connection', b'keep-alive'), (b'vary', b'origin, access-control-request-method, access-control-request-headers'), (b'access-control-allow-credentials', b'true'), (b'x-ds-trace-id', b'ad9574bd694dab80e5cfc9c2e9b5e55e'), (b'Strict-Transport-Security', b'max-age=31536000; includeSubDomains; preload'), (b'X-Content-Type-Options', b'nosniff'), (b'cf-cache-status', b'DYNAMIC'), (b'Server', b'cloudflare'), (b'CF-RAY', b'95c3c338ce6aeb40-SEA'), (b'Content-Encoding', b'gzip')])
+INFO:httpx:HTTP Request: POST https://api.deepseek.com/v1/chat/completions "HTTP/1.1 200 OK"
+DEBUG:httpcore.http11:receive_response_body.started request=<Request [b'POST']>
+[2025-07-09 00:39:22 +0000] [607] [CRITICAL] WORKER TIMEOUT (pid:618)
+DEBUG:httpcore.http11:receive_response_body.failed exception=SystemExit(1)
+DEBUG:httpcore.http11:response_closed.started
+DEBUG:httpcore.http11:response_closed.complete
+[2025-07-09 00:39:22 +0000] [618] [ERROR] Error handling request /jobs/1/upload
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/gunicorn/workers/sync.py", line 134, in handle
+    self.handle_request(listener, req, client, addr)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/gunicorn/workers/sync.py", line 177, in handle_request
+    respiter = self.wsgi(environ, resp.start_response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/middleware/proxy_fix.py", line 183, in __call__
+    return self.app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/routes.py", line 252, in upload_resume
+    analysis_result = analyze_resume(file_path, file_ext, job)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/ai_service.py", line 64, in analyze_resume
+    response = openai.chat.completions.create(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/openai/_utils/_utils.py", line 287, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py", line 1087, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/openai/_base_client.py", line 1249, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/openai/_base_client.py", line 972, in request
+    response = self._client.send(
+               ^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/httpx/_client.py", line 928, in send
+    raise exc
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/httpx/_client.py", line 922, in send
+    response.read()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/httpx/_models.py", line 881, in read
+    self._content = b"".join(self.iter_bytes())
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/httpx/_models.py", line 897, in iter_bytes
+    for raw_bytes in self.iter_raw():
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/httpx/_models.py", line 951, in iter_raw
+    for raw_stream_bytes in self.stream:
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/httpx/_client.py", line 153, in __iter__
+    for chunk in self._stream:
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/httpx/_transports/default.py", line 127, in __iter__
+    for part in self._httpcore_stream:
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/httpcore/_sync/connection_pool.py", line 407, in __iter__
+    raise exc from None
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/httpcore/_sync/connection_pool.py", line 403, in __iter__
+    for part in self._stream:
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/httpcore/_sync/http11.py", line 342, in __iter__
+    raise exc
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/httpcore/_sync/http11.py", line 334, in __iter__
+    for chunk in self._connection._receive_response_body(**kwargs):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/httpcore/_sync/http11.py", line 203, in _receive_response_body
+    event = self._receive_event(timeout=timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/httpcore/_sync/http11.py", line 217, in _receive_event
+    data = self._network_stream.read(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/httpcore/_backends/sync.py", line 128, in read
+    return self._sock.recv(max_bytes)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11/ssl.py", line 1295, in recv
+    return self.read(buflen)
+           ^^^^^^^^^^^^^^^^^
+  File "/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11/ssl.py", line 1168, in read
+    return self._sslobj.read(len)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/gunicorn/workers/base.py", line 204, in handle_abort
+    sys.exit(1)
+SystemExit: 1
+[2025-07-09 00:39:22 +0000] [618] [INFO] Worker exiting (pid: 618)
+[2025-07-09 00:39:22 +0000] [881] [INFO] Booting worker with pid: 881

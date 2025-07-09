@@ -23,9 +23,9 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('dashboard') }}">
-                <i class="fas fa-user-tie me-2"></i>
-                Viana <span class="brand-accent">e</span> Moura
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('dashboard') }}">
+                <img src="{{ url_for('static', filename='images/logo.jpeg') }}" alt="Viana e Moura" class="brand-logo me-2">
+                <span class="brand-text">Viana <span class="brand-accent">e</span> Moura</span>
             </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">

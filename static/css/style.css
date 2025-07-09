@@ -107,6 +107,24 @@ p {
     color: var(--accent-color) !important;
 }
 
+.brand-logo {
+    height: 35px;
+    width: auto;
+    border-radius: 8px;
+    object-fit: contain;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: var(--transition);
+}
+
+.brand-logo:hover {
+    transform: scale(1.05);
+}
+
+.brand-text {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
 .navbar-nav {
     gap: 0.5rem;
 }
@@ -792,4 +810,27 @@ p {
     100% {
         left: 100%;
     }
+}
+
+/* Login Page Logo */
+.login-brand-logo {
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
+    border-radius: 50%;
+    box-shadow: 0 6px 30px rgba(185, 58, 62, 0.4);
+    margin-bottom: 1.5rem;
+    transition: var(--transition);
+}
+
+.login-brand-logo:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 35px rgba(185, 58, 62, 0.5);
+}
+
+.login-logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 1rem;
 }

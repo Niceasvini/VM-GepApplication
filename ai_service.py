@@ -10,12 +10,13 @@ from openai import OpenAI
 DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("OPENAI_API_KEY")
 openai = OpenAI(
     api_key=DEEPSEEK_API_KEY,
-    base_url="https://api.deepseek.com/v1"
+    base_url="https://api.deepseek.com/v1",
+    timeout=60.0  # 60 seconds timeout
 )
 
 def analyze_resume(file_path, file_type, job):
     """
-    Analyze a resume using OpenAI GPT-4o model
+    Analyze a resume using DeepSeek API with improved error handling
     Returns a dictionary with score, summary, analysis, and skills
     """
     try:
@@ -30,33 +31,31 @@ def analyze_resume(file_path, file_type, job):
             logging.error("DeepSeek API key not found in environment variables")
             raise Exception("API key not configured")
         
-        # Prepare the analysis prompt
+        # Limit resume text to avoid token limits
+        if len(resume_text) > 8000:
+            resume_text = resume_text[:8000] + "..."
+            logging.info("Resume text truncated to fit token limits")
+        
+        # Prepare a more concise prompt
         prompt = f"""
-        Você é um especialista em recrutamento da empresa "Viana e Moura". 
-        Analise o currículo abaixo para a vaga especificada e forneça uma avaliação completa.
+        Analise este currículo para a vaga "{job.title}" e responda em JSON:
         
-        VAGA:
-        Título: {job.title}
-        Descrição: {job.description}
-        Requisitos: {job.requirements}
-        {f"DCF: {job.dcf_content}" if job.dcf_content else ""}
+        VAGA: {job.title}
+        REQUISITOS: {job.requirements[:400]}...
         
-        CURRÍCULO:
-        {resume_text}
+        CURRÍCULO: {resume_text}
         
-        Forneça sua análise no formato JSON com os seguintes campos:
+        Responda apenas com JSON válido:
         {{
-            "score": [pontuação de 0.0 a 10.0, múltiplos de 0.5],
-            "summary": "[resumo executivo do candidato em 2-3 frases]",
-            "analysis": "[análise detalhada incluindo pontos fortes, fracos e adequação à vaga]",
-            "skills": ["lista", "de", "habilidades", "técnicas", "identificadas"],
-            "experience_years": [número estimado de anos de experiência],
-            "education_level": "[nível educacional identificado]",
-            "match_reasons": ["razões", "específicas", "para", "a", "pontuação"],
-            "recommendations": ["recomendações", "para", "próximos", "passos"]
+            "score": 7.5,
+            "summary": "Resumo do candidato em 2 frases",
+            "analysis": "Análise detalhada da adequação à vaga",
+            "skills": ["skill1", "skill2", "skill3"],
+            "experience_years": 5,
+            "education_level": "Graduação",
+            "match_reasons": ["razão1", "razão2"],
+            "recommendations": ["recomendação1", "recomendação2"]
         }}
-        
-        Seja preciso, profissional e focado na adequação do candidato à vaga específica.
         """
         
         logging.info("Sending request to DeepSeek API...")
@@ -73,7 +72,7 @@ def analyze_resume(file_path, file_type, job):
                 {"role": "user", "content": prompt}
             ],
             response_format={"type": "json_object"},
-            max_tokens=2000,
+            max_tokens=1500,
             temperature=0.3
         )
         
