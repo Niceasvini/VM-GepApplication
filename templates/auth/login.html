@@ -72,6 +72,19 @@
                     Recruiter: recruiter / recruiter123
                 </small>
             </div>
+            
+            <div class="text-center mt-2">
+                <small class="text-muted">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="showDirectUrl()">
+                        <i class="fas fa-external-link-alt me-1"></i>URL para Nova Aba
+                    </button>
+                </small>
+            </div>
+            
+            <div id="direct-url-info" class="alert alert-info mt-3" style="display: none;">
+                <strong>URL direto para nova aba:</strong><br>
+                <span id="direct-url-text"></span>
+            </div>
         </div>
     </div>
     
@@ -90,6 +103,14 @@
             button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Entrando...';
             button.disabled = true;
         });
+        
+        // Função para mostrar URL direto
+        function showDirectUrl() {
+            const currentUrl = window.location.protocol + '//' + window.location.host;
+            document.getElementById('direct-url-text').innerHTML = 
+                '<a href="' + currentUrl + '" target="_blank" style="color: #B93A3E; word-break: break-all;">' + currentUrl + '</a>';
+            document.getElementById('direct-url-info').style.display = 'block';
+        }
     </script>
 </body>
 </html>
