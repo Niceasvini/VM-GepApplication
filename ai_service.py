@@ -10,20 +10,106 @@ from cache_service import analysis_cache
 # do not change this unless explicitly requested by the user
 from openai import OpenAI
 
-DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("OPENAI_API_KEY")
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY")
+if not DEEPSEEK_API_KEY:
+    DEEPSEEK_API_KEY = os.environ.get("OPENAI_API_KEY")
+
+# Configure OpenAI client for DeepSeek API
 openai = OpenAI(
     api_key=DEEPSEEK_API_KEY,
     base_url="https://api.deepseek.com/v1",
     timeout=60.0  # 60 seconds timeout
 )
 
+def generate_score_only(cv_text, job):
+    """
+    Generate only the score for faster processing
+    """
+    prompt = f"""
+Você é um avaliador técnico especializado em recrutamento.
+
+Dê uma nota de 0 a 10 para o currículo abaixo com base na vaga '{job.title}', considerando:
+
+1. Experiência prática na área (peso 4)
+2. Habilidades técnicas relevantes (peso 3)
+3. Formação acadêmica (peso 2)
+4. Clareza e estrutura do currículo (peso 1)
+
+- Considere a relevância das experiências e habilidades em relação à vaga.
+- Avalie a formação acadêmica e se ela é adequada para a posição.
+- Com base na soma ponderada desses critérios, atribua uma *nota final com até duas casas decimais*, entre 0 e 10.
+- Retorne apenas a nota final, com até duas casas decimais (ex: 7.91 ou 6.25), sem comentários ou explicações.
+
+Exemplo:
+Nota: 6.87
+
+Currículo:
+{cv_text[:3000]}
+"""
+    
+    response = openai.chat.completions.create(
+        model="deepseek-chat",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=50,
+        temperature=0.3
+    )
+    
+    result = response.choices[0].message.content
+    # Extract score using regex
+    import re
+    match = re.search(r"(\d{1,2}(?:\.\d{1,2})?)", result)
+    if match:
+        raw_score = float(match.group(1))
+        return round(min(max(raw_score, 0), 10), 2)
+    return 5.0
+
+def generate_summary_and_analysis(cv_text, job):
+    """
+    Generate summary and analysis after score
+    """
+    prompt = f"""
+Você é um analista de currículos. Analise o currículo abaixo para a vaga '{job.title}'.
+
+Retorne:
+- Um resumo estruturado do currículo
+- Uma análise crítica com base na vaga (alinhamento técnico, gaps e recomendação)
+
+Use o seguinte formato:
+
+### RESUMO
+(Resumo estruturado)
+
+### ANÁLISE
+1. Alinhamento Técnico: ...
+2. Gaps Técnicos: ...
+3. Recomendação Final: Sim / Parcial / Não
+
+Currículo:
+{cv_text[:3000]}
+"""
+    
+    response = openai.chat.completions.create(
+        model="deepseek-chat",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=800,
+        temperature=0.5
+    )
+    
+    result = response.choices[0].message.content
+    parts = result.split('### ANÁLISE')
+    
+    summary = parts[0].replace('### RESUMO', '').strip()
+    analysis = parts[1].strip() if len(parts) > 1 else 'Análise não disponível'
+    
+    return summary, analysis
+
 def analyze_resume(file_path, file_type, job):
     """
-    Analyze a resume using DeepSeek API with improved error handling
+    Optimized resume analysis with faster processing
     Returns a dictionary with score, summary, analysis, and skills
     """
     try:
-        logging.info(f"Starting analysis for file: {file_path}")
+        logging.info(f"Starting optimized analysis for file: {file_path}")
         
         # Extract text from the resume
         resume_text = extract_text_from_file(file_path, file_type)
@@ -41,85 +127,42 @@ def analyze_resume(file_path, file_type, job):
             raise Exception("API key not configured")
         
         # Limit resume text to avoid token limits
-        if len(resume_text) > 8000:
-            resume_text = resume_text[:8000] + "..."
+        if len(resume_text) > 5000:
+            resume_text = resume_text[:5000] + "..."
             logging.info("Resume text truncated to fit token limits")
         
-        # Create unique identifier for this analysis
-        text_hash = hashlib.md5(resume_text.encode()).hexdigest()[:8]
-        timestamp = int(time.time())
+        # Step 1: Generate score quickly (most important)
+        logging.info("Generating score...")
+        score = generate_score_only(resume_text, job)
+        logging.info(f"Score generated: {score}")
         
-        # Enhanced prompt with context for uniqueness
-        prompt = f"""
-[ANÁLISE #{timestamp}-{text_hash}]
-
-Você é um especialista em recrutamento analisando um currículo específico para uma vaga. 
-Cada análise deve ser única e personalizada baseada no conteúdo específico do currículo.
-
-CONTEXTO DA VAGA:
-Título: {job.title}
-Descrição: {job.description[:500]}...
-Requisitos: {job.requirements[:500]}...
-
-CURRÍCULO ESPECÍFICO PARA ANÁLISE:
-{resume_text}
-
-INSTRUÇÕES IMPORTANTES:
-1. Analise ESPECIFICAMENTE este currículo individual
-2. Identifique detalhes únicos do candidato (nome, experiências específicas, projetos)
-3. Avalie compatibilidade real com os requisitos da vaga
-4. Forneça insights personalizados baseados no conteúdo específico
-5. Use escala de 0-10 com incrementos de 0.5
-
-RESPONDA EM JSON VÁLIDO:
-{{
-    "score": float,
-    "summary": "resumo personalizado mencionando nome e experiências específicas",
-    "analysis": "análise detalhada das qualificações específicas do candidato",
-    "skills": ["lista de habilidades identificadas no currículo"],
-    "experience_years": int,
-    "education_level": "nível educacional específico",
-    "match_reasons": ["motivos específicos baseados no currículo"],
-    "recommendations": ["recomendações personalizadas para este candidato"]
-}}
-        """
+        # Step 2: Generate summary and analysis
+        logging.info("Generating summary and analysis...")
+        summary, analysis = generate_summary_and_analysis(resume_text, job)
+        logging.info("Summary and analysis generated")
         
-        logging.info("Sending request to DeepSeek API...")
+        # Extract skills from resume text (simple keyword extraction)
+        skills = extract_skills_from_text(resume_text)
         
-        response = openai.chat.completions.create(
-            model="deepseek-chat",
-            messages=[
-                {
-                    "role": "system",
-                    "content": "Você é um especialista em recrutamento com 15 anos de experiência. "
-                             "Analise currículos de forma objetiva e profissional, fornecendo insights "
-                             "práticos para decisões de contratação. Sempre responda em português brasileiro."
-                },
-                {"role": "user", "content": prompt}
-            ],
-            response_format={"type": "json_object"},
-            max_tokens=1500,
-            temperature=0.3
-        )
+        # Estimate experience years from text
+        experience_years = estimate_experience_years(resume_text)
         
-        logging.info("Response received from DeepSeek API")
+        # Determine education level
+        education_level = determine_education_level(resume_text)
         
-        result = json.loads(response.choices[0].message.content)
-        logging.info(f"API response parsed successfully: {result}")
-        
-        # Validate and clean the result
+        # Create result
         analysis_result = {
-            'score': max(0.0, min(10.0, float(result.get('score', 0)))),
-            'summary': result.get('summary', 'Resumo não disponível'),
-            'analysis': result.get('analysis', 'Análise não disponível'),
-            'skills': result.get('skills', []),
-            'experience_years': result.get('experience_years', 0),
-            'education_level': result.get('education_level', 'Não informado'),
-            'match_reasons': result.get('match_reasons', []),
-            'recommendations': result.get('recommendations', [])
+            'score': score,
+            'summary': summary,
+            'analysis': analysis,
+            'skills': skills,
+            'experience_years': experience_years,
+            'education_level': education_level,
+            'match_reasons': [f"Score: {score}/10"],
+            'recommendations': ["Avaliação baseada em experiência e habilidades técnicas"]
         }
         
-        logging.info(f"Analysis completed successfully with score: {analysis_result['score']}")
+        logging.info(f"Optimized analysis completed successfully with score: {analysis_result['score']}")
         
         # Cache the result for future use
         analysis_cache.cache_analysis(resume_text, job.id, analysis_result)
@@ -138,6 +181,67 @@ RESPONDA EM JSON VÁLIDO:
             'match_reasons': [],
             'recommendations': []
         }
+
+def extract_skills_from_text(text):
+    """
+    Extract skills from resume text using keyword matching
+    """
+    skills_keywords = [
+        'python', 'java', 'javascript', 'react', 'angular', 'vue', 'node.js',
+        'sql', 'mysql', 'postgresql', 'mongodb', 'redis', 'docker', 'kubernetes',
+        'aws', 'azure', 'gcp', 'flask', 'django', 'spring', 'laravel',
+        'git', 'github', 'gitlab', 'jenkins', 'ci/cd', 'agile', 'scrum',
+        'html', 'css', 'bootstrap', 'tailwind', 'rest', 'api', 'graphql',
+        'machine learning', 'data science', 'pandas', 'numpy', 'tensorflow',
+        'pytorch', 'power bi', 'tableau', 'excel', 'word', 'powerpoint'
+    ]
+    
+    found_skills = []
+    text_lower = text.lower()
+    
+    for skill in skills_keywords:
+        if skill in text_lower:
+            found_skills.append(skill.title())
+    
+    return found_skills[:10]  # Return top 10 skills
+
+def estimate_experience_years(text):
+    """
+    Estimate years of experience from resume text
+    """
+    import re
+    
+    # Look for patterns like "5 anos", "3 years", "2+ anos"
+    patterns = [
+        r'(\d+)\s*(?:anos?|years?)',
+        r'(\d+)\+\s*(?:anos?|years?)',
+        r'(?:há|for)\s*(\d+)\s*(?:anos?|years?)'
+    ]
+    
+    years = []
+    for pattern in patterns:
+        matches = re.findall(pattern, text.lower())
+        for match in matches:
+            years.append(int(match))
+    
+    return max(years) if years else 1
+
+def determine_education_level(text):
+    """
+    Determine education level from resume text
+    """
+    text_lower = text.lower()
+    
+    if any(word in text_lower for word in ['doutorado', 'phd', 'doutor']):
+        return 'Doutorado'
+    elif any(word in text_lower for word in ['mestrado', 'master', 'mestre']):
+        return 'Mestrado'
+    elif any(word in text_lower for word in ['bacharelado', 'bacharel', 'graduação', 'superior']):
+        return 'Superior'
+    elif any(word in text_lower for word in ['técnico', 'tecnólogo']):
+        return 'Técnico'
+    else:
+        return 'Não informado'
 
 def generate_batch_analysis_report(candidates):
     """

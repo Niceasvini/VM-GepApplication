@@ -124,10 +124,13 @@ def start_background_processing(candidate_ids):
     def background_worker():
         try:
             logging.info(f"Background processing started for {len(candidate_ids)} candidates")
+            print(f"DEBUG: Background processing started for {len(candidate_ids)} candidates")
             process_candidates_parallel(candidate_ids)
             logging.info("Background processing completed")
+            print("DEBUG: Background processing completed")
         except Exception as e:
             logging.error(f"Background processing error: {str(e)}")
+            print(f"DEBUG: Background processing error: {str(e)}")
     
     # Start background thread
     background_thread = threading.Thread(target=background_worker)

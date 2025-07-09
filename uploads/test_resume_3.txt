@@ -1,0 +1,13 @@
+Carlos Oliveira
+Email: carlos@email.com
+Telefone: (11) 77777-7777
+
+Experiência:
+- Analista de Sistemas - 2 anos
+- Python básico, SQL avançado
+- Análise de dados com pandas
+- Relatórios automatizados
+
+Formação:
+- Análise de Sistemas - FATEC
+- Certificação em Python

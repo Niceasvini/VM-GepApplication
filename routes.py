@@ -6,7 +6,7 @@ from app import app, db
 from models import User, Job, Candidate, CandidateComment
 from ai_service import analyze_resume
 from file_processor import process_uploaded_file
-from async_processor import start_background_processing, get_processing_status
+from fast_processor import start_fast_background_processing, get_fast_processing_status
 import logging
 
 # Authentication routes
@@ -269,7 +269,7 @@ def upload_resume(job_id):
     # Start parallel AI analysis for all uploaded candidates
     if candidate_ids:
         logging.info(f"Starting parallel analysis for {len(candidate_ids)} candidates")
-        start_background_processing(candidate_ids)
+        start_fast_background_processing(candidate_ids)
         flash(f'{len(candidate_ids)} currículos enviados! A análise da IA está sendo processada em paralelo.', 'success')
     else:
         flash('Nenhum arquivo válido foi enviado.', 'warning')
@@ -348,7 +348,7 @@ def bulk_upload_process(job_id):
     # Start parallel AI analysis for all uploaded candidates
     if candidate_ids:
         logging.info(f"Starting parallel analysis for {len(candidate_ids)} candidates")
-        start_background_processing(candidate_ids)
+        start_fast_background_processing(candidate_ids)
     
     return jsonify({
         'success': True,
