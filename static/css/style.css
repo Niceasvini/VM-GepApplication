@@ -110,10 +110,12 @@ p {
 .brand-logo {
     height: 35px;
     width: auto;
-    border-radius: 8px;
+    border-radius: 6px;
     object-fit: contain;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: var(--transition);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 2px;
 }
 
 .brand-logo:hover {
@@ -814,13 +816,15 @@ p {
 
 /* Login Page Logo */
 .login-brand-logo {
-    width: 120px;
-    height: 120px;
+    width: 140px;
+    height: 100px;
     object-fit: contain;
-    border-radius: 50%;
+    border-radius: 12px;
     box-shadow: 0 6px 30px rgba(185, 58, 62, 0.4);
     margin-bottom: 1.5rem;
     transition: var(--transition);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 8px;
 }
 
 .login-brand-logo:hover {
