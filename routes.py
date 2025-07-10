@@ -269,8 +269,8 @@ def upload_resume(job_id):
     # Start parallel AI analysis for all uploaded candidates
     if candidate_ids:
         logging.info(f"Starting parallel analysis for {len(candidate_ids)} candidates")
-        from async_processor import start_background_processing
-        start_background_processing(candidate_ids)
+        from background_processor import start_background_analysis
+        start_background_analysis(candidate_ids)
         flash(f'{len(candidate_ids)} currículos enviados! A análise da IA está sendo processada em paralelo.', 'success')
     else:
         flash('Nenhum arquivo válido foi enviado.', 'warning')
@@ -349,8 +349,8 @@ def bulk_upload_process(job_id):
     # Start parallel AI analysis for all uploaded candidates
     if candidate_ids:
         logging.info(f"Starting parallel analysis for {len(candidate_ids)} candidates")
-        from async_processor import start_background_processing
-        start_background_processing(candidate_ids)
+        from background_processor import start_background_analysis
+        start_background_analysis(candidate_ids)
     
     return jsonify({
         'success': True,
@@ -484,17 +484,27 @@ def api_job_processing_status(job_id):
 def api_process_pending():
     """Manually trigger processing of pending candidates"""
     try:
-        from simple_processor import process_all_pending
-        import threading
+        pending_candidates = Candidate.query.filter_by(analysis_status='pending').all()
+        if not pending_candidates:
+            return jsonify({'success': False, 'message': 'Nenhum candidato pendente encontrado'})
         
-        def background_process():
-            process_all_pending()
+        candidate_ids = [c.id for c in pending_candidates]
         
-        thread = threading.Thread(target=background_process, daemon=True)
-        thread.start()
+        from background_processor import start_background_analysis
+        start_background_analysis(candidate_ids)
         
-        return jsonify({'success': True, 'message': 'Processamento iniciado para candidatos pendentes'})
+        return jsonify({
+            'success': True, 
+            'message': f'Processamento iniciado para {len(candidate_ids)} candidatos',
+            'candidate_ids': candidate_ids
+        })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
 from datetime import datetime
+
+@app.route('/jobs/<int:job_id>/processing-monitor')
+@login_required
+def processing_monitor(job_id):
+    job = Job.query.get_or_404(job_id)
+    return render_template('jobs/processing_monitor.html', job=job)

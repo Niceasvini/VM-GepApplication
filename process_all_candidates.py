@@ -2,86 +2,133 @@
 """
 Process all pending candidates and show real-time progress
 """
+import os
 import time
 import threading
 from datetime import datetime
+from openai import OpenAI
+
+# Set environment
+os.environ['DATABASE_URL'] = 'postgresql://postgres.bndkpowgvagtlxwmthma:5585858Vini%40@aws-0-sa-east-1.pooler.supabase.com:6543/postgres'
+
 from app import app, db
 from models import Candidate
-from simple_processor import process_candidate_simple
+from file_processor import extract_text_from_file
+
+# Configure OpenAI client
+client = OpenAI(
+    api_key="sk-08e53165834948c8b96fe8ec44a12baf",
+    base_url="https://api.deepseek.com/v1",
+    timeout=20
+)
 
 def process_all_with_progress():
     """Process all pending candidates with real-time progress"""
-    with app.app_context():
-        # Get all pending candidates
-        candidates = Candidate.query.filter_by(analysis_status='pending').all()
-        
-        if not candidates:
-            print("✓ No pending candidates found")
-            return
-        
-        print(f"🚀 Starting processing of {len(candidates)} candidates...")
-        print("=" * 60)
-        
-        success_count = 0
-        failed_count = 0
-        
-        for i, candidate in enumerate(candidates, 1):
-            print(f"\n[{i}/{len(candidates)}] Processing: {candidate.name}")
-            print(f"Job: {candidate.job.title}")
-            print(f"File: {candidate.filename}")
+    try:
+        with app.app_context():
+            pending_candidates = Candidate.query.filter_by(analysis_status='pending').all()
             
-            start_time = time.time()
+            print(f"=== PROCESSAMENTO EM LOTE ===")
+            print(f"Candidatos pendentes: {len(pending_candidates)}")
             
-            try:
-                # Process candidate
-                success = process_candidate_simple(candidate.id)
+            if not pending_candidates:
+                print("Nenhum candidato pendente encontrado.")
+                return
+            
+            for i, candidate in enumerate(pending_candidates, 1):
+                print(f"\n[{i}/{len(pending_candidates)}] Processando {candidate.name}...")
                 
-                end_time = time.time()
-                duration = end_time - start_time
-                
-                if success:
-                    # Get updated candidate data
-                    candidate = Candidate.query.get(candidate.id)
-                    print(f"✓ SUCCESS - Score: {candidate.ai_score}/10 (took {duration:.1f}s)")
-                    success_count += 1
-                else:
-                    print(f"✗ FAILED (took {duration:.1f}s)")
-                    failed_count += 1
+                try:
+                    # Update status
+                    candidate.analysis_status = 'processing'
+                    db.session.commit()
                     
-            except Exception as e:
-                print(f"✗ ERROR: {str(e)}")
-                failed_count += 1
+                    # Extract resume text
+                    resume_text = extract_text_from_file(candidate.file_path, candidate.file_type)
+                    
+                    # Generate quick score
+                    print(f"  Chamando DeepSeek API...")
+                    start_time = time.time()
+                    
+                    score_response = client.chat.completions.create(
+                        model="deepseek-chat",
+                        messages=[{
+                            "role": "user",
+                            "content": f"Avalie este currículo para '{candidate.job.title}' de 0-10. Responda apenas o número (ex: 8.5):\\n\\n{resume_text[:800]}"
+                        }],
+                        max_tokens=10,
+                        temperature=0.1
+                    )
+                    
+                    elapsed = time.time() - start_time
+                    score_text = score_response.choices[0].message.content.strip()
+                    
+                    # Parse score
+                    import re
+                    score_match = re.search(r'(\\d+\\.?\\d*)', score_text)
+                    if score_match:
+                        score = float(score_match.group(1))
+                        if score > 10:
+                            score = score / 10
+                    else:
+                        score = 5.0
+                    
+                    print(f"  Score obtido: {score} (tempo: {elapsed:.2f}s)")
+                    
+                    # Generate summary
+                    summary_response = client.chat.completions.create(
+                        model="deepseek-chat",
+                        messages=[{
+                            "role": "user",
+                            "content": f"Resumo de {candidate.name} para {candidate.job.title} (máximo 100 palavras):\\n\\n{resume_text[:600]}"
+                        }],
+                        max_tokens=200,
+                        temperature=0.3
+                    )
+                    
+                    summary = summary_response.choices[0].message.content.strip()
+                    
+                    # Update candidate
+                    candidate.ai_score = score
+                    candidate.ai_summary = summary
+                    candidate.ai_analysis = f"Análise: Score {score}/10. {summary}"
+                    candidate.analysis_status = 'completed'
+                    candidate.analyzed_at = datetime.utcnow()
+                    
+                    db.session.commit()
+                    
+                    print(f"  ✓ SUCESSO: {candidate.name} - Score: {score}")
+                    
+                except Exception as e:
+                    print(f"  ✗ ERRO: {candidate.name} - {str(e)}")
+                    
+                    # Mark as failed
+                    candidate.analysis_status = 'failed'
+                    candidate.ai_summary = f'Erro: {str(e)}'
+                    candidate.ai_score = 0.0
+                    db.session.commit()
+                
+                # Small delay between requests
+                time.sleep(2)
             
-            # Show progress
-            progress = (i / len(candidates)) * 100
-            print(f"Progress: {progress:.1f}% ({i}/{len(candidates)})")
-            print("-" * 40)
-        
-        print("\n" + "=" * 60)
-        print("🎉 PROCESSING COMPLETE!")
-        print(f"✓ Successful: {success_count}")
-        print(f"✗ Failed: {failed_count}")
-        print(f"📊 Success rate: {(success_count/len(candidates)*100):.1f}%")
-        
-        # Show results summary
-        print("\n📋 RESULTS SUMMARY:")
-        print("=" * 60)
-        
-        processed_candidates = Candidate.query.filter_by(analysis_status='completed').all()
-        processed_candidates.sort(key=lambda x: x.ai_score or 0, reverse=True)
-        
-        for candidate in processed_candidates:
-            print(f"{candidate.name}: {candidate.ai_score}/10 - {candidate.job.title}")
-        
-        return success_count, failed_count
+            print(f"\n=== PROCESSAMENTO CONCLUÍDO ===")
+            
+            # Show final results
+            completed = Candidate.query.filter_by(analysis_status='completed').count()
+            failed = Candidate.query.filter_by(analysis_status='failed').count()
+            pending = Candidate.query.filter_by(analysis_status='pending').count()
+            
+            print(f"Concluídos: {completed}")
+            print(f"Falharam: {failed}")
+            print(f"Pendentes: {pending}")
+            
+    except Exception as e:
+        print(f"Erro geral: {e}")
 
 def run_background_processing():
     """Run processing in background thread"""
     def worker():
-        try:
-            process_all_with_progress()
-        except Exception as e:
-            print(f"Background processing error: {e}")
+        process_all_with_progress()
     
     thread = threading.Thread(target=worker, daemon=True)
     thread.start()

@@ -26,6 +26,9 @@
                     <a href="{{ url_for('bulk_upload_page', job_id=job.id) }}" class="btn btn-warning">
                         <i class="fas fa-rocket me-2"></i>Upload em Lote
                     </a>
+                    <a href="{{ url_for('processing_monitor', job_id=job.id) }}" class="btn btn-info">
+                        <i class="fas fa-chart-line me-2"></i>Monitor IA
+                    </a>
                     <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#uploadModal">
                         <i class="fas fa-upload me-2"></i>Carregar Individual
                     </button>

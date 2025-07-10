@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block title %}Monitor de Processamento - {{ job.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Monitor de Processamento</h1>
+        <a href="{{ url_for('job_detail', job_id=job.id) }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-briefcase"></i> {{ job.title }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="badge badge-primary badge-pill" style="font-size: 1.2em;" id="total-count">0</div>
+                                <div class="text-muted">Total</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="badge badge-warning badge-pill" style="font-size: 1.2em;" id="pending-count">0</div>
+                                <div class="text-muted">Pendentes</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="badge badge-info badge-pill" style="font-size: 1.2em;" id="processing-count">0</div>
+                                <div class="text-muted">Processando</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="badge badge-success badge-pill" style="font-size: 1.2em;" id="completed-count">0</div>
+                                <div class="text-muted">Concluídos</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Progresso</h6>
+                </div>
+                <div class="card-body">
+                    <div class="progress mb-2" style="height: 20px;">
+                        <div class="progress-bar" role="progressbar" style="width: 0%" id="progress-bar">
+                            <span id="progress-text">0%</span>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <button id="start-processing" class="btn btn-primary">
+                            <i class="fas fa-play"></i> Iniciar Processamento
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-users"></i> Candidatos
+                <span class="badge badge-secondary float-right" id="last-update">
+                    Última atualização: --:--
+                </span>
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Status</th>
+                            <th>Score</th>
+                            <th>Enviado em</th>
+                        </tr>
+                    </thead>
+                    <tbody id="candidates-table">
+                        <!-- Candidatos serão carregados aqui -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let updateInterval;
+let jobId = {{ job.id }};
+
+function updateProcessingStatus() {
+    fetch(`/api/jobs/${jobId}/processing_status`)
+        .then(response => response.json())
+        .then(data => {
+            // Update status counts
+            document.getElementById('total-count').textContent = data.status_counts.total;
+            document.getElementById('pending-count').textContent = data.status_counts.pending;
+            document.getElementById('processing-count').textContent = data.status_counts.processing;
+            document.getElementById('completed-count').textContent = data.status_counts.completed;
+            
+            // Update progress bar
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+            const percentage = data.progress_percentage;
+            
+            progressBar.style.width = percentage + '%';
+            progressText.textContent = percentage + '%';
+            
+            // Update candidates table
+            const tbody = document.getElementById('candidates-table');
+            tbody.innerHTML = '';
+            
+            data.candidates.forEach(candidate => {
+                const row = document.createElement('tr');
+                
+                let statusBadge = '';
+                let statusClass = '';
+                
+                switch(candidate.analysis_status) {
+                    case 'pending':
+                        statusBadge = '<span class="badge badge-warning">Pendente</span>';
+                        break;
+                    case 'processing':
+                        statusBadge = '<span class="badge badge-info">Processando... <i class="fas fa-spinner fa-spin"></i></span>';
+                        break;
+                    case 'completed':
+                        statusBadge = '<span class="badge badge-success">Concluído</span>';
+                        break;
+                    case 'failed':
+                        statusBadge = '<span class="badge badge-danger">Falhou</span>';
+                        break;
+                }
+                
+                const score = candidate.ai_score ? candidate.ai_score.toFixed(1) : '-';
+                const scoreClass = candidate.ai_score >= 7 ? 'text-success' : candidate.ai_score >= 5 ? 'text-warning' : 'text-danger';
+                
+                row.innerHTML = `
+                    <td>${candidate.name}</td>
+                    <td>${statusBadge}</td>
+                    <td><span class="${scoreClass}">${score}</span></td>
+                    <td>${candidate.analyzed_at ? new Date(candidate.analyzed_at).toLocaleString() : '-'}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+            
+            // Update last update time
+            document.getElementById('last-update').textContent = 
+                'Última atualização: ' + new Date().toLocaleTimeString();
+        })
+        .catch(error => {
+            console.error('Erro ao atualizar status:', error);
+        });
+}
+
+function startProcessing() {
+    const button = document.getElementById('start-processing');
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
+    
+    fetch('/api/process-pending')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Processamento iniciado! Aguarde enquanto a IA analisa os currículos.');
+                // Start monitoring
+                updateInterval = setInterval(updateProcessingStatus, 3000);
+            } else {
+                alert('Erro: ' + data.message);
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-play"></i> Iniciar Processamento';
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao iniciar processamento:', error);
+            alert('Erro ao iniciar processamento');
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-play"></i> Iniciar Processamento';
+        });
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    // Update immediately
+    updateProcessingStatus();
+    
+    // Start monitoring every 3 seconds
+    updateInterval = setInterval(updateProcessingStatus, 3000);
+    
+    // Setup start processing button
+    document.getElementById('start-processing').addEventListener('click', startProcessing);
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (updateInterval) {
+        clearInterval(updateInterval);
+    }
+});
+</script>
+{% endblock %}
