@@ -116,14 +116,26 @@ def start_background_analysis(candidate_ids):
     Start background analysis for multiple candidates
     """
     def worker():
-        for candidate_id in candidate_ids:
-            print(f"Starting background processing for candidate {candidate_id}")
-            process_candidate_background(candidate_id)
+        print(f"🚀 INICIANDO PROCESSAMENTO EM LOTE: {len(candidate_ids)} candidatos")
+        for i, candidate_id in enumerate(candidate_ids, 1):
+            print(f"📋 [{i}/{len(candidate_ids)}] Processando candidato {candidate_id}")
+            try:
+                success = process_candidate_background(candidate_id)
+                if success:
+                    print(f"✅ Candidato {candidate_id} processado com sucesso")
+                else:
+                    print(f"❌ Erro ao processar candidato {candidate_id}")
+            except Exception as e:
+                print(f"💥 Erro inesperado com candidato {candidate_id}: {e}")
+            
             time.sleep(1)  # Small delay between candidates
+        
+        print(f"🎉 PROCESSAMENTO EM LOTE CONCLUÍDO: {len(candidate_ids)} candidatos")
     
     thread = threading.Thread(target=worker, daemon=True)
     thread.start()
     processing_threads[str(candidate_ids)] = thread
+    print(f"🔄 Thread de processamento iniciada para {len(candidate_ids)} candidatos")
     return thread
 
 def get_processing_status(candidate_ids):

@@ -1,4 +1,4 @@
-Pedro Costa
-Desenvolvedor React - 2 anos
-JavaScript, HTML/CSS
-Python básico
+Fernanda Costa
+Desenvolvedor Backend - 3 anos
+Python, FastAPI, MongoDB
+Conhecimento em Docker

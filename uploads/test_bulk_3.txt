@@ -1,4 +1,4 @@
-Ana Lima
-Analista de Dados - 4 anos
-Python, SQL, Power BI
-Machine Learning
+Rafael Santos
+Engenheiro de Software - 5 anos
+Python, Java, Spring Boot
+Experiência com microserviços

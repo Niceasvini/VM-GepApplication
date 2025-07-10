@@ -1,4 +1,4 @@
-Maria Santos
-Desenvolvedor Java - 3 anos
-Spring Boot, Hibernate
-Conhecimento em Python
+Carlos Silva
+Desenvolvedor Python - 4 anos
+Django, Flask, PostgreSQL
+Experiência com APIs REST

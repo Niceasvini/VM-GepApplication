@@ -1,0 +1,4 @@
+Julia Oliveira
+Desenvolvedor Full Stack - 2 anos
+Python, React, PostgreSQL
+Conhecimento em testes automatizados

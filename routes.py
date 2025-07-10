@@ -271,7 +271,7 @@ def upload_resume(job_id):
         logging.info(f"Starting parallel analysis for {len(candidate_ids)} candidates")
         from background_processor import start_background_analysis
         start_background_analysis(candidate_ids)
-        flash(f'{len(candidate_ids)} currículos enviados! A análise da IA está sendo processada em paralelo.', 'success')
+        flash(f'{len(candidate_ids)} currículos enviados! A IA vai analisar TODOS os candidatos em paralelo (pode demorar alguns minutos).', 'success')
     else:
         flash('Nenhum arquivo válido foi enviado.', 'warning')
     
@@ -357,7 +357,7 @@ def bulk_upload_process(job_id):
         'processed_count': processed_count,
         'candidate_ids': candidate_ids,
         'errors': errors,
-        'message': f'{processed_count} currículos processados. Análise IA iniciada em paralelo.'
+        'message': f'{processed_count} currículos processados. A IA vai analisar TODOS os candidatos (pode demorar alguns minutos).'
     })
 
 # Candidate management
