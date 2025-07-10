@@ -1,4 +1,0 @@
-Carlos Silva
-Desenvolvedor Python - 4 anos
-Django, Flask, PostgreSQL
-Experiência com APIs REST

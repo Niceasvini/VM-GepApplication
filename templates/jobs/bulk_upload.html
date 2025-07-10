@@ -243,61 +243,98 @@ document.addEventListener('DOMContentLoaded', function() {
     
     async function processFilesSequentially(files) {
         const totalFiles = files.length;
-        let processed = 0;
-        let failed = 0;
-        let scores = [];
         
-        // Start progress updates
-        updateInterval = setInterval(updateEstimatedTime, 1000);
+        // Update current file
+        document.getElementById('current-file').textContent = 'Enviando todos os arquivos...');
         
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            
-            // Update current file
-            document.getElementById('current-file').textContent = file.name;
-            
-            try {
-                const formData = new FormData();
-                formData.append('file', file);
-                
-                const response = await fetch(`/upload-resume/{{ job.id }}`, {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                if (response.ok) {
-                    const result = await response.json();
-                    if (result.success) {
-                        processed++;
-                        if (result.score) {
-                            scores.push(result.score);
-                        }
-                    } else {
-                        failed++;
-                    }
-                } else {
-                    failed++;
-                }
-            } catch (error) {
-                console.error('Error processing file:', file.name, error);
-                failed++;
+        try {
+            // Create FormData with all files
+            const formData = new FormData();
+            for (let i = 0; i < files.length; i++) {
+                formData.append('files', files[i]);
             }
             
-            // Update progress
-            const progress = ((i + 1) / totalFiles) * 100;
-            document.getElementById('progress-bar').style.width = progress + '%';
-            document.getElementById('progress-text').textContent = Math.round(progress) + '%';
-            document.getElementById('processed-files').textContent = processed;
-            document.getElementById('pending-files').textContent = totalFiles - (i + 1);
-            document.getElementById('failed-files').textContent = failed;
+            // Send all files at once to bulk upload endpoint
+            const response = await fetch(`/bulk-upload/{{ job.id }}`, {
+                method: 'POST',
+                body: formData
+            });
             
-            // Small delay to prevent overwhelming the server
-            await new Promise(resolve => setTimeout(resolve, 100));
+            if (response.ok) {
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Update progress bar to 100%
+                    document.getElementById('progress-bar').style.width = '100%';
+                    document.getElementById('progress-text').textContent = '100%';
+                    document.getElementById('processed-files').textContent = result.processed_count;
+                    document.getElementById('pending-files').textContent = '0';
+                    document.getElementById('failed-files').textContent = result.errors ? result.errors.length : 0;
+                    
+                    // Show success message
+                    document.getElementById('current-file').textContent = 
+                        `${result.processed_count} currículos enviados! A IA está analisando todos em paralelo.`;
+                    
+                    // Start monitoring the AI analysis progress
+                    startMonitoringAIProgress(result.candidate_ids);
+                } else {
+                    throw new Error(result.message || 'Erro no upload');
+                }
+            } else {
+                throw new Error('Erro na requisição: ' + response.status);
+            }
+        } catch (error) {
+            console.error('Error in bulk upload:', error);
+            document.getElementById('current-file').textContent = 'Erro: ' + error.message;
+            document.getElementById('failed-files').textContent = totalFiles;
+            
+            // Show error and allow retry
+            setTimeout(() => {
+                if (confirm('Erro no upload. Tentar novamente?')) {
+                    location.reload();
+                }
+            }, 2000);
         }
+    }
+    
+    // Monitor AI analysis progress
+    async function startMonitoringAIProgress(candidateIds) {
+        if (!candidateIds || candidateIds.length === 0) return;
         
-        // Processing complete
-        clearInterval(updateInterval);
-        showResults(processed, failed, scores);
+        const totalCandidates = candidateIds.length;
+        let monitoringInterval = setInterval(async () => {
+            try {
+                const response = await fetch(`/api/jobs/{{ job.id }}/processing_status`);
+                const data = await response.json();
+                
+                const completed = data.status_counts.completed || 0;
+                const failed = data.status_counts.failed || 0;
+                const processing = data.status_counts.processing || 0;
+                const pending = data.status_counts.pending || 0;
+                
+                // Update progress based on AI analysis
+                const aiProgress = ((completed + failed) / totalCandidates) * 100;
+                
+                document.getElementById('current-file').textContent = 
+                    `IA analisando: ${completed} concluídos, ${processing} processando, ${pending} pendentes`;
+                
+                // Check if all done
+                if (completed + failed >= totalCandidates) {
+                    clearInterval(monitoringInterval);
+                    clearInterval(updateInterval);
+                    
+                    // Calculate average score
+                    const avgScore = data.candidates
+                        .filter(c => c.ai_score)
+                        .reduce((sum, c) => sum + c.ai_score, 0) / 
+                        data.candidates.filter(c => c.ai_score).length;
+                    
+                    showResults(completed, failed, [avgScore]);
+                }
+            } catch (error) {
+                console.error('Error monitoring progress:', error);
+            }
+        }, 3000); // Check every 3 seconds
     }
     
     function showResults(processed, failed, scores) {
