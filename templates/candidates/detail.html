@@ -151,14 +151,18 @@
                         </h5>
                     </div>
                     <div class="card-body" style="min-height: 350px; max-height: none;">
-                        <div class="analysis-content" style="max-height: none; overflow: visible;">
-                            {% if '## Resumo Executivo' in candidate.ai_analysis %}
+                        <div class="analysis-content" style="max-height: none; overflow: visible; word-wrap: break-word;">
+                            {% if candidate.ai_summary and candidate.ai_summary != '' %}
+                                {{ candidate.ai_summary|replace('**', '')|replace('*', '')|replace('\n', '<br>')|safe }}
+                            {% elif '## Resumo Executivo' in candidate.ai_analysis %}
                                 {% set resume_section = candidate.ai_analysis.split('## Resumo Executivo')[1].split('## Análise Detalhada')[0] %}
                                 {{ resume_section.strip()|replace('**', '')|replace('*', '')|replace('\n', '<br>')|safe }}
                             {% else %}
-                                <!-- Extract resume info from older format -->
-                                {% set clean_analysis = candidate.ai_analysis|replace('**', '')|replace('*', '') %}
-                                {{ clean_analysis|replace('\n', '<br>')|safe }}
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Resumo Executivo será gerado automaticamente</strong><br>
+                                    O resumo detalhado do candidato será exibido aqui após o processamento da análise de IA.
+                                </div>
                             {% endif %}
                         </div>
                     </div>

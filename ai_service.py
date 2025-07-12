@@ -124,12 +124,7 @@ IMPORTANTE:
     )
     
     result = response.choices[0].message.content
-    parts = result.split('### ANÁLISE')
-    
-    summary = parts[0].replace('### RESUMO', '').strip()
-    analysis = parts[1].strip() if len(parts) > 1 else 'Análise não disponível'
-    
-    return summary, analysis
+    return result
 
 def analyze_resume(file_path, file_type, job):
     """
@@ -166,8 +161,26 @@ def analyze_resume(file_path, file_type, job):
         
         # Step 2: Generate summary and analysis
         logging.info("Generating summary and analysis...")
-        summary, analysis = generate_summary_and_analysis(resume_text, job)
+        full_analysis = generate_summary_and_analysis(resume_text, job)
         logging.info("Summary and analysis generated")
+        
+        # Step 3: Split the analysis into executive summary and detailed analysis
+        executive_summary = ""
+        detailed_analysis = ""
+        
+        if full_analysis:
+            if "## Resumo Executivo" in full_analysis and "## Análise Detalhada" in full_analysis:
+                parts = full_analysis.split("## Análise Detalhada")
+                if len(parts) >= 2:
+                    executive_summary = parts[0].replace("## Resumo Executivo", "").strip()
+                    detailed_analysis = "## Análise Detalhada" + parts[1]
+                else:
+                    executive_summary = full_analysis
+                    detailed_analysis = full_analysis
+            else:
+                # If format is not as expected, use the full analysis as summary
+                executive_summary = full_analysis
+                detailed_analysis = full_analysis
         
         # Extract skills from resume text (simple keyword extraction)
         skills = extract_skills_from_text(resume_text)
@@ -181,8 +194,8 @@ def analyze_resume(file_path, file_type, job):
         # Create result
         analysis_result = {
             'score': score,
-            'summary': summary,
-            'analysis': analysis,
+            'summary': executive_summary,  # Only the executive summary
+            'analysis': detailed_analysis,  # Only the detailed analysis
             'skills': skills,
             'experience_years': experience_years,
             'education_level': education_level,
