@@ -220,11 +220,14 @@ def analyze_resume(file_path, file_type, job):
         return analysis_result
         
     except Exception as e:
-        logging.error(f"Error analyzing resume: {e}")
+        # Detailed error description based on error type
+        error_description = get_detailed_error_description(e, file_path)
+        logging.error(f"Error analyzing resume: {error_description}")
+        
         return {
             'score': 0.0,
             'summary': 'Erro na análise do currículo',
-            'analysis': f'Não foi possível analisar o currículo: {str(e)}',
+            'analysis': f'FALHA NA ANÁLISE: {error_description}',
             'skills': [],
             'experience_years': 0,
             'education_level': 'Não informado',
@@ -292,6 +295,53 @@ def determine_education_level(text):
         return 'Técnico'
     else:
         return 'Não informado'
+
+def get_detailed_error_description(error, file_path):
+    """
+    Generate detailed error description based on error type
+    """
+    error_type = type(error).__name__
+    error_msg = str(error)
+    
+    # File-related errors
+    if "No such file or directory" in error_msg:
+        return f"Arquivo não encontrado: {file_path} - O arquivo foi removido ou movido durante o processamento."
+    
+    # Permission errors
+    if "Permission denied" in error_msg:
+        return f"Erro de permissão: Não foi possível acessar o arquivo {file_path}. Verifique as permissões do arquivo."
+    
+    # OpenAI/API errors
+    if "OpenAI" in error_type or "API" in error_type:
+        if "timeout" in error_msg.lower():
+            return f"Timeout na API: A análise demorou muito para responder. Isso pode ocorrer quando o serviço de IA está sobrecarregado."
+        elif "rate limit" in error_msg.lower():
+            return f"Limite de taxa excedido: Muitas requisições à API. Aguarde alguns minutos antes de tentar novamente."
+        elif "invalid" in error_msg.lower():
+            return f"Erro de API: Chave de API inválida ou problema na configuração do serviço de IA."
+        elif "connection" in error_msg.lower():
+            return f"Erro de conexão: Não foi possível conectar ao serviço de IA. Verifique a conexão com a internet."
+        else:
+            return f"Erro na API de IA: {error_msg}"
+    
+    # Database errors
+    if "database" in error_msg.lower() or "sql" in error_msg.lower():
+        return f"Erro de banco de dados: {error_msg} - Problema ao salvar ou recuperar dados do candidato."
+    
+    # Text extraction errors
+    if "extract" in error_msg.lower() or "decode" in error_msg.lower():
+        return f"Erro na extração de texto: Não foi possível extrair o conteúdo do arquivo {file_path}. O arquivo pode estar corrompido ou em formato não suportado."
+    
+    # Memory/processing errors
+    if "memory" in error_msg.lower() or "out of" in error_msg.lower():
+        return f"Erro de memória: O arquivo {file_path} é muito grande ou complexo para processamento."
+    
+    # Network errors
+    if "network" in error_msg.lower() or "dns" in error_msg.lower():
+        return f"Erro de rede: Problema de conectividade. Verifique a conexão com a internet."
+    
+    # Generic errors
+    return f"Erro inesperado ({error_type}): {error_msg}"
 
 def generate_batch_analysis_report(candidates):
     """

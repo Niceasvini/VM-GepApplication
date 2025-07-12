@@ -15,6 +15,53 @@ from app import app, db
 from models import Candidate
 from file_processor import extract_text_from_file
 
+def get_detailed_error_description(error, file_path):
+    """
+    Generate detailed error description based on error type
+    """
+    error_type = type(error).__name__
+    error_msg = str(error)
+    
+    # File-related errors
+    if "No such file or directory" in error_msg:
+        return f"Arquivo não encontrado: {file_path} - O arquivo foi removido ou movido durante o processamento."
+    
+    # Permission errors
+    if "Permission denied" in error_msg:
+        return f"Erro de permissão: Não foi possível acessar o arquivo {file_path}. Verifique as permissões do arquivo."
+    
+    # OpenAI/API errors
+    if "OpenAI" in error_type or "API" in error_type or "timeout" in error_msg.lower():
+        if "timeout" in error_msg.lower():
+            return f"Timeout na API: A análise demorou muito para responder. Isso pode ocorrer quando o serviço de IA está sobrecarregado."
+        elif "rate limit" in error_msg.lower():
+            return f"Limite de taxa excedido: Muitas requisições à API. Aguarde alguns minutos antes de tentar novamente."
+        elif "invalid" in error_msg.lower():
+            return f"Erro de API: Chave de API inválida ou problema na configuração do serviço de IA."
+        elif "connection" in error_msg.lower():
+            return f"Erro de conexão: Não foi possível conectar ao serviço de IA. Verifique a conexão com a internet."
+        else:
+            return f"Erro na API de IA: {error_msg}"
+    
+    # Database errors
+    if "database" in error_msg.lower() or "sql" in error_msg.lower():
+        return f"Erro de banco de dados: {error_msg} - Problema ao salvar ou recuperar dados do candidato."
+    
+    # Text extraction errors
+    if "extract" in error_msg.lower() or "decode" in error_msg.lower():
+        return f"Erro na extração de texto: Não foi possível extrair o conteúdo do arquivo {file_path}. O arquivo pode estar corrompido ou em formato não suportado."
+    
+    # Memory/processing errors
+    if "memory" in error_msg.lower() or "out of" in error_msg.lower():
+        return f"Erro de memória: O arquivo {file_path} é muito grande ou complexo para processamento."
+    
+    # Network errors
+    if "network" in error_msg.lower() or "dns" in error_msg.lower():
+        return f"Erro de rede: Problema de conectividade. Verifique a conexão com a internet."
+    
+    # Generic errors
+    return f"Erro inesperado ({error_type}): {error_msg}"
+
 # Configure OpenAI client
 client = OpenAI(
     api_key="sk-08e53165834948c8b96fe8ec44a12baf",
@@ -94,20 +141,23 @@ def process_candidate_background(candidate_id):
             return True
             
     except Exception as e:
-        print(f"✗ Error processing {candidate_id}: {e}")
+        # Generate detailed error description
+        error_description = get_detailed_error_description(e, candidate.file_path if 'candidate' in locals() else 'arquivo desconhecido')
+        print(f"✗ FALHA no processamento do candidato {candidate_id}: {error_description}")
         
-        # Mark as failed
+        # Mark as failed with detailed error
         try:
             with app.app_context():
                 candidate = db.session.get(Candidate, candidate_id)
                 if candidate:
                     candidate.analysis_status = 'failed'
-                    candidate.ai_summary = f'Erro: {str(e)}'
+                    candidate.ai_summary = f'FALHA: {error_description}'
+                    candidate.ai_analysis = f'ANÁLISE FALHOU: {error_description}'
                     candidate.ai_score = 0.0
                     db.session.commit()
                     processing_status[candidate_id] = 'failed'
-        except:
-            pass
+        except Exception as db_error:
+            print(f"✗ Erro adicional ao salvar falha: {db_error}")
         
         return False
 

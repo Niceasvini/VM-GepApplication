@@ -573,9 +573,41 @@ def api_job_processing_status(job_id):
             'candidates': candidate_details,
             'progress_percentage': round((status_counts['completed'] + status_counts['failed']) / max(status_counts['total'], 1) * 100, 1)
         })
+        
     except Exception as e:
         logging.error(f"Error getting processing status: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/candidates/<int:candidate_id>/reprocess', methods=['POST'])
+@login_required
+def api_reprocess_candidate(candidate_id):
+    """Reprocess a failed candidate"""
+    try:
+        candidate = Candidate.query.get_or_404(candidate_id)
+        
+        # Reset candidate status
+        candidate.analysis_status = 'pending'
+        candidate.ai_score = None
+        candidate.ai_summary = None
+        candidate.ai_analysis = None
+        candidate.analyzed_at = None
+        db.session.commit()
+        
+        # Start background processing
+        from background_processor import start_background_analysis
+        start_background_analysis([candidate_id])
+        
+        return jsonify({
+            'success': True,
+            'message': f'Candidato {candidate.name} foi colocado na fila para reprocessamento'
+        })
+        
+    except Exception as e:
+        logging.error(f"Error reprocessing candidate {candidate_id}: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 @app.route('/api/process-pending')
 @login_required

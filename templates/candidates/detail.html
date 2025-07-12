@@ -264,10 +264,38 @@
                 </div>
             {% elif candidate.analysis_status == 'failed' %}
                 <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-body text-center py-5">
-                        <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
-                        <h5 class="text-danger">Falha na Análise</h5>
-                        <p class="text-muted">Houve um erro ao analisar o currículo. Tente novamente mais tarde.</p>
+                    <div class="card-body py-4">
+                        <div class="text-center mb-4">
+                            <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                            <h5 class="text-danger">Falha na Análise</h5>
+                        </div>
+                        
+                        <!-- Show detailed error if available -->
+                        {% if candidate.ai_summary and 'FALHA:' in candidate.ai_summary %}
+                            <div class="alert alert-danger">
+                                <h6 class="alert-heading">
+                                    <i class="fas fa-info-circle me-2"></i>Detalhes do Erro:
+                                </h6>
+                                <p class="mb-0">{{ candidate.ai_summary.replace('FALHA:', '').strip() }}</p>
+                            </div>
+                        {% elif candidate.ai_analysis and 'FALHA' in candidate.ai_analysis %}
+                            <div class="alert alert-danger">
+                                <h6 class="alert-heading">
+                                    <i class="fas fa-info-circle me-2"></i>Detalhes do Erro:
+                                </h6>
+                                <p class="mb-0">{{ candidate.ai_analysis.replace('ANÁLISE FALHOU:', '').replace('FALHA NA ANÁLISE:', '').strip() }}</p>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <p class="mb-0">Houve um erro ao analisar o currículo. Tente reprocessar o candidato.</p>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="text-center mt-3">
+                            <button type="button" class="btn btn-outline-primary" onclick="reprocessCandidate({{ candidate.id }})">
+                                <i class="fas fa-redo me-2"></i>Tentar Novamente
+                            </button>
+                        </div>
                     </div>
                 </div>
             {% else %}
@@ -380,6 +408,48 @@ function confirmDeleteCandidate(candidateId, candidateName) {
         
         document.body.appendChild(form);
         form.submit();
+    }
+}
+
+function reprocessCandidate(candidateId) {
+    if (confirm('Deseja tentar reprocessar este candidato?\n\nIsso pode levar alguns minutos.')) {
+        // Show loading state
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Reprocessando...';
+        button.disabled = true;
+        
+        // Make request to reprocess
+        fetch(`/api/candidates/${candidateId}/reprocess`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Reload page after 3 seconds
+                setTimeout(() => {
+                    location.reload();
+                }, 3000);
+                
+                // Show success message
+                button.innerHTML = '<i class="fas fa-check me-2"></i>Reprocessando...';
+                button.className = 'btn btn-success';
+            } else {
+                // Show error and restore button
+                alert('Erro ao reprocessar candidato: ' + (data.error || 'Erro desconhecido'));
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Erro ao reprocessar candidato');
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
     }
 }
 </script>
