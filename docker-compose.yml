@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  # Aplicação principal
+  vianaemoura:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_APP=main.py
+      - FLASK_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - SESSION_SECRET=${SESSION_SECRET}
+    volumes:
+      - ./uploads:/app/uploads
+      - ./cache:/app/cache
+      - ./instance:/app/instance
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  # Banco PostgreSQL local (opcional - para desenvolvimento)
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=vianaemoura
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  # Redis para cache (opcional)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
