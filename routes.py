@@ -288,7 +288,7 @@ def bulk_upload_page(job_id):
 @app.route('/jobs/<int:job_id>/bulk-upload', methods=['POST'])
 @login_required
 def bulk_upload_process(job_id):
-    """Process bulk resume upload with parallel AI analysis"""
+    """Process bulk resume upload with optimized batch processing"""
     try:
         job = Job.query.get_or_404(job_id)
         
@@ -299,15 +299,30 @@ def bulk_upload_process(job_id):
         if not files or all(not f.filename for f in files):
             return jsonify({'error': 'Nenhum arquivo válido enviado'}), 400
         
-        candidate_ids = []
-        processed_count = 0
-        errors = []
+        logging.info(f"Starting optimized bulk upload for {len(files)} files")
         
-        logging.info(f"Starting bulk upload for {len(files)} files")
+        # Use the streaming upload processor
+        from streaming_upload import start_batch_upload
+        result = start_batch_upload(files, job_id)
+        
+        return jsonify({
+            'success': True,
+            'processed_count': result['processed_count'],
+            'candidate_ids': result['candidate_ids'],
+            'errors': result['errors'],
+            'total_files': result['total_files'],
+            'message': f'{result["processed_count"]} currículos processados com sucesso! A IA está analisando todos em paralelo.'
+        })
         
     except Exception as e:
-        logging.error(f"Error in bulk upload setup: {e}")
-        return jsonify({'error': f'Erro no setup: {str(e)}'}), 500
+        logging.error(f"Error in bulk upload: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Erro no processamento: {str(e)}',
+            'processed_count': 0,
+            'candidate_ids': [],
+            'errors': [str(e)]
+        }), 500
     
     for file in files:
         if file and file.filename:
@@ -351,6 +366,7 @@ def bulk_upload_process(job_id):
                     candidate_id = candidate.id
                     db.session.commit()
                     candidate_ids.append(candidate_id)
+                    processed_count += 1
                     logging.info(f"Successfully saved candidate: {filename} with ID: {candidate_id}")
                 except SQLAlchemyError as db_error:
                     logging.error(f"Database error for {filename}: {db_error}")
@@ -362,8 +378,6 @@ def bulk_upload_process(job_id):
                     db.session.rollback()
                     errors.append(f'Erro inesperado para {filename}: {str(e)}')
                     continue
-                processed_count += 1
-                
             except Exception as e:
                 logging.error(f"Error processing file {file.filename}: {e}")
                 errors.append(f'Erro ao processar {file.filename}: {str(e)}')
