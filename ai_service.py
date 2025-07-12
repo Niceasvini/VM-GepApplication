@@ -88,18 +88,42 @@ FORMATO OBRIGATÓRIO:
 
 ## Resumo Executivo
 
-[Faça um resumo COMPLETO e DETALHADO do perfil profissional do candidato em texto corrido, incluindo TODAS as informações relevantes: dados pessoais, formação acadêmica completa, todas as experiências profissionais com detalhes, habilidades técnicas e comportamentais, idiomas, cursos relevantes, certificações, projetos e objetivo profissional. Seja extenso e detalhado, sem limitação de palavras. Mantenha o texto bem estruturado e fluído, sem bullets ou análise técnica.]
+Extraia e organize as informações do currículo em formato estruturado:
+
+### Nome Completo
+[nome do candidato]
+
+### Experiência Relevante
+- [Cargo] @ [Empresa] ([Ano-Início] - [Ano-Fim])
+- [Cargo] @ [Empresa] ([Ano-Início] - [Ano-Fim])
+- [continuar com todas as experiências mais relevantes]
+
+### Habilidades Técnicas
+- [Liste as principais habilidades técnicas identificadas no currículo]
+
+### Formação Acadêmica
+- [Grau] em [Curso] @ [Instituição]
+- [Cursos complementares relevantes]
+
+### Idiomas
+- [Idioma] ([Nível])
+- [Idioma] ([Nível])
+
+### Informações de Contato
+- Email: [email]
+- Telefone: [telefone]
+- Localização: [cidade/estado]
 
 ## Análise Detalhada
 
 1. Alinhamento Técnico:
-[Liste pontos positivos e habilidades que se alinham com a vaga - sem usar asteriscos]
+[Análise específica e detalhada baseada no perfil apresentado no currículo e compatibilidade com os requisitos da vaga. Cite experiências específicas, empresas onde trabalhou, tecnologias que domina, e como essas competências se relacionam com a vaga. Seja específico e detalhado.]
 
 2. Gaps Técnicos:
-[Liste lacunas técnicas e conhecimentos ausentes - sem usar asteriscos]
+[Liste especificamente quais requisitos da vaga o candidato não atende, que tecnologias precisa aprender, que experiências faltam no perfil. Seja específico sobre tecnologias, metodologias ou conhecimentos ausentes. Compare diretamente com os requisitos da vaga.]
 
-3. Recomendação Final: [Adequado/Fraco/Inadequado]
-[Justificativa da recomendação baseada na análise técnica]
+3. Recomendação Final: [Adequado/Parcial/Inadequado]
+[Justificativa detalhada da recomendação baseada na análise técnica, considerando experiência, formação, habilidades técnicas e adequação aos requisitos da vaga.]
 
 VAGA: {job.title}
 REQUISITOS: {job.requirements[:1000] if job.requirements else 'Não especificado'}
@@ -109,9 +133,8 @@ CURRÍCULO:
 
 IMPORTANTE: 
 - Use exatamente o formato mostrado acima
-- No Resumo Executivo, seja EXTENSO e DETALHADO, sem limitação de palavras
-- Inclua TODAS as informações do currículo no resumo executivo
-- Na Análise Detalhada, use as 3 seções obrigatórias
+- No Resumo Executivo, organize as informações em seções estruturadas
+- Na Análise Detalhada, seja específico e detalhado para cada candidato
 - Para candidatos com score baixo, use "Inadequado" na recomendação
 - Não use ** ou asteriscos no texto
 """
