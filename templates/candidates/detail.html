@@ -297,8 +297,14 @@
                 <div class="card-body">
                     <table class="table table-sm">
                         <tr>
-                            <th>Nome:</th>
-                            <td>{{ candidate.filename }}</td>
+                            <th>Arquivo:</th>
+                            <td>
+                                <a href="{{ url_for('download_candidate_file', candidate_id=candidate.id) }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-download me-1"></i>
+                                    {{ candidate.filename }}
+                                </a>
+                            </td>
                         </tr>
                         <tr>
                             <th>Tipo:</th>

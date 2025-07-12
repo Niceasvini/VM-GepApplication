@@ -1,5 +1,5 @@
 import os
-from flask import render_template, request, redirect, url_for, flash, jsonify, current_app
+from flask import render_template, request, redirect, url_for, flash, jsonify, current_app, send_file
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
 from app import app, db
@@ -507,6 +507,28 @@ def add_comment(candidate_id):
     
     flash('Comentário adicionado com sucesso!', 'success')
     return redirect(url_for('candidate_detail', candidate_id=candidate_id))
+
+@app.route('/candidates/<int:candidate_id>/download')
+@login_required
+def download_candidate_file(candidate_id):
+    candidate = Candidate.query.get_or_404(candidate_id)
+    
+    # Check if file exists
+    if not os.path.exists(candidate.file_path):
+        flash('Arquivo não encontrado.', 'error')
+        return redirect(url_for('candidate_detail', candidate_id=candidate_id))
+    
+    try:
+        return send_file(
+            candidate.file_path,
+            as_attachment=True,
+            download_name=candidate.filename,
+            mimetype='application/octet-stream'
+        )
+    except Exception as e:
+        logging.error(f"Error downloading file {candidate.file_path}: {e}")
+        flash('Erro ao baixar arquivo.', 'error')
+        return redirect(url_for('candidate_detail', candidate_id=candidate_id))
 
 @app.route('/candidates/<int:candidate_id>/delete', methods=['POST'])
 @login_required
