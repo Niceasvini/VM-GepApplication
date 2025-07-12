@@ -55,7 +55,6 @@
                             {% if candidate.status == 'pending' %}Pendente
                             {% elif candidate.status == 'interested' %}Interessado
                             {% elif candidate.status == 'rejected' %}Reprovado
-                            {% elif candidate.status == 'interview' %}Entrevista
                             {% else %}{{ candidate.status }}{% endif %}
                         </span>
                         <br>
@@ -74,7 +73,7 @@
                                 <option value="pending" {{ 'selected' if candidate.status == 'pending' else '' }}>Pendente</option>
                                 <option value="interested" {{ 'selected' if candidate.status == 'interested' else '' }}>Interessado</option>
                                 <option value="rejected" {{ 'selected' if candidate.status == 'rejected' else '' }}>Reprovado</option>
-                                <option value="interview" {{ 'selected' if candidate.status == 'interview' else '' }}>Entrevista</option>
+
                             </select>
                             <button type="submit" class="btn btn-sm btn-primary-custom">
                                 <i class="fas fa-save"></i>

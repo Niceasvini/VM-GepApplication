@@ -55,7 +55,7 @@ class Candidate(db.Model):
     extracted_skills = db.Column(db.Text)  # JSON string of skills
     
     # Status Management
-    status = db.Column(db.String(20), default='pending')  # 'pending', 'analyzing', 'analyzed', 'interested', 'rejected', 'interview'
+    status = db.Column(db.String(20), default='pending')  # 'pending', 'analyzing', 'analyzed', 'interested', 'rejected'
     analysis_status = db.Column(db.String(20), default='pending')  # 'pending', 'processing', 'completed', 'failed'
     
     # Timestamps

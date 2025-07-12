@@ -372,8 +372,8 @@ def bulk_upload_process(job_id):
     try:
         if candidate_ids:
             logging.info(f"Starting parallel analysis for {len(candidate_ids)} candidates")
-            from background_processor import start_background_analysis
-            start_background_analysis(candidate_ids)
+            from parallel_processor import start_parallel_analysis
+            start_parallel_analysis(candidate_ids)
         
         return jsonify({
             'success': True,
@@ -414,7 +414,7 @@ def update_candidate_status(candidate_id):
     candidate = Candidate.query.get_or_404(candidate_id)
     new_status = request.form['status']
     
-    if new_status in ['pending', 'interested', 'rejected', 'interview']:
+    if new_status in ['pending', 'interested', 'rejected']:
         candidate.status = new_status
         db.session.commit()
         flash('Status atualizado com sucesso!', 'success')

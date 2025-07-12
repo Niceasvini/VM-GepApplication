@@ -55,24 +55,74 @@ Currículo:
     )
     
     result = response.choices[0].message.content
-    # Extract score using regex
+    # Extract score using regex - more precise
     import re
     match = re.search(r"(\d{1,2}(?:\.\d{1,2})?)", result)
     if match:
         raw_score = float(match.group(1))
+        # Ensure score is between 0 and 10 with proper scaling
+        if raw_score > 10:
+            raw_score = raw_score / 10  # Handle cases like 85/100
         return round(min(max(raw_score, 0), 10), 2)
+    
+    # If no score found, try to extract from different patterns
+    if "excelente" in result.lower() or "muito bom" in result.lower():
+        return 8.5
+    elif "bom" in result.lower() or "adequado" in result.lower():
+        return 7.0
+    elif "regular" in result.lower() or "médio" in result.lower():
+        return 5.5
+    elif "fraco" in result.lower() or "inadequado" in result.lower():
+        return 3.0
+    
     return 5.0
 
 def generate_summary_and_analysis(cv_text, job):
     """
-    Generate summary and analysis after score
+    Generate detailed summary and analysis in structured format
     """
     prompt = f"""
-Você é um analista de currículos. Analise o currículo abaixo para a vaga '{job.title}'.
+Você é um analista de currículos especializado. Analise o currículo abaixo para a vaga '{job.title}' e formate a resposta EXATAMENTE como o exemplo:
 
-Retorne:
-- Um resumo estruturado do currículo
-- Uma análise crítica com base na vaga (alinhamento técnico, gaps e recomendação)
+📄 Currículo de [Nome do Candidato]
+
+📋 Conteúdo do Currículo
+Nome: [Nome completo]
+Idade: [Idade se disponível]
+Localização: [Cidade/Estado]
+Contato: [Telefone] | [E-mail]
+
+Objetivo:
+[Objetivo profissional do candidato]
+
+Experiência Profissional:
+[Listar experiências com empresas, cargos e períodos]
+
+Educação:
+[Formação acadêmica e cursos]
+
+🔍 Análise da IA
+
+Alinhamento Técnico:
+• [Pontos positivos relevantes para a vaga]
+• [Experiências que agregam valor]
+• [Habilidades alinhadas com os requisitos]
+
+Gaps Técnicos:
+• [Competências que faltam para a vaga]
+• [Experiências não relacionadas ou insuficientes]
+• [Conhecimentos técnicos em falta]
+
+Recomendação Final: [Forte/Parcial/Fraco]
+[Justificativa da recomendação com base na análise]
+
+Currículo para análise:
+{cv_text[:2000]}
+
+Requisitos da vaga:
+{job.requirements[:1000] if job.requirements else 'Não especificado'}
+
+IMPORTANTE: Mantenha exatamente essa formatação com emojis e estrutura organizacional.
 
 Use o seguinte formato:
 
