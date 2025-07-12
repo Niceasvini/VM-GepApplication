@@ -99,7 +99,7 @@ Idiomas: [Idioma] ([Nível]), [Idioma] ([Nível])
 
 Informações de Contato: Email: [email], Telefone: [telefone], Localização: [cidade/estado]
 
-Análise Detalhada
+Análise da IA
 
 1. Alinhamento Técnico:
 O candidato possui experiência em [cite experiências específicas do currículo] na empresa [nome da empresa] durante [período]. Suas responsabilidades incluíram [liste atividades específicas]. Em relação aos requisitos da vaga de {job.title}, o candidato demonstra competência em [liste competências específicas que se alinham]. Por exemplo, sua experiência com [tecnologia/processo específico] na [empresa] por [período] indica capacidade para [função específica da vaga]. Adicionalmente, sua formação em [curso/área] complementa os requisitos de [requisito específico da vaga].
@@ -119,7 +119,7 @@ CURRÍCULO:
 IMPORTANTE: 
 - Use exatamente o formato mostrado acima
 - No Resumo Executivo, organize as informações em seções estruturadas SEM usar traços, hashes ou marcações
-- Na Análise Detalhada, seja específico citando empresas, cargos, tecnologias e experiências reais
+- Na Análise da IA, seja específico citando empresas, cargos, tecnologias e experiências reais
 - Para candidatos com score baixo, use "Inadequado" na recomendação
 - Não use **, asteriscos, ---, ###, #### ou qualquer marcação de formatação no texto
 - Seja direto e específico, evite frases genéricas como "baseado no perfil apresentado"

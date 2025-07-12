@@ -172,13 +172,13 @@
                 <div class="card border-0 shadow-sm mb-4">
                     <div class="card-header bg-secondary text-white">
                         <h5 class="card-title mb-0">
-                            <i class="fas fa-chart-line me-2"></i>Análise Detalhada
+                            <i class="fas fa-chart-line me-2"></i>Análise da IA
                         </h5>
                     </div>
                     <div class="card-body">
                         <div class="analysis-content">
-                            {% if 'Análise Detalhada' in candidate.ai_analysis %}
-                                {% set analysis_section = candidate.ai_analysis.split('Análise Detalhada')[1] %}
+                            {% if 'Análise da IA' in candidate.ai_analysis %}
+                                {% set analysis_section = candidate.ai_analysis.split('Análise da IA')[1] %}
                                 {{ analysis_section.strip()|replace('**', '')|replace('*', '')|replace('\n', '<br>')|safe }}
                             {% else %}
                                 <!-- Show message for outdated analysis format -->
