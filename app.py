@@ -70,6 +70,21 @@ with app.app_context():
     try:
         db.create_all()
         logging.info("Database tables created successfully")
+        
+        # Create admin user if it doesn't exist
+        from models import User
+        admin_user = User.query.filter_by(email='viniciusniceas@vianaemoura.com.br').first()
+        if not admin_user:
+            admin_user = User(
+                username='admin',
+                email='viniciusniceas@vianaemoura.com.br',
+                role='admin'
+            )
+            admin_user.set_password('5585858Vi@')
+            db.session.add(admin_user)
+            db.session.commit()
+            logging.info("Admin user created: viniciusniceas@vianaemoura.com.br")
+        
     except Exception as e:
         logging.error(f"Database error: {e}")
         logging.info("Database tables will be created when connection is available")

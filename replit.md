@@ -17,6 +17,13 @@ Preferred communication style: Simple, everyday language.
 - All routes protected with proper access control checks
 - Multi-tenancy architecture prevents data leakage between accounts
 
+**Admin User Configuration**
+- Unique admin user: viniciusniceas@vianaemoura.com.br
+- Username: admin
+- Password: 5585858Vi@
+- Role: admin (full platform access)
+- Other users are recruiters with isolated data access
+
 ## System Architecture
 
 ### Backend Architecture
