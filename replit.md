@@ -1,143 +1,127 @@
-# Viana e Moura - Recrutamento Inteligente
+# Viana e Moura - Recruitment System
 
 ## Overview
 
-This is a professional web application for automated resume analysis using artificial intelligence. The system allows recruiters to create job postings, upload candidate resumes, and get AI-powered compatibility scores and analysis to streamline the recruitment process.
+This is a Flask-based recruitment platform that uses AI to automatically analyze resumes and match candidates to job positions. The system provides intelligent candidate scoring, automated analysis, and streamlined recruitment workflow management.
 
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
 
-## Recent Changes (July 2025)
-
-- **Removed word limit restrictions**: Eliminated "máximo 100 palavras" from all AI analysis processors
-- **Enhanced AI analysis prompts**: Updated to generate detailed technical summaries instead of limited responses
-- **Improved analysis structure**: Removed formatting marks (---, ##, ###) from analysis output
-- **Increased token limits**: Enhanced to 900 tokens for more comprehensive analysis
-- **Specific analysis requirements**: AI now cites specific companies, technologies, and experiences instead of generic responses
-- **Better resume processing**: Increased text extraction to 3000-5000 characters for fuller context
-- **Detailed error handling**: Added comprehensive error description system for failed analyses
-- **Improved error display**: Updated HTML templates to show specific error messages instead of generic failures
-- **Reprocessing functionality**: Added "Try Again" button and API endpoint for failed candidate reprocessing
-- **Outdated analysis detection**: Replaced generic template analysis with reprocessing prompts for better AI output
-- **Fixed content separation**: Corrected template parsing to properly separate "Resumo Executivo" from "Análise da IA"
-- **Project organization**: Organized Python files into logical folder structure (services/, processors/, utils/, tests/)
-- **Updated imports**: Fixed all import statements to reflect new folder structure
-
 ## System Architecture
 
 ### Backend Architecture
 - **Framework**: Flask (Python web framework)
-- **Database**: SQLAlchemy ORM with PostgreSQL (configurable via DATABASE_URL)
+- **Database**: PostgreSQL via Supabase
+- **ORM**: SQLAlchemy with Flask-SQLAlchemy
 - **Authentication**: Flask-Login for session management
-- **AI Integration**: OpenAI GPT-4o for resume analysis
-- **File Processing**: Support for PDF, DOCX, and TXT resume formats
+- **File Processing**: PyPDF2 for PDFs, python-docx for Word documents
 
 ### Frontend Architecture
-- **Template Engine**: Jinja2 with Flask
-- **CSS Framework**: Bootstrap 5.3.0 with custom styling
-- **JavaScript**: Vanilla JS with Chart.js for analytics
-- **Icons**: Font Awesome 6.0.0
-- **Responsive Design**: Mobile-first approach
+- **Template Engine**: Jinja2 (Flask's default)
+- **CSS Framework**: Bootstrap 5.3.0
+- **JavaScript**: Vanilla JavaScript with Chart.js for visualizations
+- **Icons**: Font Awesome 6.0
+- **Styling**: Custom CSS with modern design variables
 
-### Database Schema
-- **Users**: Authentication, roles (recruiter/admin)
-- **Jobs**: Job postings with descriptions, requirements, and DCF content
-- **Candidates**: Resume data with AI analysis results
-- **Comments**: Candidate evaluation comments (referenced but not fully implemented)
+### AI Integration
+- **AI Provider**: DeepSeek API (OpenAI-compatible)
+- **Analysis Engine**: Custom AI service for resume analysis and scoring
+- **Caching**: File-based caching system to prevent redundant AI calls
 
 ## Key Components
 
-### Authentication System
-- User registration and login
-- Role-based access control (recruiter/admin)
-- Session management with Flask-Login
+### Models (Database Schema)
+- **User**: Authentication and role management (admin/recruiter)
+- **Job**: Job postings with descriptions, requirements, and DCF content
+- **Candidate**: Resume storage with AI analysis results
+- **CandidateComment**: Comments and notes on candidates (referenced but not fully implemented)
 
-### Job Management
-- Create, edit, and manage job postings
-- Support for detailed job descriptions and requirements
-- DCF (Documento de Conteúdo Funcional) integration
+### Services
+- **AI Service**: Handles resume analysis, scoring, and candidate matching
+- **File Processor**: Extracts text from PDF, DOCX, and TXT files
+- **Cache Service**: Prevents duplicate AI analysis calls
 
-### File Processing
-- Multi-format resume upload (PDF, DOCX, TXT)
-- Text extraction from various file formats
-- Secure file storage in uploads directory
-
-### AI Analysis Engine
-- OpenAI GPT-4o integration for resume analysis
-- Scoring system (0-10 scale, 0.5 increments)
-- Detailed analysis including strengths, weaknesses, and recommendations
-- Skills extraction and experience level assessment
-
-### Dashboard and Analytics
-- Real-time statistics and metrics
-- Visual charts and graphs
-- Candidate ranking and filtering
+### Processing Systems
+- **Parallel Processing**: Multiple concurrent AI analysis processors
+- **Batch Upload**: Handles bulk resume uploads
+- **Background Processing**: Asynchronous candidate analysis
 
 ## Data Flow
 
-1. **Job Creation**: Recruiters create job postings with detailed requirements
-2. **Resume Upload**: Multiple resumes can be uploaded per job
+1. **Job Creation**: Recruiters create job postings with requirements
+2. **Resume Upload**: Individual or bulk upload of candidate resumes
 3. **Text Extraction**: System extracts text from various file formats
-4. **AI Analysis**: OpenAI processes resume against job requirements
-5. **Scoring**: AI generates compatibility scores and detailed analysis
-6. **Review**: Recruiters review ranked candidates and make decisions
+4. **AI Analysis**: DeepSeek API analyzes resumes against job requirements
+5. **Scoring**: AI generates numerical scores (0-10) and detailed analysis
+6. **Caching**: Results are cached to avoid redundant API calls
+7. **Review**: Recruiters review candidates and make decisions
 
 ## External Dependencies
 
-### AI Services
-- **OpenAI API**: GPT-4o model for resume analysis
-- **API Key**: Required via OPENAI_API_KEY environment variable
+### Database
+- **Supabase**: PostgreSQL hosting with connection pooling
+- **Connection**: Direct PostgreSQL connection string
 
-### File Processing Libraries
+### AI Services
+- **DeepSeek API**: Primary AI provider for resume analysis
+- **OpenAI SDK**: Used for API communication (compatible with DeepSeek)
+
+### File Processing
 - **PyPDF2**: PDF text extraction
-- **python-docx**: DOCX document processing
-- **Built-in**: TXT file handling
+- **python-docx**: Word document processing
+- **Werkzeug**: File upload handling and security
 
 ### Frontend Libraries
 - **Bootstrap 5.3.0**: UI framework
-- **Font Awesome 6.0.0**: Icon library
+- **Font Awesome 6.0**: Icon library
 - **Chart.js**: Data visualization
 
 ## Deployment Strategy
 
-### Environment Variables
-- `DATABASE_URL`: PostgreSQL connection string
-- `OPENAI_API_KEY`: OpenAI API authentication
-- `SESSION_SECRET`: Flask session encryption key
+### Environment Configuration
+- Environment variables for database URL and API keys
+- Session secrets for Flask security
+- File upload limits and directory configuration
 
-### Configuration
-- Database connection pooling with recycle and pre-ping
-- 16MB file upload limit
-- Uploads directory auto-creation
-- ProxyFix for proper HTTPS handling
+### Database Setup
+- Automated table creation via SQLAlchemy
+- Default admin user creation
+- Connection pooling for performance
+
+### File Storage
+- Local file system storage in 'uploads' directory
+- Secure filename handling
+- File type validation (PDF, DOCX, TXT)
+
+### Processing Architecture
+- Multiple processor implementations for scalability
+- Error handling and retry mechanisms
+- Real-time progress monitoring
 
 ### Security Features
+- CORS headers configuration
+- Secure file upload handling
 - Password hashing with Werkzeug
-- File type validation
-- Secure filename handling
-- Role-based access control
+- User role-based access control
 
-## Key Features
+## Notes
 
-### Multi-language Support
-- Portuguese-language interface
-- Localized error messages and UI text
+- The system uses a custom design with Viana e Moura branding
+- AI analysis includes detailed scoring with explanations
+- Caching system prevents redundant API calls and reduces costs
+- Multiple processing strategies available for different performance needs
+- The platform supports both individual and bulk candidate processing
 
-### Professional Design
-- Clean, modern interface with custom branding
-- Responsive layout for all devices
-- Professional color scheme (blues, grays, whites)
+## Documentation
 
-### Analytics and Reporting
-- Dashboard with key metrics
-- Candidate ranking by AI scores
-- Status tracking and filtering
-- Visual data representation
-
-### File Management
-- Support for multiple file formats
-- Secure file storage and retrieval
-- File metadata tracking
-
-The application follows a traditional MVC pattern with Flask, using SQLAlchemy for data persistence and integrating modern AI capabilities for intelligent recruitment processing.
+### README.md
+A comprehensive README file has been created with complete project documentation including:
+- **Project Overview**: Detailed description of features and capabilities
+- **Technology Stack**: Complete list of technologies and their versions
+- **Installation Guide**: Step-by-step setup instructions
+- **Usage Instructions**: How to use all features
+- **API Documentation**: Format of AI analysis responses
+- **Deployment Guide**: Instructions for various platforms
+- **Contributing Guidelines**: How to contribute to the project
+- **Security Information**: Authentication and data protection details

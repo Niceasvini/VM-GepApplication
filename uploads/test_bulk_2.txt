@@ -1,4 +1,0 @@
-Fernanda Costa
-Desenvolvedor Backend - 3 anos
-Python, FastAPI, MongoDB
-Conhecimento em Docker
