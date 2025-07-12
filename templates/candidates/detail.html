@@ -2,6 +2,50 @@
 
 {% block title %}{{ candidate.name }} - Viana e Moura{% endblock %}
 
+{% block styles %}
+<style>
+    .analysis-content {
+        font-size: 15px;
+        line-height: 1.7;
+        color: #333;
+    }
+    
+    .analysis-content p {
+        margin-bottom: 12px;
+    }
+    
+    .analysis-content strong {
+        color: #B93A3E;
+        font-weight: 600;
+    }
+    
+    .text-primary-custom {
+        color: #B93A3E !important;
+    }
+    
+    .bg-primary-custom {
+        background-color: #B93A3E !important;
+    }
+    
+    .score-display h2 {
+        font-size: 2.5rem;
+        font-weight: bold;
+    }
+    
+    .card-header {
+        font-weight: 600;
+    }
+    
+    .ps-3 {
+        padding-left: 1.5rem !important;
+    }
+    
+    .fs-6 {
+        font-size: 1rem !important;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-5">
     <!-- Candidate Header -->
@@ -96,12 +140,12 @@
             {% if candidate.analysis_status == 'completed' and candidate.ai_analysis %}
                 <!-- Always show Resumo Executivo -->
                 <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-header bg-primary-custom text-white">
+                    <div class="card-header bg-info text-white">
                         <h5 class="card-title mb-0">
                             <i class="fas fa-user me-2"></i>Resumo Executivo
                         </h5>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body" style="min-height: 200px;">
                         <div class="analysis-content">
                             {% if '## Resumo Executivo' in candidate.ai_analysis %}
                                 {% set resume_section = candidate.ai_analysis.split('## Resumo Executivo')[1].split('## Análise Detalhada')[0] %}
@@ -129,25 +173,46 @@
                                 {{ analysis_section.strip()|replace('**', '')|replace('*', '')|replace('\n', '<br>')|safe }}
                             {% else %}
                                 <!-- Generate structured analysis for older format -->
-                                <div class="mb-3">
-                                    <h6 class="text-primary-custom">1. Alinhamento Técnico:</h6>
-                                    <p class="text-muted">Análise das competências que se alinham com a vaga em questão.</p>
-                                </div>
-                                <div class="mb-3">
-                                    <h6 class="text-primary-custom">2. Gaps Técnicos:</h6>
-                                    <p class="text-muted">Identificação das lacunas técnicas e conhecimentos ausentes.</p>
-                                </div>
-                                <div class="mb-3">
-                                    <h6 class="text-primary-custom">3. Recomendação Final:</h6>
-                                    <p class="text-muted">
-                                        {% if candidate.ai_score and candidate.ai_score < 5.0 %}
-                                            <span class="badge bg-danger">Inadequado</span> - Pontuação abaixo do mínimo exigido.
-                                        {% elif candidate.ai_score and candidate.ai_score >= 7.0 %}
-                                            <span class="badge bg-success">Adequado</span> - Candidato qualificado para a vaga.
+                                <div class="mb-4">
+                                    <h6 class="text-primary-custom mb-2">1. Alinhamento Técnico:</h6>
+                                    <div class="ps-3">
+                                        {% if candidate.get_skills_list() %}
+                                            {% for skill in candidate.get_skills_list()[:5] %}
+                                                <p class="mb-1">• <strong>{{ skill }}</strong> - Competência identificada no currículo</p>
+                                            {% endfor %}
                                         {% else %}
-                                            <span class="badge bg-warning">Parcial</span> - Candidato com potencial, mas necessita desenvolvimento.
+                                            <p class="text-muted">Análise baseada no perfil apresentado no currículo e compatibilidade com os requisitos da vaga.</p>
                                         {% endif %}
-                                    </p>
+                                    </div>
+                                </div>
+                                <div class="mb-4">
+                                    <h6 class="text-primary-custom mb-2">2. Gaps Técnicos:</h6>
+                                    <div class="ps-3">
+                                        {% if candidate.ai_score and candidate.ai_score < 6.0 %}
+                                            <p class="mb-1">• Experiência limitada nas tecnologias principais da vaga</p>
+                                            <p class="mb-1">• Necessidade de desenvolvimento em habilidades técnicas específicas</p>
+                                        {% elif candidate.ai_score and candidate.ai_score < 8.0 %}
+                                            <p class="mb-1">• Algumas competências técnicas podem ser aprimoradas</p>
+                                            <p class="mb-1">• Oportunidade de crescimento em áreas específicas</p>
+                                        {% else %}
+                                            <p class="text-success">• Perfil bem alinhado com os requisitos técnicos</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <h6 class="text-primary-custom mb-2">3. Recomendação Final:</h6>
+                                    <div class="ps-3">
+                                        {% if candidate.ai_score and candidate.ai_score < 5.0 %}
+                                            <span class="badge bg-danger fs-6 mb-2">Inadequado</span>
+                                            <p class="text-muted">Candidato não atende aos requisitos mínimos para a vaga. Pontuação abaixo do limite aceitável.</p>
+                                        {% elif candidate.ai_score and candidate.ai_score >= 7.0 %}
+                                            <span class="badge bg-success fs-6 mb-2">Adequado</span>
+                                            <p class="text-muted">Candidato qualificado e alinhado com os requisitos da vaga. Recomendado para próximas etapas.</p>
+                                        {% else %}
+                                            <span class="badge bg-warning fs-6 mb-2">Parcial</span>
+                                            <p class="text-muted">Candidato com potencial, mas necessita desenvolvimento em algumas áreas. Pode ser considerado com treinamento adequado.</p>
+                                        {% endif %}
+                                    </div>
                                 </div>
                             {% endif %}
                         </div>
