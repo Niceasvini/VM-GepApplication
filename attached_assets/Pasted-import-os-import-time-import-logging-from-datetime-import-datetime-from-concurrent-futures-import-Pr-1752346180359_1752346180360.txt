@@ -1,0 +1,130 @@
+import os
+import time
+import logging
+from datetime import datetime
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from app import app, db
+from models import Candidate
+from ai_service import analyze_resume
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class ParallelAIProcessor:
+    def __init__(self, max_workers=6):
+        self.max_workers = max_workers
+        self.processing_status = {}
+
+    def process_candidate(self, candidate_id):
+        try:
+            with app.app_context():
+                candidate = db.session.get(Candidate, candidate_id)
+                if not candidate:
+                    logger.error(f"Candidate {candidate_id} not found")
+                    return False
+
+                candidate.analysis_status = 'processing'
+                db.session.commit()
+                self.processing_status[candidate_id] = 'processing'
+                logger.info(f"🔍 Analisando candidato {candidate_id}: {candidate.name}")
+
+                result = analyze_resume(candidate.file_path, candidate.file_type, candidate.job)
+
+                if result:
+                    candidate.ai_score = result.get('score', 0)
+                    candidate.ai_summary = result.get('summary', '')
+                    candidate.ai_analysis = result.get('analysis', '')
+                    candidate.extracted_skills = result.get('skills', '[]')
+                    candidate.analysis_status = 'completed'
+                    candidate.analyzed_at = datetime.utcnow()
+                    db.session.commit()
+
+                    self.processing_status[candidate_id] = 'completed'
+                    logger.info(f"✅ Análise concluída para {candidate.name}")
+                    return True
+                else:
+                    candidate.analysis_status = 'failed'
+                    db.session.commit()
+                    self.processing_status[candidate_id] = 'failed'
+                    logger.error(f"❌ Falha na análise para {candidate.name}")
+                    return False
+        except Exception as e:
+            logger.error(f"Erro ao processar {candidate_id}: {str(e)}")
+            try:
+                with app.app_context():
+                    candidate = db.session.get(Candidate, candidate_id)
+                    if candidate:
+                        candidate.analysis_status = 'failed'
+                        db.session.commit()
+                    self.processing_status[candidate_id] = 'failed'
+            except:
+                pass
+            return False
+
+    def process_candidates_parallel(self, candidate_ids):
+        if not candidate_ids:
+            return {'success': 0, 'failed': 0, 'total': 0}
+
+        logger.info(f"🚀 Iniciando análise paralela de {len(candidate_ids)} candidatos")
+        success_count = 0
+        failed_count = 0
+
+        with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
+            future_to_candidate = {
+                executor.submit(self.process_candidate, cid): cid
+                for cid in candidate_ids
+            }
+
+            for future in as_completed(future_to_candidate):
+                candidate_id = future_to_candidate[future]
+                try:
+                    result = future.result()
+                    if result:
+                        success_count += 1
+                    else:
+                        failed_count += 1
+                except Exception as e:
+                    logger.error(f"Erro ao processar {candidate_id}: {str(e)}")
+                    failed_count += 1
+
+        logger.info(f"✅ Concluído: {success_count} sucesso(s), {failed_count} falha(s)")
+        return {
+            'success': success_count,
+            'failed': failed_count,
+            'total': len(candidate_ids)
+        }
+
+    def get_processing_status(self, candidate_ids):
+        status_counts = {
+            'pending': 0,
+            'processing': 0,
+            'completed': 0,
+            'failed': 0
+        }
+
+        for cid in candidate_ids:
+            status = self.processing_status.get(cid, 'pending')
+            status_counts[status] += 1
+
+        return status_counts
+
+# Instância global
+processor = ParallelAIProcessor(max_workers=6)
+
+def start_parallel_analysis(candidate_ids):
+    import threading
+
+    def worker():
+        try:
+            processor.process_candidates_parallel(candidate_ids)
+        except Exception as e:
+            logger.error(f"Erro geral: {str(e)}")
+
+    thread = threading.Thread(target=worker)
+    thread.daemon = True
+    thread.start()
+    return thread
+
+def get_processing_status(candidate_ids):
+    return processor.get_processing_status(candidate_ids)
