@@ -14,6 +14,7 @@ os.environ['DATABASE_URL'] = 'postgresql://postgres.bndkpowgvagtlxwmthma:5585858
 from app import app, db
 from models import Candidate
 from file_processor import extract_text_from_file
+from ai_service import generate_summary_and_analysis, generate_score_only
 
 def get_detailed_error_description(error, file_path):
     """
@@ -91,46 +92,16 @@ def process_candidate_background(candidate_id):
             # Extract resume text
             resume_text = extract_text_from_file(candidate.file_path, candidate.file_type)
             
-            # Generate score (wait for DeepSeek even if slow)
-            score_response = client.chat.completions.create(
-                model="deepseek-chat",
-                messages=[{
-                    "role": "user",
-                    "content": f"Avalie este currículo para '{candidate.job.title}' de 0-10. Responda apenas o número (ex: 7.5):\\n\\n{resume_text[:800]}"
-                }],
-                max_tokens=10,
-                temperature=0.1
-            )
+            # Generate score using ai_service
+            score = generate_score_only(resume_text, candidate.job)
             
-            score_text = score_response.choices[0].message.content.strip()
+            # Generate summary and analysis using ai_service (new format)
+            analysis_result = generate_summary_and_analysis(resume_text, candidate.job)
             
-            # Parse score
-            import re
-            score_match = re.search(r'(\\d+\\.?\\d*)', score_text)
-            if score_match:
-                score = float(score_match.group(1))
-                if score > 10:
-                    score = score / 10
-            else:
-                score = 5.0
-            
-            # Generate summary (wait for DeepSeek even if slow)
-            summary_response = client.chat.completions.create(
-                model="deepseek-chat",
-                messages=[{
-                    "role": "user",
-                    "content": f"Faça um resumo técnico detalhado de {candidate.name} para {candidate.job.title}. Inclua experiência, habilidades e formação relevante:\\n\\n{resume_text[:3000]}"
-                }],
-                max_tokens=900,
-                temperature=0.3
-            )
-            
-            summary = summary_response.choices[0].message.content.strip()
-            
-            # Update candidate
+            # Update candidate with new format
             candidate.ai_score = score
-            candidate.ai_summary = summary
-            candidate.ai_analysis = f"Análise: Score {score}/10. {summary}"
+            candidate.ai_summary = ""  # Will be extracted from analysis_result
+            candidate.ai_analysis = analysis_result
             candidate.analysis_status = 'completed'
             candidate.analyzed_at = datetime.utcnow()
             
