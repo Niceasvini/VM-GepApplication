@@ -86,44 +86,30 @@ Você é um analista de currículos especializado. Analise o currículo abaixo p
 
 FORMATO OBRIGATÓRIO:
 
-## Resumo Executivo
+Resumo Executivo
 
-Extraia e organize as informações do currículo em formato estruturado:
+Nome Completo: [nome do candidato]
 
-### Nome Completo
-[nome do candidato]
+Experiência Relevante: [Cargo] na [Empresa] ([Ano-Início] - [Ano-Fim]), [Cargo] na [Empresa] ([Ano-Início] - [Ano-Fim]), [continuar com todas as experiências mais relevantes]
 
-### Experiência Relevante
-- [Cargo] @ [Empresa] ([Ano-Início] - [Ano-Fim])
-- [Cargo] @ [Empresa] ([Ano-Início] - [Ano-Fim])
-- [continuar com todas as experiências mais relevantes]
+Habilidades Técnicas: [Liste as principais habilidades técnicas identificadas no currículo]
 
-### Habilidades Técnicas
-- [Liste as principais habilidades técnicas identificadas no currículo]
+Formação Acadêmica: [Grau] em [Curso] na [Instituição], [Cursos complementares relevantes]
 
-### Formação Acadêmica
-- [Grau] em [Curso] @ [Instituição]
-- [Cursos complementares relevantes]
+Idiomas: [Idioma] ([Nível]), [Idioma] ([Nível])
 
-### Idiomas
-- [Idioma] ([Nível])
-- [Idioma] ([Nível])
+Informações de Contato: Email: [email], Telefone: [telefone], Localização: [cidade/estado]
 
-### Informações de Contato
-- Email: [email]
-- Telefone: [telefone]
-- Localização: [cidade/estado]
-
-## Análise Detalhada
+Análise Detalhada
 
 1. Alinhamento Técnico:
-[Faça uma análise técnica específica e detalhada do candidato. Cite experiências concretas com empresas reais, cargos ocupados, responsabilidades específicas, tecnologias dominadas, projetos desenvolvidos, e como essas competências se relacionam diretamente com os requisitos da vaga. Mencione períodos de trabalho, resultados alcançados, e habilidades demonstradas. Seja específico e use dados do currículo.]
+O candidato possui experiência em [cite experiências específicas do currículo] na empresa [nome da empresa] durante [período]. Suas responsabilidades incluíram [liste atividades específicas]. Em relação aos requisitos da vaga de {job.title}, o candidato demonstra competência em [liste competências específicas que se alinham]. Por exemplo, sua experiência com [tecnologia/processo específico] na [empresa] por [período] indica capacidade para [função específica da vaga]. Adicionalmente, sua formação em [curso/área] complementa os requisitos de [requisito específico da vaga].
 
 2. Gaps Técnicos:
-[Identifique especificamente quais requisitos da vaga o candidato não atende. Liste tecnologias, metodologias, certificações, experiências ou conhecimentos que estão ausentes no perfil. Compare ponto a ponto com os requisitos da vaga. Mencione áreas específicas que precisam ser desenvolvidas, cursos que poderiam ser feitos, ou experiências que faltam para o perfil ideal.]
+Analisando os requisitos da vaga, o candidato apresenta lacunas em [liste especificamente quais requisitos faltam]. Não possui experiência comprovada em [tecnologia/metodologia específica] que é essencial para [função específica]. Sua formação carece de [conhecimento específico] necessário para [atividade da vaga]. Recomenda-se desenvolvimento em [área específica] através de [curso/certificação específica]. Também seria benéfico adquirir experiência prática em [tecnologia/processo específico] para atender plenamente aos requisitos de [requisito específico da vaga].
 
 3. Recomendação Final: [Adequado/Parcial/Inadequado]
-[Dê uma justificativa detalhada e técnica da recomendação. Considere experiência total, formação acadêmica, habilidades técnicas específicas, adequação cultural, potencial de crescimento, e alinhamento com os requisitos da vaga. Seja específico sobre pontos fortes e fracos, e explique o raciocínio por trás da recomendação.]
+Baseado na análise técnica, o candidato demonstra [pontos fortes específicos] através de sua experiência em [empresa/cargo] e formação em [área]. Contudo, apresenta limitações em [áreas específicas] que impactam sua adequação para [função específica da vaga]. Considerando que [justificativa técnica baseada em experiência e requisitos], a recomendação é [Adequado/Parcial/Inadequado] pois [explicação detalhada do raciocínio].
 
 VAGA: {job.title}
 REQUISITOS: {job.requirements[:1000] if job.requirements else 'Não especificado'}
@@ -133,10 +119,11 @@ CURRÍCULO:
 
 IMPORTANTE: 
 - Use exatamente o formato mostrado acima
-- No Resumo Executivo, organize as informações em seções estruturadas
-- Na Análise Detalhada, seja específico e detalhado para cada candidato
+- No Resumo Executivo, organize as informações em seções estruturadas SEM usar traços, hashes ou marcações
+- Na Análise Detalhada, seja específico citando empresas, cargos, tecnologias e experiências reais
 - Para candidatos com score baixo, use "Inadequado" na recomendação
-- Não use ** ou asteriscos no texto
+- Não use **, asteriscos, ---, ###, #### ou qualquer marcação de formatação no texto
+- Seja direto e específico, evite frases genéricas como "baseado no perfil apresentado"
 """
     
     response = openai.chat.completions.create(

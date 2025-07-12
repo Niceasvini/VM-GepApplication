@@ -8,6 +8,15 @@ This is a professional web application for automated resume analysis using artif
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (July 2025)
+
+- **Removed word limit restrictions**: Eliminated "máximo 100 palavras" from all AI analysis processors
+- **Enhanced AI analysis prompts**: Updated to generate detailed technical summaries instead of limited responses
+- **Improved analysis structure**: Removed formatting marks (---, ##, ###) from analysis output
+- **Increased token limits**: Enhanced to 900 tokens for more comprehensive analysis
+- **Specific analysis requirements**: AI now cites specific companies, technologies, and experiences instead of generic responses
+- **Better resume processing**: Increased text extraction to 3000-5000 characters for fuller context
+
 ## System Architecture
 
 ### Backend Architecture
