@@ -154,8 +154,8 @@
                         <div class="analysis-content" style="max-height: none; overflow: visible; word-wrap: break-word;">
                             {% if candidate.ai_summary and candidate.ai_summary != '' %}
                                 {{ candidate.ai_summary|replace('**', '')|replace('*', '')|replace('\n', '<br>')|safe }}
-                            {% elif '## Resumo Executivo' in candidate.ai_analysis %}
-                                {% set resume_section = candidate.ai_analysis.split('## Resumo Executivo')[1].split('## Análise Detalhada')[0] %}
+                            {% elif 'Resumo Executivo' in candidate.ai_analysis %}
+                                {% set resume_section = candidate.ai_analysis.split('Resumo Executivo')[1].split('Análise Detalhada')[0] %}
                                 {{ resume_section.strip()|replace('**', '')|replace('*', '')|replace('\n', '<br>')|safe }}
                             {% else %}
                                 <div class="alert alert-info">
@@ -177,8 +177,8 @@
                     </div>
                     <div class="card-body">
                         <div class="analysis-content">
-                            {% if '## Análise Detalhada' in candidate.ai_analysis %}
-                                {% set analysis_section = candidate.ai_analysis.split('## Análise Detalhada')[1] %}
+                            {% if 'Análise Detalhada' in candidate.ai_analysis %}
+                                {% set analysis_section = candidate.ai_analysis.split('Análise Detalhada')[1] %}
                                 {{ analysis_section.strip()|replace('**', '')|replace('*', '')|replace('\n', '<br>')|safe }}
                             {% else %}
                                 <!-- Show message for outdated analysis format -->
