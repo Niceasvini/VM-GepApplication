@@ -1,0 +1,19 @@
+{
+  "timestamp": "2025-07-12T18:17:18.732359",
+  "analysis": {
+    "score": 2.0,
+    "summary": "📄 Currículo de Allyne Santos Silva De Souza  \n\n📋 Conteúdo do Currículo  \n**Nome:** Allyne Santos Silva De Souza  \n**Idade:** 35 anos  \n**Localização:** Caruaru/PE  \n**Contato:** (87) 99989-6942 | (81) 2161-6225  \n\n**Objetivo:**  \n*[Não especificado no currículo]*  \n\n**Experiência Profissional:**  \n- **Cencosud Brasil Comercial Ltda** – Operadora de Caixas (1 ano e 10 meses)  \n- **Cremmy Indústria e Comércio Ltda** – Operadora de Televendas (1 ano e 11 dias)  \n- **Brasil Telecom Call Center** – Agente de Atendimento e Negócios (1 ano e 7 meses)  \n- **WCCN Publicidade** – Vendedora (1 ano e 8 meses)  \n\n**Educação:**  \n- Ensino Médio Completo – Escola Mario Sette (Caruaru/PE)  \n- Curso Extracurricular: Informática Básica – Process Informática (Caruaru/PE)  \n\n🔍 **Análise da IA**  \n\n**Alinhamento Técnico:**  \n• *Perfil colaborativo e experiência em atendimento*: As experiências em call center e televendas demonstram habilidades de comunicação e organização, alinhadas parcialmente com o perfil desejado.  \n• *Informática básica*: Conhecimento introdutório em tecnologia, mas sem aprofundamento em ferramentas relevantes para a vaga.  \n\n**Gaps Técnicos:**  \n• *Falta de experiência com JavaScript (React.js/Node.js), PostgreSQL, Supabase ou APIs REST*: Nenhuma menção a tecnologias ou projetos relacionados ao desenvolvimento full stack.  \n• *Ausência de cursos ou formações em programação*: O currículo não apresenta conhecimentos em TailwindCSS, Next.js ou outras stacks mencionadas na vaga.  \n• *Experiência profissional não relacionada à área de TI*: Todas as experiências são em operação comercial/atendimento, sem conexão com desenvolvimento de software.  \n\n**Recomendação Final:** **Não**  \n*Justificativa:* O currículo não atende aos requisitos técnicos mínimos para a vaga (JavaScript, bancos de dados, APIs). Apesar das habilidades interpessoais, a falta de experiência ou formação na área de tecnologia inviabiliza o alinhamento com a posição. Recomenda-se buscar qualificação em cursos específicos (ex.: bootcamps de programação) para transição de carreira.  \n\n---  \n  \n- **Candidata:** Allyne Santos (35 anos, Caruaru/PE).  \n- **Experiência:** 4+ anos em atendimento/vendas, sem vivência em TI.  \n- **Formação:** Ensino médio + curso básico de informática.  \n- **Faltam:** Conhecimentos em JS, bancos de dados, APIs e stacks modernas.",
+    "analysis": "1. **Alinhamento Técnico:** Habilidades interpessoais (comunicação/organização).  \n2. **Gaps Técnicos:** Ausência total de experiência ou formação em desenvolvimento.  \n3. **Recomendação Final:** **Não** *(Não atende aos requisitos técnicos da vaga)*.",
+    "skills": [],
+    "experience_years": 35,
+    "education_level": "Não informado",
+    "match_reasons": [
+      "Score: 2.0/10"
+    ],
+    "recommendations": [
+      "Avaliação baseada em experiência e habilidades técnicas"
+    ]
+  },
+  "job_id": 4,
+  "cache_key": "c3c65739b93f484487a8efe8e5d54b10"
+}

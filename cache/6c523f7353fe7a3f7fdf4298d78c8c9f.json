@@ -1,0 +1,19 @@
+{
+  "timestamp": "2025-07-12T18:10:27.656566",
+  "analysis": {
+    "score": 7.45,
+    "summary": "📄 Currículo de [Nome do Candidato]  \n\n📋 Conteúdo do Currículo  \nNome: [Nome completo]  \nIdade: [Idade se disponível]  \nLocalização: [Cidade/Estado]  \nContato: [Telefone] | [E-mail]  \n\nObjetivo:  \n[Objetivo profissional do candidato]  \n\nExperiência Profissional:  \n[Listar experiências com empresas, cargos e períodos]  \n\nEducação:  \n[Formação acadêmica e cursos]  \n\n🔍 Análise da IA  \n\nAlinhamento Técnico:  \n• [Pontos positivos relevantes para a vaga]  \n• [Experiências que agregam valor]  \n• [Habilidades alinhadas com os requisitos]  \n\nGaps Técnicos:  \n• [Competências que faltam para a vaga]  \n• [Experiências não relacionadas ou insuficientes]  \n• [Conhecimentos técnicos em falta]  \n\nRecomendação Final: [Forte/Parcial/Fraco]  \n[Justificativa da recomendação com base na análise]  \n\n  \n(Não foi fornecido um currículo para análise. Por favor, envie o currículo do candidato para que possamos realizar uma avaliação detalhada.)",
+    "analysis": "1. Alinhamento Técnico: Não é possível analisar sem o currículo.  \n2. Gaps Técnicos: Não é possível identificar sem o currículo.  \n3. Recomendação Final: Não (devido à falta de informações).  \n\nPor favor, envie o currículo completo para uma análise precisa.",
+    "skills": [],
+    "experience_years": 1,
+    "education_level": "Não informado",
+    "match_reasons": [
+      "Score: 7.45/10"
+    ],
+    "recommendations": [
+      "Avaliação baseada em experiência e habilidades técnicas"
+    ]
+  },
+  "job_id": 4,
+  "cache_key": "6c523f7353fe7a3f7fdf4298d78c8c9f"
+}

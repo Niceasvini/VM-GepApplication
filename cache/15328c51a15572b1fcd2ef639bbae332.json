@@ -1,0 +1,19 @@
+{
+  "timestamp": "2025-07-12T18:19:38.779810",
+  "analysis": {
+    "score": 2.2,
+    "summary": "📄 Currículo de **Anderson Fernando do Nascimento Silva**  \n\n📋 Conteúdo do Currículo  \n**Nome:** Anderson Fernando do Nascimento Silva  \n**Idade:** 29 anos (nascido em 15/01/1995)  \n**Localização:** Caruaru, PE  \n**Contato:** (81) 9 9376-1561 | andersonfernandodonascime2nqoq_sqk@indeedemail.com  \n\n**Objetivo:**  \nBusca uma nova oportunidade na área administrativa.  \n\n**Experiência Profissional:**  \n- **Operador de Telemarketing** na PROVIDER Soluções Tecnológicas LTDA (março/2024 - atual)  \n  - Atendimento ao público, cadastro de informações em sistemas, agendamentos.  \n\n**Educação:**  \n- **Graduação em Administração de Empresas** (cursando, 6º período) - UFPE (2022 - atual)  \n- **Ensino Médio Técnico em Secretariado** - Senac (2020 - 2021)  \n\n**Habilidades:**  \n- Atendimento ao cliente  \n- Microsoft Office  \n- Comunicação e organização  \n\n---",
+    "analysis": "1. **Alinhamento Técnico:**  \n   - **Perfil colaborativo e boa comunicação:** Habilidades destacadas no currículo (atendimento ao cliente, organização) são relevantes para o requisito de perfil colaborativo.  \n   - **Experiência com sistemas:** Cadastro de informações em sistemas pode indicar familiaridade com ferramentas digitais, mas não especificamente com tecnologias da vaga.  \n\n2. **Gaps Técnicos:**  \n   - **Falta de experiência técnica:** Nenhuma menção a JavaScript, React.js, Node.js, PostgreSQL, Supabase ou APIs REST.  \n   - **Ausência de habilidades desejáveis:** Não há conhecimento em TailwindCSS, Next.js ou desenvolvimento full stack.  \n   - **Formação não alinhada:** Cursando Administração, sem formação ou cursos em TI/desenvolvimento.  \n\n3. **Recomendação Final:** **Não**  \n   - O currículo não atende aos requisitos técnicos essenciais da vaga (linguagens, bancos de dados, frameworks). As habilidades comportamentais são positivas, mas insuficientes para um cargo júnior em desenvolvimento full stack.  \n\n---  \n\n**Observação:** O candidato pode ser direcionado para vagas administrativas ou de suporte ao cliente, onde seu perfil teria melhor aderência.",
+    "skills": [],
+    "experience_years": 1,
+    "education_level": "Superior",
+    "match_reasons": [
+      "Score: 2.2/10"
+    ],
+    "recommendations": [
+      "Avaliação baseada em experiência e habilidades técnicas"
+    ]
+  },
+  "job_id": 4,
+  "cache_key": "15328c51a15572b1fcd2ef639bbae332"
+}

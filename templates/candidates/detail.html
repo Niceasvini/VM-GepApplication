@@ -94,30 +94,37 @@
         <!-- AI Analysis Results -->
         <div class="col-md-8">
             {% if candidate.analysis_status == 'completed' %}
-                {% if candidate.ai_summary %}
-                <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-header bg-transparent">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-robot me-2"></i>Resumo Executivo
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <p class="text-muted">{{ candidate.ai_summary }}</p>
-                    </div>
-                </div>
-                {% endif %}
+
                 
                 {% if candidate.ai_analysis %}
-                <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-header bg-transparent">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-chart-line me-2"></i>Análise Detalhada
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="text-muted">{{ candidate.ai_analysis|replace('\n', '<br>')|safe }}</div>
-                    </div>
-                </div>
+                    {% set analysis_parts = candidate.ai_analysis.split('## ') %}
+                    {% for part in analysis_parts %}
+                        {% if part.strip() %}
+                            {% if part.startswith('Resumo Executivo') %}
+                                <div class="card border-0 shadow-sm mb-4">
+                                    <div class="card-header bg-primary-custom text-white">
+                                        <h5 class="card-title mb-0">
+                                            <i class="fas fa-user me-2"></i>Resumo Executivo
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="text-muted">{{ part.replace('Resumo Executivo', '').strip()|replace('\n', '<br>')|safe }}</div>
+                                    </div>
+                                </div>
+                            {% elif part.startswith('Análise Detalhada') %}
+                                <div class="card border-0 shadow-sm mb-4">
+                                    <div class="card-header bg-secondary text-white">
+                                        <h5 class="card-title mb-0">
+                                            <i class="fas fa-chart-line me-2"></i>Análise Detalhada
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="text-muted">{{ part.replace('Análise Detalhada', '').strip()|replace('\n', '<br>')|safe }}</div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
                 {% endif %}
                 
                 {% if candidate.get_skills_list() %}

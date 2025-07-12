@@ -1,0 +1,21 @@
+{
+  "timestamp": "2025-07-12T18:10:59.815739",
+  "analysis": {
+    "score": 2.5,
+    "summary": "📄 Currículo de Esther Lima  \n\n📋 Conteúdo do Currículo  \nNome: Esther Lima  \nIdade: 22 anos  \nLocalização: Caruaru/PE  \nContato: (81) 9 8137-3839 | estherlarissa02@gmail.com  \n\nObjetivo:  \nProcuro oportunidades de atuação onde eu possa aprender e crescer como profissional.  \n\nExperiência Profissional:  \n• Operador de Telemarketing - Teleperformance (2024)  \n• Atendente Autônoma - Ingresse (2024-2025)  \n• Operador de Telemarketing - Provider (2021-2023)  \n\nEducação:  \n• Cursando Graduação em Psicologia - UNINASSAU CARUARU  \n• Assistente Administrativo (concluído em 2019)  \n• Informática Básica (concluído em 2021)  \n\nHabilidades:  \n• Boa comunicação  \n• Pacote Office  \n• Digitação",
+    "analysis": "1. **Alinhamento Técnico**:  \n   • Boa comunicação (alinhada com o perfil colaborativo exigido).  \n   • Experiência em atendimento ao cliente (pode agregar valor em interações com usuários da plataforma).  \n\n2. **Gaps Técnicos**:  \n   • Nenhuma experiência com JavaScript, React.js, Node.js, PostgreSQL, Supabase ou APIs REST.  \n   • Falta de conhecimento em TailwindCSS e Next.js.  \n   • Formação e experiências profissionais não relacionadas à área de desenvolvimento.  \n\n3. **Recomendação Final**: **Não**  \n   Justificativa: O currículo não apresenta as habilidades técnicas necessárias para a vaga de Desenvolvedor(a) Full Stack Júnior, focando em áreas completamente distintas (Psicologia e Telemarketing). Recomenda-se buscar candidatos com formação ou experiência em tecnologia.",
+    "skills": [
+      "Git"
+    ],
+    "experience_years": 22,
+    "education_level": "Superior",
+    "match_reasons": [
+      "Score: 2.5/10"
+    ],
+    "recommendations": [
+      "Avaliação baseada em experiência e habilidades técnicas"
+    ]
+  },
+  "job_id": 4,
+  "cache_key": "aec9569fd024892e489dfe2a01c04d0a"
+}

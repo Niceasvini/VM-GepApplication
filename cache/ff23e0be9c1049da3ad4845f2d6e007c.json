@@ -1,0 +1,19 @@
+{
+  "timestamp": "2025-07-12T18:14:50.017044",
+  "analysis": {
+    "score": 2.5,
+    "summary": "📄 Currículo de **Abgayl Esttefany**  \n\n📋 **Conteúdo do Currículo**  \n**Nome:** Abgayl Esttefany  \n**Idade:** 20 anos  \n**Localização:** Caruaru, Pernambuco  \n**Contato:** (81) 98964-1630 | abgaylesttefany@gmail.com  \n\n**Objetivo:**  \nBusca oportunidades para ampliar conhecimentos e crescer profissionalmente, contribuindo para o crescimento da empresa.  \n\n**Experiência Profissional:**  \n- **Fedex Brasil Logística e Transporte LTDA** (2023-2024)  \n  *Auxiliar de escritório*: Organização de planilhas e documentos, desenvolvimento de habilidades em trabalho em equipe.  \n- **Hyundai Autorac** (Nov 2024 - Mar 2025)  \n  *Assistente Administrativo (Temporário)*: Atendimento ao cliente, intermediação entre banco e concessionária, gestão de leads.  \n- **Alves e Carvalho - Soluções Financeiras** (Atualmente)  \n  *Consultora Financeira*: Atendimento ao cliente e soluções financeiras personalizadas.  \n\n**Educação:**  \n- **Ciências Biológicas** (em andamento, 2025-2029) - UFPE  \n- **Administração** (2020-2022)  \n- **Inglês Essencial** - Infor Quallity (2017-2018)  \n\n**Habilidades:**  \n- Atendimento ao cliente  \n- Boa comunicação e trabalho em equipe  \n- Facilidade com pacote Office e informática básica  \n\n---",
+    "analysis": "**1. Alinhamento Técnico:**  \n• **Perfil colaborativo e comunicação**: Habilidades em atendimento ao cliente e trabalho em equipe são relevantes para o perfil desejado.  \n• **Organização**: Experiência com planilhas e processos administrativos demonstra organização.  \n\n**2. Gaps Técnicos:**  \n• **Falta de experiência técnica**: Nenhuma menção a JavaScript, React.js, Node.js, PostgreSQL, Supabase ou APIs REST.  \n• **Ausência de conhecimentos em frontend/backend**: Não há evidências de habilidades em TailwindCSS, Next.js ou desenvolvimento full-stack.  \n• **Formação não relacionada**: Curso em Ciências Biológicas e experiência administrativa não atendem aos requisitos técnicos da vaga.  \n\n**3. Recomendação Final:** **Não**  \n**Justificativa:** O currículo não apresenta as competências técnicas essenciais para a vaga (desenvolvimento full-stack, linguagens/frameworks específicos). Apesar das habilidades interpessoais alinhadas, os gaps técnicos são críticos para a função. Recomenda-se buscar candidatos com formação ou experiência em tecnologia.",
+    "skills": [],
+    "experience_years": 20,
+    "education_level": "Não informado",
+    "match_reasons": [
+      "Score: 2.5/10"
+    ],
+    "recommendations": [
+      "Avaliação baseada em experiência e habilidades técnicas"
+    ]
+  },
+  "job_id": 4,
+  "cache_key": "ff23e0be9c1049da3ad4845f2d6e007c"
+}

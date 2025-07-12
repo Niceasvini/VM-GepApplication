@@ -82,60 +82,37 @@ def generate_summary_and_analysis(cv_text, job):
     Generate detailed summary and analysis in structured format
     """
     prompt = f"""
-Você é um analista de currículos especializado. Analise o currículo abaixo para a vaga '{job.title}' e formate a resposta EXATAMENTE como o exemplo:
+Você é um analista de currículos especializado. Analise o currículo abaixo para a vaga '{job.title}' e formate a resposta EXATAMENTE como solicitado:
 
-📄 Currículo de [Nome do Candidato]
+FORMATO OBRIGATÓRIO:
 
-📋 Conteúdo do Currículo
-Nome: [Nome completo]
-Idade: [Idade se disponível]
-Localização: [Cidade/Estado]
-Contato: [Telefone] | [E-mail]
+## Resumo Executivo
 
-Objetivo:
-[Objetivo profissional do candidato]
+[Faça um resumo completo e organizado do perfil profissional do candidato em texto corrido, incluindo: formação acadêmica, experiências profissionais principais, habilidades técnicas e comportamentais, idiomas, cursos relevantes e objetivo profissional. Mantenha o texto bem estruturado e fluído, sem bullets ou análise técnica.]
 
-Experiência Profissional:
-[Listar experiências com empresas, cargos e períodos]
+## Análise Detalhada
 
-Educação:
-[Formação acadêmica e cursos]
+1. Alinhamento Técnico:
+[Liste pontos positivos e habilidades que se alinham com a vaga - sem usar asteriscos]
 
-🔍 Análise da IA
+2. Gaps Técnicos:
+[Liste lacunas técnicas e conhecimentos ausentes - sem usar asteriscos]
 
-Alinhamento Técnico:
-• [Pontos positivos relevantes para a vaga]
-• [Experiências que agregam valor]
-• [Habilidades alinhadas com os requisitos]
+3. Recomendação Final: [Adequado/Fraco/Inadequado]
+[Justificativa da recomendação baseada na análise técnica]
 
-Gaps Técnicos:
-• [Competências que faltam para a vaga]
-• [Experiências não relacionadas ou insuficientes]
-• [Conhecimentos técnicos em falta]
+VAGA: {job.title}
+REQUISITOS: {job.requirements[:1000] if job.requirements else 'Não especificado'}
 
-Recomendação Final: [Forte/Parcial/Fraco]
-[Justificativa da recomendação com base na análise]
-
-Currículo para análise:
-{cv_text[:2000]}
-
-Requisitos da vaga:
-{job.requirements[:1000] if job.requirements else 'Não especificado'}
-
-IMPORTANTE: Mantenha exatamente essa formatação com emojis e estrutura organizacional.
-
-Use o seguinte formato:
-
-### RESUMO
-(Resumo estruturado)
-
-### ANÁLISE
-1. Alinhamento Técnico: ...
-2. Gaps Técnicos: ...
-3. Recomendação Final: Sim / Parcial / Não
-
-Currículo:
+CURRÍCULO:
 {cv_text[:3000]}
+
+IMPORTANTE: 
+- Use exatamente o formato mostrado acima
+- No Resumo Executivo, faça um texto corrido sem bullets
+- Na Análise Detalhada, use as 3 seções obrigatórias
+- Para candidatos com score baixo, use "Inadequado" na recomendação
+- Não use ** ou asteriscos no texto
 """
     
     response = openai.chat.completions.create(
