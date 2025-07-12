@@ -88,7 +88,7 @@ FORMATO OBRIGATÓRIO:
 
 ## Resumo Executivo
 
-[Faça um resumo completo e organizado do perfil profissional do candidato em texto corrido, incluindo: formação acadêmica, experiências profissionais principais, habilidades técnicas e comportamentais, idiomas, cursos relevantes e objetivo profissional. Mantenha o texto bem estruturado e fluído, sem bullets ou análise técnica.]
+[Faça um resumo COMPLETO e DETALHADO do perfil profissional do candidato em texto corrido, incluindo TODAS as informações relevantes: dados pessoais, formação acadêmica completa, todas as experiências profissionais com detalhes, habilidades técnicas e comportamentais, idiomas, cursos relevantes, certificações, projetos e objetivo profissional. Seja extenso e detalhado, sem limitação de palavras. Mantenha o texto bem estruturado e fluído, sem bullets ou análise técnica.]
 
 ## Análise Detalhada
 
@@ -109,7 +109,8 @@ CURRÍCULO:
 
 IMPORTANTE: 
 - Use exatamente o formato mostrado acima
-- No Resumo Executivo, faça um texto corrido sem bullets
+- No Resumo Executivo, seja EXTENSO e DETALHADO, sem limitação de palavras
+- Inclua TODAS as informações do currículo no resumo executivo
 - Na Análise Detalhada, use as 3 seções obrigatórias
 - Para candidatos com score baixo, use "Inadequado" na recomendação
 - Não use ** ou asteriscos no texto
@@ -118,7 +119,7 @@ IMPORTANTE:
     response = openai.chat.completions.create(
         model="deepseek-chat",
         messages=[{"role": "user", "content": prompt}],
-        max_tokens=800,
+        max_tokens=1500,  # Increased for longer detailed summaries
         temperature=0.5
     )
     

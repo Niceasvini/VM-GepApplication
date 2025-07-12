@@ -8,6 +8,11 @@
         font-size: 15px;
         line-height: 1.7;
         color: #333;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        white-space: normal;
+        max-height: none !important;
+        height: auto !important;
     }
     
     .analysis-content p {
@@ -145,8 +150,8 @@
                             <i class="fas fa-user me-2"></i>Resumo Executivo
                         </h5>
                     </div>
-                    <div class="card-body" style="min-height: 200px;">
-                        <div class="analysis-content">
+                    <div class="card-body" style="min-height: 350px; max-height: none;">
+                        <div class="analysis-content" style="max-height: none; overflow: visible;">
                             {% if '## Resumo Executivo' in candidate.ai_analysis %}
                                 {% set resume_section = candidate.ai_analysis.split('## Resumo Executivo')[1].split('## Análise Detalhada')[0] %}
                                 {{ resume_section.strip()|replace('**', '')|replace('*', '')|replace('\n', '<br>')|safe }}
