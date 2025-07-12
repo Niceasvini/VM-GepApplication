@@ -117,13 +117,13 @@ Extraia e organize as informações do currículo em formato estruturado:
 ## Análise Detalhada
 
 1. Alinhamento Técnico:
-[Análise específica e detalhada baseada no perfil apresentado no currículo e compatibilidade com os requisitos da vaga. Cite experiências específicas, empresas onde trabalhou, tecnologias que domina, e como essas competências se relacionam com a vaga. Seja específico e detalhado.]
+[Faça uma análise técnica específica e detalhada do candidato. Cite experiências concretas com empresas reais, cargos ocupados, responsabilidades específicas, tecnologias dominadas, projetos desenvolvidos, e como essas competências se relacionam diretamente com os requisitos da vaga. Mencione períodos de trabalho, resultados alcançados, e habilidades demonstradas. Seja específico e use dados do currículo.]
 
 2. Gaps Técnicos:
-[Liste especificamente quais requisitos da vaga o candidato não atende, que tecnologias precisa aprender, que experiências faltam no perfil. Seja específico sobre tecnologias, metodologias ou conhecimentos ausentes. Compare diretamente com os requisitos da vaga.]
+[Identifique especificamente quais requisitos da vaga o candidato não atende. Liste tecnologias, metodologias, certificações, experiências ou conhecimentos que estão ausentes no perfil. Compare ponto a ponto com os requisitos da vaga. Mencione áreas específicas que precisam ser desenvolvidas, cursos que poderiam ser feitos, ou experiências que faltam para o perfil ideal.]
 
 3. Recomendação Final: [Adequado/Parcial/Inadequado]
-[Justificativa detalhada da recomendação baseada na análise técnica, considerando experiência, formação, habilidades técnicas e adequação aos requisitos da vaga.]
+[Dê uma justificativa detalhada e técnica da recomendação. Considere experiência total, formação acadêmica, habilidades técnicas específicas, adequação cultural, potencial de crescimento, e alinhamento com os requisitos da vaga. Seja específico sobre pontos fortes e fracos, e explique o raciocínio por trás da recomendação.]
 
 VAGA: {job.title}
 REQUISITOS: {job.requirements[:1000] if job.requirements else 'Não especificado'}

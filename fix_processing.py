@@ -91,9 +91,9 @@ def fix_and_process_candidates():
                         model="deepseek-chat",
                         messages=[{
                             "role": "user",
-                            "content": f"Resumo de {candidate.name} para vaga '{candidate.job.title}' (máximo 100 palavras):\n\n{resume_text[:500]}"
+                            "content": f"Faça um resumo técnico detalhado de {candidate.name} para vaga '{candidate.job.title}'. Inclua experiência, habilidades e formação relevante:\n\n{resume_text[:500]}"
                         }],
-                        max_tokens=200,
+                        max_tokens=500,
                         temperature=0.3
                     )
                     

@@ -72,9 +72,9 @@ def process_candidate_background(candidate_id):
                 model="deepseek-chat",
                 messages=[{
                     "role": "user",
-                    "content": f"Resumo de {candidate.name} para {candidate.job.title} (máximo 100 palavras):\\n\\n{resume_text[:600]}"
+                    "content": f"Faça um resumo técnico detalhado de {candidate.name} para {candidate.job.title}. Inclua experiência, habilidades e formação relevante:\\n\\n{resume_text[:600]}"
                 }],
-                max_tokens=200,
+                max_tokens=500,
                 temperature=0.3
             )
             
