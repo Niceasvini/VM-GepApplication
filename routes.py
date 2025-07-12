@@ -6,6 +6,7 @@ from app import app, db
 from models import User, Job, Candidate, CandidateComment
 from ai_service import analyze_resume
 from file_processor import process_uploaded_file
+from sqlalchemy.exc import SQLAlchemyError
 # Import will be done locally to avoid circular imports
 import logging
 
@@ -288,18 +289,25 @@ def bulk_upload_page(job_id):
 @login_required
 def bulk_upload_process(job_id):
     """Process bulk resume upload with parallel AI analysis"""
-    job = Job.query.get_or_404(job_id)
-    
-    if 'files' not in request.files:
-        return jsonify({'error': 'Nenhum arquivo enviado'}), 400
-    
-    files = request.files.getlist('files')
-    if not files or all(not f.filename for f in files):
-        return jsonify({'error': 'Nenhum arquivo válido enviado'}), 400
-    
-    candidate_ids = []
-    processed_count = 0
-    errors = []
+    try:
+        job = Job.query.get_or_404(job_id)
+        
+        if 'files' not in request.files:
+            return jsonify({'error': 'Nenhum arquivo enviado'}), 400
+        
+        files = request.files.getlist('files')
+        if not files or all(not f.filename for f in files):
+            return jsonify({'error': 'Nenhum arquivo válido enviado'}), 400
+        
+        candidate_ids = []
+        processed_count = 0
+        errors = []
+        
+        logging.info(f"Starting bulk upload for {len(files)} files")
+        
+    except Exception as e:
+        logging.error(f"Error in bulk upload setup: {e}")
+        return jsonify({'error': f'Erro no setup: {str(e)}'}), 500
     
     for file in files:
         if file and file.filename:
@@ -337,9 +345,23 @@ def bulk_upload_process(job_id):
                     analysis_status='pending'
                 )
                 
-                db.session.add(candidate)
-                db.session.commit()
-                candidate_ids.append(candidate.id)
+                try:
+                    db.session.add(candidate)
+                    db.session.flush()  # Flush to get ID without committing
+                    candidate_id = candidate.id
+                    db.session.commit()
+                    candidate_ids.append(candidate_id)
+                    logging.info(f"Successfully saved candidate: {filename} with ID: {candidate_id}")
+                except SQLAlchemyError as db_error:
+                    logging.error(f"Database error for {filename}: {db_error}")
+                    db.session.rollback()
+                    errors.append(f'Erro de banco para {filename}: {str(db_error)}')
+                    continue
+                except Exception as e:
+                    logging.error(f"Unexpected error for {filename}: {e}")
+                    db.session.rollback()
+                    errors.append(f'Erro inesperado para {filename}: {str(e)}')
+                    continue
                 processed_count += 1
                 
             except Exception as e:
@@ -347,18 +369,28 @@ def bulk_upload_process(job_id):
                 errors.append(f'Erro ao processar {file.filename}: {str(e)}')
     
     # Start parallel AI analysis for all uploaded candidates
-    if candidate_ids:
-        logging.info(f"Starting parallel analysis for {len(candidate_ids)} candidates")
-        from background_processor import start_background_analysis
-        start_background_analysis(candidate_ids)
-    
-    return jsonify({
-        'success': True,
-        'processed_count': processed_count,
-        'candidate_ids': candidate_ids,
-        'errors': errors,
-        'message': f'{processed_count} currículos processados. A IA vai analisar TODOS os candidatos (pode demorar alguns minutos).'
-    })
+    try:
+        if candidate_ids:
+            logging.info(f"Starting parallel analysis for {len(candidate_ids)} candidates")
+            from background_processor import start_background_analysis
+            start_background_analysis(candidate_ids)
+        
+        return jsonify({
+            'success': True,
+            'processed_count': processed_count,
+            'candidate_ids': candidate_ids,
+            'errors': errors,
+            'message': f'{processed_count} currículos processados. A IA vai analisar TODOS os candidatos (pode demorar alguns minutos).'
+        })
+    except Exception as e:
+        logging.error(f"Error in bulk upload response: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Erro no processamento: {str(e)}',
+            'processed_count': processed_count,
+            'candidate_ids': candidate_ids,
+            'errors': errors
+        }), 500
 
 # Candidate management
 @app.route('/candidates')
