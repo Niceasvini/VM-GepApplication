@@ -93,66 +93,74 @@
     <div class="row">
         <!-- AI Analysis Results -->
         <div class="col-md-8">
-            {% if candidate.analysis_status == 'completed' %}
-                {% if candidate.ai_analysis %}
-                    {% if '## Resumo Executivo' in candidate.ai_analysis and '## Análise Detalhada' in candidate.ai_analysis %}
-                        <!-- New formatted analysis -->
-                        {% set analysis_parts = candidate.ai_analysis.split('## ') %}
-                        {% for part in analysis_parts %}
-                            {% if part.strip() %}
-                                {% if part.startswith('Resumo Executivo') %}
-                                    <div class="card border-0 shadow-sm mb-4">
-                                        <div class="card-header bg-primary-custom text-white">
-                                            <h5 class="card-title mb-0">
-                                                <i class="fas fa-user me-2"></i>Resumo Executivo
-                                            </h5>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="analysis-content">
-                                                {{ part.replace('Resumo Executivo', '').strip()|replace('\n', '<br>')|safe }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                {% elif part.startswith('Análise Detalhada') %}
-                                    <div class="card border-0 shadow-sm mb-4">
-                                        <div class="card-header bg-secondary text-white">
-                                            <h5 class="card-title mb-0">
-                                                <i class="fas fa-chart-line me-2"></i>Análise Detalhada
-                                            </h5>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="analysis-content">
-                                                {{ part.replace('Análise Detalhada', '').strip()|replace('\n', '<br>')|safe }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                {% endif %}
+            {% if candidate.analysis_status == 'completed' and candidate.ai_analysis %}
+                <!-- Always show Resumo Executivo -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-primary-custom text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-user me-2"></i>Resumo Executivo
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="analysis-content">
+                            {% if '## Resumo Executivo' in candidate.ai_analysis %}
+                                {% set resume_section = candidate.ai_analysis.split('## Resumo Executivo')[1].split('## Análise Detalhada')[0] %}
+                                {{ resume_section.strip()|replace('**', '')|replace('*', '')|replace('\n', '<br>')|safe }}
+                            {% else %}
+                                <!-- Extract resume info from older format -->
+                                {% set clean_analysis = candidate.ai_analysis|replace('**', '')|replace('*', '') %}
+                                {{ clean_analysis|replace('\n', '<br>')|safe }}
                             {% endif %}
-                        {% endfor %}
-                    {% else %}
-                        <!-- Fallback for older analysis format -->
-                        <div class="card border-0 shadow-sm mb-4">
-                            <div class="card-header bg-primary-custom text-white">
-                                <h5 class="card-title mb-0">
-                                    <i class="fas fa-robot me-2"></i>Análise da IA
-                                </h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="analysis-content">
-                                    {{ candidate.ai_analysis|replace('\n', '<br>')|safe }}
-                                </div>
-                            </div>
-                        </div>
-                    {% endif %}
-                {% else %}
-                    <div class="card border-0 shadow-sm mb-4">
-                        <div class="card-body text-center py-5">
-                            <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
-                            <h5 class="text-warning">Análise não disponível</h5>
-                            <p class="text-muted">A análise da IA não foi gerada para este candidato.</p>
                         </div>
                     </div>
-                {% endif %}
+                </div>
+                
+                <!-- Always show Análise Detalhada -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-line me-2"></i>Análise Detalhada
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="analysis-content">
+                            {% if '## Análise Detalhada' in candidate.ai_analysis %}
+                                {% set analysis_section = candidate.ai_analysis.split('## Análise Detalhada')[1] %}
+                                {{ analysis_section.strip()|replace('**', '')|replace('*', '')|replace('\n', '<br>')|safe }}
+                            {% else %}
+                                <!-- Generate structured analysis for older format -->
+                                <div class="mb-3">
+                                    <h6 class="text-primary-custom">1. Alinhamento Técnico:</h6>
+                                    <p class="text-muted">Análise das competências que se alinham com a vaga em questão.</p>
+                                </div>
+                                <div class="mb-3">
+                                    <h6 class="text-primary-custom">2. Gaps Técnicos:</h6>
+                                    <p class="text-muted">Identificação das lacunas técnicas e conhecimentos ausentes.</p>
+                                </div>
+                                <div class="mb-3">
+                                    <h6 class="text-primary-custom">3. Recomendação Final:</h6>
+                                    <p class="text-muted">
+                                        {% if candidate.ai_score and candidate.ai_score < 5.0 %}
+                                            <span class="badge bg-danger">Inadequado</span> - Pontuação abaixo do mínimo exigido.
+                                        {% elif candidate.ai_score and candidate.ai_score >= 7.0 %}
+                                            <span class="badge bg-success">Adequado</span> - Candidato qualificado para a vaga.
+                                        {% else %}
+                                            <span class="badge bg-warning">Parcial</span> - Candidato com potencial, mas necessita desenvolvimento.
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% elif candidate.analysis_status == 'completed' %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                        <h5 class="text-warning">Análise não disponível</h5>
+                        <p class="text-muted">A análise da IA não foi gerada para este candidato.</p>
+                    </div>
+                </div>
                 
                 {% if candidate.get_skills_list() %}
                 <div class="card border-0 shadow-sm mb-4">
