@@ -17,8 +17,7 @@ if not DEEPSEEK_API_KEY:
 # Configure OpenAI client for DeepSeek API
 openai = OpenAI(
     api_key=DEEPSEEK_API_KEY,
-    base_url="https://api.deepseek.com/v1",
-    timeout=60.0  # 60 seconds timeout
+    base_url="https://api.deepseek.com/v1"
 )
 
 def generate_score_only(cv_text, job):

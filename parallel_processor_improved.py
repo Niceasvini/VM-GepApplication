@@ -133,7 +133,7 @@ class ImprovedParallelAIProcessor:
             for future in as_completed(future_to_candidate):
                 candidate_id = future_to_candidate[future]
                 try:
-                    result = future.result(timeout=300)  # 5 minute timeout per candidate
+                    result = future.result()
                     if result:
                         success_count += 1
                     else:

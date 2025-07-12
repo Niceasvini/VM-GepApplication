@@ -15,11 +15,10 @@ from app import app, db
 from models import Candidate
 from file_processor import extract_text_from_file
 
-# Configure OpenAI client with timeout
+# Configure OpenAI client
 client = OpenAI(
     api_key="sk-08e53165834948c8b96fe8ec44a12baf",
-    base_url="https://api.deepseek.com/v1",
-    timeout=30  # 30 second timeout
+    base_url="https://api.deepseek.com/v1"
 )
 
 def fix_and_process_candidates():

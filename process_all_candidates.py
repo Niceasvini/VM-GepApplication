@@ -19,7 +19,7 @@ from file_processor import extract_text_from_file
 client = OpenAI(
     api_key="sk-08e53165834948c8b96fe8ec44a12baf",
     base_url="https://api.deepseek.com/v1",
-    timeout=20
+
 )
 
 def process_all_with_progress():
