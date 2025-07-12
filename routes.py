@@ -73,25 +73,44 @@ def index():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    # Get statistics
-    total_jobs = Job.query.count()
-    total_candidates = Candidate.query.count()
-    analyzed_candidates = Candidate.query.filter_by(analysis_status='completed').count()
-    
-    # Get recent jobs
-    recent_jobs = Job.query.order_by(Job.created_at.desc()).limit(5).all()
-    
-    # Get top candidates (by score)
-    top_candidates = Candidate.query.filter(
-        Candidate.ai_score.isnot(None)
-    ).order_by(Candidate.ai_score.desc()).limit(10).all()
+    # Get statistics for current user only (admin can see all)
+    if current_user.is_admin():
+        # Admin sees all data
+        total_jobs = Job.query.count()
+        total_candidates = Candidate.query.count()
+        analyzed_candidates = Candidate.query.filter_by(analysis_status='completed').count()
+        recent_jobs = Job.query.order_by(Job.created_at.desc()).limit(5).all()
+        candidates_with_scores = Candidate.query.filter(Candidate.ai_score.isnot(None)).all()
+        top_candidates = Candidate.query.filter(
+            Candidate.ai_score.isnot(None)
+        ).order_by(Candidate.ai_score.desc()).limit(10).all()
+    else:
+        # Regular users see only their own data
+        user_jobs = Job.query.filter_by(created_by=current_user.id)
+        user_job_ids = [job.id for job in user_jobs]
+        
+        total_jobs = user_jobs.count()
+        total_candidates = Candidate.query.filter(Candidate.job_id.in_(user_job_ids)).count()
+        analyzed_candidates = Candidate.query.filter(
+            Candidate.job_id.in_(user_job_ids),
+            Candidate.analysis_status == 'completed'
+        ).count()
+        
+        recent_jobs = user_jobs.order_by(Job.created_at.desc()).limit(5).all()
+        candidates_with_scores = Candidate.query.filter(
+            Candidate.job_id.in_(user_job_ids),
+            Candidate.ai_score.isnot(None)
+        ).all()
+        top_candidates = Candidate.query.filter(
+            Candidate.job_id.in_(user_job_ids),
+            Candidate.ai_score.isnot(None)
+        ).order_by(Candidate.ai_score.desc()).limit(10).all()
     
     # Get score distribution for chart
     score_ranges = {
         '0-2': 0, '2-4': 0, '4-6': 0, '6-8': 0, '8-10': 0
     }
     
-    candidates_with_scores = Candidate.query.filter(Candidate.ai_score.isnot(None)).all()
     for candidate in candidates_with_scores:
         score = candidate.ai_score
         if score <= 2:
