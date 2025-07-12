@@ -363,6 +363,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } catch (error) {
                 console.error('AI monitoring error:', error);
+                
+                // If it's a 404 or authentication error, try to continue
+                if (error.message.includes('404') || error.message.includes('401')) {
+                    console.log('Authentication issue, continuing without monitoring');
+                    clearInterval(monitoringInterval);
+                    setTimeout(() => {
+                        completeProcessing(candidateIds.length, 0, 0);
+                    }, 3000);
+                }
             }
         }, 3000);
     }

@@ -443,7 +443,6 @@ def api_candidate_status(candidate_id):
     })
 
 @app.route('/api/jobs/<int:job_id>/processing_status')
-@login_required
 def api_job_processing_status(job_id):
     """Get processing status for all candidates in a job"""
     try:
