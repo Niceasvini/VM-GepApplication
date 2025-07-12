@@ -89,7 +89,10 @@ Resumo Executivo
 
 Nome Completo: [nome do candidato]
 
-Experiência Relevante: [Cargo] na [Empresa] ([Ano-Início] - [Ano-Fim]), [Cargo] na [Empresa] ([Ano-Início] - [Ano-Fim]), [continuar com todas as experiências mais relevantes]
+Experiência Relevante:
+• [Cargo] na [Empresa] ([período])
+• [Cargo] na [Empresa] ([período])
+• [Cargo] na [Empresa] ([período])
 
 Habilidades Técnicas: [Liste as principais habilidades técnicas identificadas no currículo]
 
@@ -102,13 +105,19 @@ Informações de Contato: Email: [email], Telefone: [telefone], Localização: [
 Análise da IA
 
 1. Alinhamento Técnico:
-O candidato possui experiência em [cite experiências específicas do currículo] na empresa [nome da empresa] durante [período]. Suas responsabilidades incluíram [liste atividades específicas]. Em relação aos requisitos da vaga de {job.title}, o candidato demonstra competência em [liste competências específicas que se alinham]. Por exemplo, sua experiência com [tecnologia/processo específico] na [empresa] por [período] indica capacidade para [função específica da vaga]. Adicionalmente, sua formação em [curso/área] complementa os requisitos de [requisito específico da vaga].
+• Experiência relevante: [cargo] na [empresa] ([período])
+• Competências alinhadas: [liste 2-3 competências específicas]
+• Adequação à vaga: [explique objetivamente o que atende aos requisitos]
 
 2. Gaps Técnicos:
-Analisando os requisitos da vaga, o candidato apresenta lacunas em [liste especificamente quais requisitos faltam]. Não possui experiência comprovada em [tecnologia/metodologia específica] que é essencial para [função específica]. Sua formação carece de [conhecimento específico] necessário para [atividade da vaga]. Recomenda-se desenvolvimento em [área específica] através de [curso/certificação específica]. Também seria benéfico adquirir experiência prática em [tecnologia/processo específico] para atender plenamente aos requisitos de [requisito específico da vaga].
+• Lacunas identificadas: [liste 2-3 lacunas específicas]
+• Conhecimentos em falta: [conhecimentos específicos necessários]
+• Recomendações: [sugira 2-3 desenvolvimentos específicos]
 
 3. Recomendação Final: [Adequado/Parcial/Inadequado]
-Baseado na análise técnica, o candidato demonstra [pontos fortes específicos] através de sua experiência em [empresa/cargo] e formação em [área]. Contudo, apresenta limitações em [áreas específicas] que impactam sua adequação para [função específica da vaga]. Considerando que [justificativa técnica baseada em experiência e requisitos], a recomendação é [Adequado/Parcial/Inadequado] pois [explicação detalhada do raciocínio].
+• Pontos fortes: [liste 2-3 pontos fortes específicos]
+• Limitações: [liste 2-3 limitações específicas]
+• Justificativa: [explique objetivamente por que é Adequado/Parcial/Inadequado]
 
 VAGA: {job.title}
 REQUISITOS: {job.requirements[:1000] if job.requirements else 'Não especificado'}
