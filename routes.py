@@ -301,9 +301,62 @@ def bulk_upload_process(job_id):
         
         logging.info(f"Starting optimized bulk upload for {len(files)} files")
         
-        # Use the streaming upload processor
-        from streaming_upload import start_batch_upload
-        result = start_batch_upload(files, job_id)
+        # Use simple immediate response to avoid timeout
+        candidate_ids = []
+        processed_count = 0
+        errors = []
+        
+        for file in files:
+            try:
+                if not file.filename or file.filename == '':
+                    continue
+                
+                # Quick processing - just save files
+                filename = secure_filename(file.filename)
+                if not filename:
+                    filename = f"resume_{int(time.time())}.pdf"
+                
+                file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+                if file_ext not in ['pdf', 'docx', 'txt']:
+                    continue
+                
+                # Save file
+                file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+                file.save(file_path)
+                
+                # Create candidate with minimal processing
+                candidate = Candidate(
+                    name=filename.rsplit('.', 1)[0],
+                    filename=filename,
+                    file_path=file_path,
+                    file_type=file_ext,
+                    job_id=job_id,
+                    status='pending',
+                    analysis_status='pending'
+                )
+                
+                db.session.add(candidate)
+                db.session.flush()
+                candidate_ids.append(candidate.id)
+                processed_count += 1
+                
+            except Exception as e:
+                errors.append(f'Erro: {file.filename}')
+        
+        # Commit all at once
+        db.session.commit()
+        
+        # Start simple background processing
+        if candidate_ids:
+            from simple_processor import start_simple_background_processing
+            start_simple_background_processing(candidate_ids)
+        
+        result = {
+            'processed_count': processed_count,
+            'candidate_ids': candidate_ids,
+            'errors': errors,
+            'total_files': len(files)
+        }
         
         return jsonify({
             'success': True,

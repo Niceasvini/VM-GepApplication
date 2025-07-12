@@ -1,26 +1,18 @@
-#!/usr/bin/env python3
 """
 Fast parallel processor for AI analysis with optimized performance
 """
 import os
-import time
 import threading
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import time
+import logging
 from datetime import datetime
-from openai import OpenAI
-
-# Set environment
-os.environ['DATABASE_URL'] = 'postgresql://postgres.bndkpowgvagtlxwmthma:5585858Vini%40@aws-0-sa-east-1.pooler.supabase.com:6543/postgres'
-
 from app import app, db
-from models import User, Job, Candidate
-from file_processor import extract_text_from_file
+from models import Candidate
+from ai_service import analyze_resume
 
-# Configure OpenAI client
-client = OpenAI(
-    api_key="sk-08e53165834948c8b96fe8ec44a12baf",
-    base_url="https://api.deepseek.com/v1"
-)
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def process_candidate_fast(candidate_id):
     """
@@ -28,7 +20,7 @@ def process_candidate_fast(candidate_id):
     """
     try:
         with app.app_context():
-            candidate = Candidate.query.get(candidate_id)
+            candidate = db.session.get(Candidate, candidate_id)
             if not candidate:
                 return False
             
@@ -36,61 +28,30 @@ def process_candidate_fast(candidate_id):
             candidate.analysis_status = 'processing'
             db.session.commit()
             
-            # Extract resume text
-            resume_text = extract_text_from_file(candidate.file_path, candidate.file_type)
-            if len(resume_text) > 2000:
-                resume_text = resume_text[:2000]
+            # Analyze with AI
+            result = analyze_resume(candidate.file_path, candidate.file_type, candidate.job)
             
-            # Generate score only (faster)
-            score_response = client.chat.completions.create(
-                model="deepseek-chat",
-                messages=[{
-                    "role": "user",
-                    "content": f"Avalie este currículo para a vaga '{candidate.job.title}' de 0 a 10. Responda apenas a nota (ex: 7.5):\n\n{resume_text}"
-                }],
-                max_tokens=20,
-                temperature=0.3
-            )
-            
-            score_text = score_response.choices[0].message.content.strip()
-            try:
-                score = float(score_text.replace(":", "").strip())
-            except:
-                score = 5.0
-            
-            # Basic analysis (shorter)
-            analysis_response = client.chat.completions.create(
-                model="deepseek-chat",
-                messages=[{
-                    "role": "user",
-                    "content": f"Resumo do candidato {candidate.name} para vaga '{candidate.job.title}' (máximo 200 palavras):\n\n{resume_text}"
-                }],
-                max_tokens=300,
-                temperature=0.5
-            )
-            
-            analysis = analysis_response.choices[0].message.content.strip()
-            
-            # Update candidate
-            candidate.ai_score = score
-            candidate.ai_summary = analysis
-            candidate.ai_analysis = f"Análise rápida: Score {score}/10 baseado em compatibilidade com a vaga."
-            candidate.analysis_status = 'completed'
-            candidate.analyzed_at = datetime.utcnow()
-            
-            db.session.commit()
-            
-            return True
-            
+            if result:
+                candidate.ai_score = result.get('score', 0)
+                candidate.ai_summary = result.get('summary', '')
+                candidate.ai_analysis = result.get('analysis', '')
+                candidate.extracted_skills = result.get('skills', '[]')
+                candidate.analysis_status = 'completed'
+                candidate.analyzed_at = datetime.utcnow()
+                db.session.commit()
+                return True
+            else:
+                candidate.analysis_status = 'failed'
+                db.session.commit()
+                return False
+                
     except Exception as e:
-        print(f"Error processing candidate {candidate_id}: {str(e)}")
+        logger.error(f"Error processing candidate {candidate_id}: {str(e)}")
         try:
             with app.app_context():
-                candidate = Candidate.query.get(candidate_id)
+                candidate = db.session.get(Candidate, candidate_id)
                 if candidate:
                     candidate.analysis_status = 'failed'
-                    candidate.ai_summary = f'Erro na análise: {str(e)}'
-                    candidate.ai_score = 0.0
                     db.session.commit()
         except:
             pass
@@ -100,40 +61,57 @@ def process_candidates_parallel_fast(candidate_ids):
     """
     Process multiple candidates in parallel with optimized performance
     """
-    results = {'success': 0, 'failed': 0}
+    import threading
+    from concurrent.futures import ThreadPoolExecutor, as_completed
     
-    with ThreadPoolExecutor(max_workers=3) as executor:
+    logger.info(f"🚀 Starting fast parallel processing of {len(candidate_ids)} candidates")
+    
+    success_count = 0
+    failed_count = 0
+    
+    # Use smaller thread pool for stability
+    with ThreadPoolExecutor(max_workers=4) as executor:
         # Submit all tasks
-        futures = {executor.submit(process_candidate_fast, cid): cid for cid in candidate_ids}
+        future_to_candidate = {
+            executor.submit(process_candidate_fast, cid): cid 
+            for cid in candidate_ids
+        }
         
-        # Process results as they complete
-        for future in as_completed(futures):
-            candidate_id = futures[future]
+        # Process completed tasks
+        for future in as_completed(future_to_candidate):
+            candidate_id = future_to_candidate[future]
             try:
-                success = future.result()
-                if success:
-                    results['success'] += 1
-                    print(f"✓ Completed candidate {candidate_id}")
+                result = future.result()
+                if result:
+                    success_count += 1
                 else:
-                    results['failed'] += 1
-                    print(f"✗ Failed candidate {candidate_id}")
+                    failed_count += 1
             except Exception as e:
-                results['failed'] += 1
-                print(f"✗ Exception for candidate {candidate_id}: {e}")
+                logger.error(f"Exception in processing candidate {candidate_id}: {str(e)}")
+                failed_count += 1
     
-    return results
+    logger.info(f"🎉 Fast processing completed: {success_count} success, {failed_count} failed")
+    
+    return {
+        'success': success_count,
+        'failed': failed_count,
+        'total': len(candidate_ids)
+    }
 
 def start_fast_background_processing(candidate_ids):
     """
     Start fast background processing in a separate thread
     """
     def fast_background_worker():
-        print(f"Starting fast background processing for {len(candidate_ids)} candidates...")
-        results = process_candidates_parallel_fast(candidate_ids)
-        print(f"Fast processing completed: {results['success']} success, {results['failed']} failed")
+        try:
+            process_candidates_parallel_fast(candidate_ids)
+        except Exception as e:
+            logger.error(f"Error in fast background processing: {str(e)}")
     
-    thread = threading.Thread(target=fast_background_worker, daemon=True)
+    thread = threading.Thread(target=fast_background_worker)
+    thread.daemon = True
     thread.start()
+    
     return thread
 
 def get_fast_processing_status(candidate_ids):
@@ -142,8 +120,6 @@ def get_fast_processing_status(candidate_ids):
     """
     try:
         with app.app_context():
-            candidates = Candidate.query.filter(Candidate.id.in_(candidate_ids)).all()
-            
             status_counts = {
                 'pending': 0,
                 'processing': 0,
@@ -151,12 +127,16 @@ def get_fast_processing_status(candidate_ids):
                 'failed': 0
             }
             
-            for candidate in candidates:
-                status_counts[candidate.analysis_status] += 1
+            for cid in candidate_ids:
+                candidate = db.session.get(Candidate, cid)
+                if candidate:
+                    status = candidate.analysis_status
+                    if status in status_counts:
+                        status_counts[status] += 1
             
             return status_counts
     except Exception as e:
-        print(f"Error getting processing status: {e}")
+        logger.error(f"Error getting processing status: {str(e)}")
         return {'pending': 0, 'processing': 0, 'completed': 0, 'failed': 0}
 
 def reset_stale_candidates():
@@ -165,27 +145,21 @@ def reset_stale_candidates():
     """
     try:
         with app.app_context():
-            stale_candidates = Candidate.query.filter_by(analysis_status='processing').all()
+            # Find candidates stuck in processing for more than 5 minutes
+            from datetime import datetime, timedelta
+            threshold = datetime.utcnow() - timedelta(minutes=5)
+            
+            stale_candidates = Candidate.query.filter(
+                Candidate.analysis_status == 'processing',
+                Candidate.analyzed_at < threshold
+            ).all()
+            
             for candidate in stale_candidates:
                 candidate.analysis_status = 'pending'
-            db.session.commit()
-            print(f"Reset {len(stale_candidates)} stale candidates")
+                db.session.commit()
+                logger.info(f"Reset stale candidate: {candidate.id}")
+            
+            return len(stale_candidates)
     except Exception as e:
-        print(f"Error resetting stale candidates: {e}")
-
-if __name__ == "__main__":
-    # Test with existing candidates
-    with app.app_context():
-        candidates = Candidate.query.all()
-        if candidates:
-            candidate_ids = [c.id for c in candidates]
-            print(f"Found {len(candidate_ids)} candidates to process")
-            
-            # Reset any stuck candidates
-            reset_stale_candidates()
-            
-            # Process them
-            results = process_candidates_parallel_fast(candidate_ids)
-            print(f"Processing completed: {results}")
-        else:
-            print("No candidates found to process")
+        logger.error(f"Error resetting stale candidates: {str(e)}")
+        return 0
