@@ -272,24 +272,26 @@ const scoreChart = new Chart(scoreCtx, {
     }
 });
 
-// Status Distribution Chart (Mock data for demonstration)
+// Status Distribution Chart using real data
 const statusCtx = document.getElementById('statusChart').getContext('2d');
 const statusChart = new Chart(statusCtx, {
     type: 'doughnut',
     data: {
-        labels: ['Pendente', 'Interessado', 'Entrevista', 'Reprovado'],
+        labels: ['Pendente', 'Interessado', 'Reprovado'],
         datasets: [{
-            data: [{{ total_candidates - analyzed_candidates }}, 5, 3, 2], // Mock data
+            data: [
+                {{ candidate_status.get('pending', 0) }},
+                {{ candidate_status.get('interested', 0) }},
+                {{ candidate_status.get('rejected', 0) }}
+            ],
             backgroundColor: [
                 'rgba(108, 117, 125, 0.8)',
                 'rgba(25, 135, 84, 0.8)',
-                'rgba(13, 202, 240, 0.8)',
                 'rgba(220, 53, 69, 0.8)'
             ],
             borderColor: [
                 'rgba(108, 117, 125, 1)',
                 'rgba(25, 135, 84, 1)',
-                'rgba(13, 202, 240, 1)',
                 'rgba(220, 53, 69, 1)'
             ],
             borderWidth: 1

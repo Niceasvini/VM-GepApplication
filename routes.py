@@ -17,7 +17,10 @@ def login():
         username = request.form['username']
         password = request.form['password']
         
+        # Try to find user by username first, then by email
         user = User.query.filter_by(username=username).first()
+        if not user:
+            user = User.query.filter_by(email=username).first()
         
         if user and user.check_password(password):
             login_user(user)
@@ -124,13 +127,33 @@ def dashboard():
         else:
             score_ranges['8-10'] += 1
     
+    # Get candidate status distribution for pie chart
+    if current_user.is_admin():
+        # Admin sees all candidates
+        status_counts = db.session.query(
+            Candidate.status, 
+            db.func.count(Candidate.id)
+        ).group_by(Candidate.status).all()
+    else:
+        # Regular users see only their candidates
+        status_counts = db.session.query(
+            Candidate.status, 
+            db.func.count(Candidate.id)
+        ).filter(Candidate.job_id.in_(user_job_ids)).group_by(Candidate.status).all()
+    
+    # Convert to dictionary for template
+    candidate_status = {}
+    for status, count in status_counts:
+        candidate_status[status] = count
+    
     return render_template('dashboard.html',
                          total_jobs=total_jobs,
                          total_candidates=total_candidates,
                          analyzed_candidates=analyzed_candidates,
                          recent_jobs=recent_jobs,
                          top_candidates=top_candidates,
-                         score_ranges=score_ranges)
+                         score_ranges=score_ranges,
+                         candidate_status=candidate_status)
 
 # Job management routes
 @app.route('/jobs')

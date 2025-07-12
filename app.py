@@ -36,6 +36,11 @@ def after_request(response):
 database_url = os.environ.get("DATABASE_URL")
 if database_url and database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
+
+# Use Supabase connection string from .env if DATABASE_URL is not working
+if not database_url or "neon.tech" in database_url:
+    database_url = "postgresql://postgres.bndkpowgvagtlxwmthma:5585858Vini%40@aws-0-sa-east-1.pooler.supabase.com:6543/postgres"
+
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
@@ -75,15 +80,19 @@ with app.app_context():
         from models import User
         admin_user = User.query.filter_by(email='viniciusniceas@vianaemoura.com.br').first()
         if not admin_user:
-            admin_user = User(
-                username='admin',
-                email='viniciusniceas@vianaemoura.com.br',
-                role='admin'
-            )
-            admin_user.set_password('5585858Vi@')
-            db.session.add(admin_user)
-            db.session.commit()
-            logging.info("Admin user created: viniciusniceas@vianaemoura.com.br")
+            try:
+                admin_user = User(
+                    username='admin',
+                    email='viniciusniceas@vianaemoura.com.br',
+                    role='admin'
+                )
+                admin_user.set_password('5585858Vi@')
+                db.session.add(admin_user)
+                db.session.commit()
+                logging.info("Admin user created: viniciusniceas@vianaemoura.com.br")
+            except Exception as e:
+                logging.info(f"Admin user already exists: {e}")
+                db.session.rollback()
         
     except Exception as e:
         logging.error(f"Database error: {e}")
