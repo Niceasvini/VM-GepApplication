@@ -136,7 +136,11 @@ def dashboard():
 @app.route('/jobs')
 @login_required
 def jobs_list():
-    jobs = Job.query.order_by(Job.created_at.desc()).all()
+    # Users only see their own jobs, admin sees all
+    if current_user.is_admin():
+        jobs = Job.query.order_by(Job.created_at.desc()).all()
+    else:
+        jobs = Job.query.filter_by(created_by=current_user.id).order_by(Job.created_at.desc()).all()
     return render_template('jobs/list.html', jobs=jobs)
 
 @app.route('/jobs/create', methods=['GET', 'POST'])
@@ -168,6 +172,12 @@ def create_job():
 @login_required
 def job_detail(job_id):
     job = Job.query.get_or_404(job_id)
+    
+    # Check if user has access to this job
+    if not current_user.is_admin() and job.created_by != current_user.id:
+        flash('Acesso negado. Você só pode ver suas próprias vagas.', 'error')
+        return redirect(url_for('jobs_list'))
+    
     candidates = Candidate.query.filter_by(job_id=job_id).order_by(
         Candidate.ai_score.desc().nullslast()
     ).all()
@@ -190,6 +200,11 @@ def job_detail(job_id):
 def edit_job(job_id):
     job = Job.query.get_or_404(job_id)
     
+    # Check if user has access to edit this job
+    if not current_user.is_admin() and job.created_by != current_user.id:
+        flash('Acesso negado. Você só pode editar suas próprias vagas.', 'error')
+        return redirect(url_for('jobs_list'))
+    
     if request.method == 'POST':
         job.title = request.form['title']
         job.description = request.form['description']
@@ -205,11 +220,13 @@ def edit_job(job_id):
 @app.route('/jobs/<int:job_id>/delete', methods=['POST'])
 @login_required
 def delete_job(job_id):
-    if not current_user.is_admin():
-        flash('Permissão negada.', 'error')
+    job = Job.query.get_or_404(job_id)
+    
+    # Check if user has access to delete this job
+    if not current_user.is_admin() and job.created_by != current_user.id:
+        flash('Acesso negado. Você só pode excluir suas próprias vagas.', 'error')
         return redirect(url_for('jobs_list'))
     
-    job = Job.query.get_or_404(job_id)
     db.session.delete(job)
     db.session.commit()
     
@@ -221,6 +238,11 @@ def delete_job(job_id):
 @login_required
 def upload_resume(job_id):
     job = Job.query.get_or_404(job_id)
+    
+    # Check if user has access to upload to this job
+    if not current_user.is_admin() and job.created_by != current_user.id:
+        flash('Acesso negado. Você só pode fazer upload para suas próprias vagas.', 'error')
+        return redirect(url_for('jobs_list'))
     
     if 'resumes' not in request.files:
         flash('Nenhum arquivo selecionado.', 'error')
@@ -284,6 +306,12 @@ def upload_resume(job_id):
 def bulk_upload_page(job_id):
     """Page for bulk resume upload"""
     job = Job.query.get_or_404(job_id)
+    
+    # Check if user has access to this job
+    if not current_user.is_admin() and job.created_by != current_user.id:
+        flash('Acesso negado. Você só pode fazer upload para suas próprias vagas.', 'error')
+        return redirect(url_for('jobs_list'))
+    
     return render_template('jobs/bulk_upload.html', job=job)
 
 @app.route('/jobs/<int:job_id>/bulk-upload', methods=['POST'])
@@ -292,6 +320,10 @@ def bulk_upload_process(job_id):
     """Process bulk resume upload with optimized batch processing"""
     try:
         job = Job.query.get_or_404(job_id)
+        
+        # Check if user has access to this job
+        if not current_user.is_admin() and job.created_by != current_user.id:
+            return jsonify({'error': 'Acesso negado. Você só pode fazer upload para suas próprias vagas.'}), 403
         
         if 'files' not in request.files:
             return jsonify({'error': 'Nenhum arquivo enviado'}), 400
@@ -464,13 +496,24 @@ def bulk_upload_process(job_id):
 @app.route('/candidates')
 @login_required
 def candidates_list():
-    candidates = Candidate.query.order_by(Candidate.ai_score.desc().nullslast()).all()
+    # Users only see candidates from their own jobs, admin sees all
+    if current_user.is_admin():
+        candidates = Candidate.query.order_by(Candidate.ai_score.desc().nullslast()).all()
+    else:
+        user_job_ids = [job.id for job in Job.query.filter_by(created_by=current_user.id)]
+        candidates = Candidate.query.filter(Candidate.job_id.in_(user_job_ids)).order_by(Candidate.ai_score.desc().nullslast()).all()
     return render_template('candidates/list.html', candidates=candidates)
 
 @app.route('/candidates/<int:candidate_id>')
 @login_required
 def candidate_detail(candidate_id):
     candidate = Candidate.query.get_or_404(candidate_id)
+    
+    # Check if user has access to this candidate
+    if not current_user.is_admin() and candidate.job.created_by != current_user.id:
+        flash('Acesso negado. Você só pode ver candidatos das suas próprias vagas.', 'error')
+        return redirect(url_for('candidates_list'))
+    
     comments = CandidateComment.query.filter_by(candidate_id=candidate_id).order_by(
         CandidateComment.created_at.desc()
     ).all()
@@ -480,6 +523,12 @@ def candidate_detail(candidate_id):
 @login_required
 def update_candidate_status(candidate_id):
     candidate = Candidate.query.get_or_404(candidate_id)
+    
+    # Check if user has access to this candidate
+    if not current_user.is_admin() and candidate.job.created_by != current_user.id:
+        flash('Acesso negado. Você só pode atualizar candidatos das suas próprias vagas.', 'error')
+        return redirect(url_for('candidates_list'))
+    
     new_status = request.form['status']
     
     if new_status in ['pending', 'interested', 'rejected']:
@@ -495,6 +544,12 @@ def update_candidate_status(candidate_id):
 @login_required
 def add_comment(candidate_id):
     candidate = Candidate.query.get_or_404(candidate_id)
+    
+    # Check if user has access to this candidate
+    if not current_user.is_admin() and candidate.job.created_by != current_user.id:
+        flash('Acesso negado. Você só pode comentar em candidatos das suas próprias vagas.', 'error')
+        return redirect(url_for('candidates_list'))
+    
     content = request.form['content']
     
     comment = CandidateComment(
@@ -513,6 +568,11 @@ def add_comment(candidate_id):
 @login_required
 def download_candidate_file(candidate_id):
     candidate = Candidate.query.get_or_404(candidate_id)
+    
+    # Check if user has access to this candidate
+    if not current_user.is_admin() and candidate.job.created_by != current_user.id:
+        flash('Acesso negado. Você só pode baixar arquivos de candidatos das suas próprias vagas.', 'error')
+        return redirect(url_for('candidates_list'))
     
     # Check if file exists
     if not os.path.exists(candidate.file_path):
@@ -535,6 +595,12 @@ def download_candidate_file(candidate_id):
 @login_required
 def delete_candidate(candidate_id):
     candidate = Candidate.query.get_or_404(candidate_id)
+    
+    # Check if user has access to this candidate
+    if not current_user.is_admin() and candidate.job.created_by != current_user.id:
+        flash('Acesso negado. Você só pode excluir candidatos das suas próprias vagas.', 'error')
+        return redirect(url_for('candidates_list'))
+    
     job_id = candidate.job_id
     
     # Delete the physical file if it exists
@@ -557,6 +623,11 @@ def delete_candidate(candidate_id):
 @login_required
 def api_candidate_status(candidate_id):
     candidate = Candidate.query.get_or_404(candidate_id)
+    
+    # Check if user has access to this candidate
+    if not current_user.is_admin() and candidate.job.created_by != current_user.id:
+        return jsonify({'error': 'Acesso negado'}), 403
+    
     return jsonify({
         'id': candidate.id,
         'analysis_status': candidate.analysis_status,
@@ -565,10 +636,16 @@ def api_candidate_status(candidate_id):
     })
 
 @app.route('/api/jobs/<int:job_id>/processing_status')
+@login_required
 def api_job_processing_status(job_id):
     """Get processing status for all candidates in a job"""
     try:
         job = Job.query.get_or_404(job_id)
+        
+        # Check if user has access to this job
+        if not current_user.is_admin() and job.created_by != current_user.id:
+            return jsonify({'error': 'Acesso negado'}), 403
+        
         candidates = Candidate.query.filter_by(job_id=job_id).all()
         
         status_counts = {
@@ -608,6 +685,10 @@ def api_reprocess_candidate(candidate_id):
     try:
         candidate = Candidate.query.get_or_404(candidate_id)
         
+        # Check if user has access to this candidate
+        if not current_user.is_admin() and candidate.job.created_by != current_user.id:
+            return jsonify({'error': 'Acesso negado'}), 403
+        
         # Reset candidate status
         candidate.analysis_status = 'pending'
         candidate.ai_score = None
@@ -637,7 +718,16 @@ def api_reprocess_candidate(candidate_id):
 def api_process_pending():
     """Manually trigger processing of pending candidates"""
     try:
-        pending_candidates = Candidate.query.filter_by(analysis_status='pending').all()
+        # Users only process their own candidates, admin processes all
+        if current_user.is_admin():
+            pending_candidates = Candidate.query.filter_by(analysis_status='pending').all()
+        else:
+            user_job_ids = [job.id for job in Job.query.filter_by(created_by=current_user.id)]
+            pending_candidates = Candidate.query.filter(
+                Candidate.job_id.in_(user_job_ids),
+                Candidate.analysis_status == 'pending'
+            ).all()
+        
         if not pending_candidates:
             return jsonify({'success': False, 'message': 'Nenhum candidato pendente encontrado'})
         

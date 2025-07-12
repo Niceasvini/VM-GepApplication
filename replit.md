@@ -8,6 +8,15 @@ This is a Flask-based recruitment platform that uses AI to automatically analyze
 
 Preferred communication style: Simple, everyday language.
 
+## Security & Access Control
+
+**User Account Isolation System (Implemented July 2025)**
+- Each user account has complete data isolation
+- Users can only see and interact with their own jobs and candidates
+- Admin users have access to all data across the platform
+- All routes protected with proper access control checks
+- Multi-tenancy architecture prevents data leakage between accounts
+
 ## System Architecture
 
 ### Backend Architecture
@@ -32,10 +41,10 @@ Preferred communication style: Simple, everyday language.
 ## Key Components
 
 ### Models (Database Schema)
-- **User**: Authentication and role management (admin/recruiter)
-- **Job**: Job postings with descriptions, requirements, and DCF content
-- **Candidate**: Resume storage with AI analysis results
-- **CandidateComment**: Comments and notes on candidates (referenced but not fully implemented)
+- **User**: Authentication and role management (admin/recruiter) with account isolation
+- **Job**: Job postings with descriptions, requirements, and DCF content (linked to creator)
+- **Candidate**: Resume storage with AI analysis results (access controlled by job owner)
+- **CandidateComment**: Comments and notes on candidates (access controlled by job owner)
 
 ### Services
 - **AI Service**: Handles resume analysis, scoring, and candidate matching
@@ -104,6 +113,10 @@ Preferred communication style: Simple, everyday language.
 - Secure file upload handling
 - Password hashing with Werkzeug
 - User role-based access control
+- **Complete data isolation between user accounts**
+- **Admin-only access to all data**
+- **Protected API endpoints with access control**
+- **Multi-tenant architecture with security checks**
 
 ## Notes
 
