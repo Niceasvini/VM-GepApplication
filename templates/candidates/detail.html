@@ -97,34 +97,49 @@
 
                 
                 {% if candidate.ai_analysis %}
-                    {% set analysis_parts = candidate.ai_analysis.split('## ') %}
-                    {% for part in analysis_parts %}
-                        {% if part.strip() %}
-                            {% if part.startswith('Resumo Executivo') %}
-                                <div class="card border-0 shadow-sm mb-4">
-                                    <div class="card-header bg-primary-custom text-white">
-                                        <h5 class="card-title mb-0">
-                                            <i class="fas fa-user me-2"></i>Resumo Executivo
-                                        </h5>
+                    {% if '## Resumo Executivo' in candidate.ai_analysis and '## Análise Detalhada' in candidate.ai_analysis %}
+                        <!-- New formatted analysis -->
+                        {% set analysis_parts = candidate.ai_analysis.split('## ') %}
+                        {% for part in analysis_parts %}
+                            {% if part.strip() %}
+                                {% if part.startswith('Resumo Executivo') %}
+                                    <div class="card border-0 shadow-sm mb-4">
+                                        <div class="card-header bg-primary-custom text-white">
+                                            <h5 class="card-title mb-0">
+                                                <i class="fas fa-user me-2"></i>Resumo Executivo
+                                            </h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="text-muted">{{ part.replace('Resumo Executivo', '').strip()|replace('\n', '<br>')|safe }}</div>
+                                        </div>
                                     </div>
-                                    <div class="card-body">
-                                        <div class="text-muted">{{ part.replace('Resumo Executivo', '').strip()|replace('\n', '<br>')|safe }}</div>
+                                {% elif part.startswith('Análise Detalhada') %}
+                                    <div class="card border-0 shadow-sm mb-4">
+                                        <div class="card-header bg-secondary text-white">
+                                            <h5 class="card-title mb-0">
+                                                <i class="fas fa-chart-line me-2"></i>Análise Detalhada
+                                            </h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="text-muted">{{ part.replace('Análise Detalhada', '').strip()|replace('\n', '<br>')|safe }}</div>
+                                        </div>
                                     </div>
-                                </div>
-                            {% elif part.startswith('Análise Detalhada') %}
-                                <div class="card border-0 shadow-sm mb-4">
-                                    <div class="card-header bg-secondary text-white">
-                                        <h5 class="card-title mb-0">
-                                            <i class="fas fa-chart-line me-2"></i>Análise Detalhada
-                                        </h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="text-muted">{{ part.replace('Análise Detalhada', '').strip()|replace('\n', '<br>')|safe }}</div>
-                                    </div>
-                                </div>
+                                {% endif %}
                             {% endif %}
-                        {% endif %}
-                    {% endfor %}
+                        {% endfor %}
+                    {% else %}
+                        <!-- Fallback for older analysis format -->
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-header bg-primary-custom text-white">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-robot me-2"></i>Análise da IA
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="text-muted">{{ candidate.ai_analysis|replace('\n', '<br>')|safe }}</div>
+                            </div>
+                        </div>
+                    {% endif %}
                 {% endif %}
                 
                 {% if candidate.get_skills_list() %}
