@@ -13,7 +13,7 @@ os.environ['DATABASE_URL'] = 'postgresql://postgres.bndkpowgvagtlxwmthma:5585858
 
 from app import app, db
 from models import Candidate
-from ai_service import analyze_resume
+from services.ai_service import analyze_resume
 
 def find_generic_candidates():
     """

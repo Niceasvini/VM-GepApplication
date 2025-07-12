@@ -155,7 +155,7 @@
                             {% if candidate.ai_summary and candidate.ai_summary != '' %}
                                 {{ candidate.ai_summary|replace('**', '')|replace('*', '')|replace('\n', '<br>')|safe }}
                             {% elif 'Resumo Executivo' in candidate.ai_analysis %}
-                                {% set resume_section = candidate.ai_analysis.split('Resumo Executivo')[1].split('Análise Detalhada')[0] %}
+                                {% set resume_section = candidate.ai_analysis.split('Resumo Executivo')[1].split('Análise da IA')[0] %}
                                 {{ resume_section.strip()|replace('**', '')|replace('*', '')|replace('\n', '<br>')|safe }}
                             {% else %}
                                 <div class="alert alert-info">

@@ -64,7 +64,7 @@ def reprocess_outdated_batch(max_candidates=10):
         batch = outdated[:max_candidates]
         print(f"\n🚀 INICIANDO REPROCESSAMENTO DE {len(batch)} CANDIDATOS...")
         
-        from background_processor import start_background_analysis
+        from processors.background_processor import start_background_analysis
         candidate_ids = [c.id for c in batch]
         
         # Reset status for reprocessing

@@ -43,7 +43,7 @@ def test_api_connection():
 def test_file_processing():
     """Test file processing functionality"""
     try:
-        from file_processor import extract_text_from_file
+        from services.file_processor import extract_text_from_file
         
         print("\nTesting file processing...")
         

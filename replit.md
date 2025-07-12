@@ -20,6 +20,9 @@ Preferred communication style: Simple, everyday language.
 - **Improved error display**: Updated HTML templates to show specific error messages instead of generic failures
 - **Reprocessing functionality**: Added "Try Again" button and API endpoint for failed candidate reprocessing
 - **Outdated analysis detection**: Replaced generic template analysis with reprocessing prompts for better AI output
+- **Fixed content separation**: Corrected template parsing to properly separate "Resumo Executivo" from "Análise da IA"
+- **Project organization**: Organized Python files into logical folder structure (services/, processors/, utils/, tests/)
+- **Updated imports**: Fixed all import statements to reflect new folder structure
 
 ## System Architecture
 

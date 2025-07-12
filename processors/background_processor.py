@@ -13,8 +13,8 @@ os.environ['DATABASE_URL'] = 'postgresql://postgres.bndkpowgvagtlxwmthma:5585858
 
 from app import app, db
 from models import Candidate
-from file_processor import extract_text_from_file
-from ai_service import generate_summary_and_analysis, generate_score_only
+from services.file_processor import extract_text_from_file
+from services.ai_service import generate_summary_and_analysis, generate_score_only
 
 def get_detailed_error_description(error, file_path):
     """

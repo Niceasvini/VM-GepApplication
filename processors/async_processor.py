@@ -14,7 +14,7 @@ os.environ['DATABASE_URL'] = 'postgresql://postgres.bndkpowgvagtlxwmthma:5585858
 
 from app import app, db
 from models import Candidate
-from file_processor import extract_text_from_file
+from services.file_processor import extract_text_from_file
 
 # Configure OpenAI client
 client = OpenAI(

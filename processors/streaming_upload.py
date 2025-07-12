@@ -8,7 +8,7 @@ from flask import jsonify, request, current_app
 from werkzeug.utils import secure_filename
 from app import app, db
 from models import Candidate, Job
-from file_processor import process_uploaded_file
+from services.file_processor import process_uploaded_file
 from sqlalchemy.exc import SQLAlchemyError
 
 def process_files_in_batches(files, job_id, batch_size=10):

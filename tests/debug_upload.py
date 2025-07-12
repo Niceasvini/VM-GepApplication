@@ -81,7 +81,7 @@ def test_bulk_upload_simulation():
         print(f"\n🚀 INICIANDO PROCESSAMENTO EM LOTE")
         print(f"Total candidatos: {len(candidate_ids)}")
         
-        from background_processor import start_background_analysis
+        from processors.background_processor import start_background_analysis
         thread = start_background_analysis(candidate_ids)
         
         print(f"Thread iniciada: {thread.is_alive()}")

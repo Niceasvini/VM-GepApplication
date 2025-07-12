@@ -65,7 +65,7 @@ def start_bulk_processing(candidate_ids):
     print(f"Total candidatos: {len(candidate_ids)}")
     
     # This is exactly what happens in routes.py after bulk upload
-    from background_processor import start_background_analysis
+    from processors.background_processor import start_background_analysis
     thread = start_background_analysis(candidate_ids)
     
     print(f"Processamento iniciado em background!")

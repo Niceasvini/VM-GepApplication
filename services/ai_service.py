@@ -3,8 +3,8 @@ import os
 import logging
 import time
 import hashlib
-from file_processor import extract_text_from_file
-from cache_service import analysis_cache
+from services.file_processor import extract_text_from_file
+from services.cache_service import analysis_cache
 
 # the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
 # do not change this unless explicitly requested by the user

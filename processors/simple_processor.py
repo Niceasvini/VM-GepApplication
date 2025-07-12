@@ -8,7 +8,7 @@ import time
 from datetime import datetime
 from app import app, db
 from models import Candidate
-from ai_service import analyze_resume
+from services.ai_service import analyze_resume
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

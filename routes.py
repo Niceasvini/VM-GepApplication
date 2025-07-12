@@ -4,8 +4,8 @@ from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
 from app import app, db
 from models import User, Job, Candidate, CandidateComment
-from ai_service import analyze_resume
-from file_processor import process_uploaded_file
+from services.ai_service import analyze_resume
+from services.file_processor import process_uploaded_file
 from sqlalchemy.exc import SQLAlchemyError
 # Import will be done locally to avoid circular imports
 import logging
@@ -270,7 +270,7 @@ def upload_resume(job_id):
     # Start parallel AI analysis for all uploaded candidates
     if candidate_ids:
         logging.info(f"Starting parallel analysis for {len(candidate_ids)} candidates")
-        from background_processor import start_background_analysis
+        from processors.background_processor import start_background_analysis
         start_background_analysis(candidate_ids)
         flash(f'{len(candidate_ids)} currículos enviados! A IA vai analisar TODOS os candidatos em paralelo (pode demorar alguns minutos).', 'success')
     else:
@@ -594,7 +594,7 @@ def api_reprocess_candidate(candidate_id):
         db.session.commit()
         
         # Start background processing
-        from background_processor import start_background_analysis
+        from processors.background_processor import start_background_analysis
         start_background_analysis([candidate_id])
         
         return jsonify({
@@ -620,7 +620,7 @@ def api_process_pending():
         
         candidate_ids = [c.id for c in pending_candidates]
         
-        from background_processor import start_background_analysis
+        from processors.background_processor import start_background_analysis
         start_background_analysis(candidate_ids)
         
         return jsonify({
