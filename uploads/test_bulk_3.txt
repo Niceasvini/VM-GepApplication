@@ -1,4 +1,0 @@
-Rafael Santos
-Engenheiro de Software - 5 anos
-Python, Java, Spring Boot
-Experiência com microserviços

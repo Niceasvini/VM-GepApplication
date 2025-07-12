@@ -258,10 +258,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 formData.append('files', files[i]);
             }
             
-            console.log('Sending files to /bulk-upload/{{ job.id }}');
+            console.log('Sending files to /jobs/{{ job.id }}/bulk-upload');
             
             // Send request
-            const response = await fetch('/bulk-upload/{{ job.id }}', {
+            const response = await fetch('/jobs/{{ job.id }}/bulk-upload', {
                 method: 'POST',
                 body: formData
             });

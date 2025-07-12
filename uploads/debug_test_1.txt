@@ -1,4 +1,0 @@
-Ana Silva
-Desenvolvedor Python
-3 anos experiência
-Django, Flask, PostgreSQL

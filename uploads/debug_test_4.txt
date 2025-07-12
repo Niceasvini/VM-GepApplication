@@ -1,4 +1,0 @@
-Rafael Lima
-Desenvolvedor Backend
-2 anos experiência
-Python, FastAPI, Docker
