@@ -16,6 +16,10 @@ Preferred communication style: Simple, everyday language.
 - **Increased token limits**: Enhanced to 900 tokens for more comprehensive analysis
 - **Specific analysis requirements**: AI now cites specific companies, technologies, and experiences instead of generic responses
 - **Better resume processing**: Increased text extraction to 3000-5000 characters for fuller context
+- **Detailed error handling**: Added comprehensive error description system for failed analyses
+- **Improved error display**: Updated HTML templates to show specific error messages instead of generic failures
+- **Reprocessing functionality**: Added "Try Again" button and API endpoint for failed candidate reprocessing
+- **Outdated analysis detection**: Replaced generic template analysis with reprocessing prompts for better AI output
 
 ## System Architecture
 
