@@ -21,8 +21,10 @@ db = SQLAlchemy(model_class=Base)
 login_manager = LoginManager()
 
 # Cria a aplicação Flask
-app = Flask(__name__)
-app.secret_key = os.environ.get("SESSION_SECRET")
+app = Flask(__name__, 
+            template_folder='views/templates',
+            static_folder='views/static')
+app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key-change-in-production")
 # Necessário para o url_for gerar URLs com https quando atrás de proxy reverso
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
@@ -34,14 +36,33 @@ def after_request(response):
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
     return response
 
-# Configura a URL do banco de dados, relativa à instância da aplicação
-database_url = os.environ.get("DATABASE_URL")
-if database_url and database_url.startswith("postgres://"):
-    database_url = database_url.replace("postgres://", "postgresql://", 1)
+# Configuração do banco de dados
+def get_database_url():
+    """Get Supabase database URL"""
+    database_url = os.environ.get("DATABASE_URL")
+    
+    if not database_url:
+        raise ValueError("DATABASE_URL não encontrada no arquivo .env")
+    
+    # Fix postgres:// to postgresql://
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
+    
+    # Test PostgreSQL connection
+    try:
+        import psycopg2
+        
+        # Use the URL directly instead of parsing
+        conn = psycopg2.connect(database_url)
+        conn.close()
+        logging.info("✅ Conexão com Supabase bem-sucedida!")
+        return database_url
+    except Exception as e:
+        logging.error(f"❌ Erro na conexão com Supabase: {e}")
+        raise Exception(f"Não foi possível conectar ao Supabase: {e}")
 
-# Usa a string de conexão do Supabase do .env se DATABASE_URL não estiver funcionando
-if not database_url or "neon.tech" in database_url:
-    database_url = "postgresql://postgres.bndkpowgvagtlxwmthma:5585858Vini%40@aws-0-sa-east-1.pooler.supabase.com:6543/postgres"
+# Configura a URL do banco de dados
+database_url = get_database_url()
 
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
@@ -63,7 +84,7 @@ login_manager.login_message = 'Por favor, faça login para acessar esta página.
 
 @login_manager.user_loader
 def load_user(user_id):
-    from models import User
+    from models.models import User
     return User.query.get(int(user_id))
 
 # Cria a pasta de uploads se ela não existir
@@ -71,15 +92,15 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 with app.app_context():
     # Certifique-se de importar os models aqui, senão as tabelas não serão criadas
-    import models  # noqa: F401
-    import routes  # noqa: F401
+    import models.models  # noqa: F401
+    import controllers.routes  # noqa: F401
     
     try:
         db.create_all()
         logging.info("Tabelas do banco de dados criadas com sucesso")
         
         # Cria usuário admin se ele ainda não existir
-        from models import User
+        from models.models import User
         admin_user = User.query.filter_by(email='viniciusniceas@vianaemoura.com.br').first()
         if not admin_user:
             try:

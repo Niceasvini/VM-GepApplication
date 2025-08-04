@@ -18,6 +18,41 @@ O **Viana e Moura** é uma solução completa de recrutamento inteligente que ut
 - **Processamento em lote** para análise de centenas de currículos
 - **Interface web moderna** com dashboard e relatórios visuais
 
+## 🏗️ Nova Estrutura MVC
+
+```
+vianaemoura/
+├── 📁 models/              # Modelos de dados (M)
+│   ├── __init__.py
+│   └── models.py           # User, Job, Candidate, CandidateComment
+├── 📁 views/               # Views e templates (V)
+│   ├── __init__.py
+│   ├── templates/          # Templates HTML
+│   │   ├── auth/           # Login e registro
+│   │   ├── jobs/           # Gestão de vagas
+│   │   └── candidates/     # Gestão de candidatos
+│   └── static/             # Arquivos estáticos
+│       ├── css/            # Estilos
+│       ├── js/             # JavaScript
+│       └── images/         # Imagens
+├── 📁 controllers/         # Controladores (C)
+│   ├── __init__.py
+│   └── routes.py           # Todas as rotas da aplicação
+├── 📁 services/            # Serviços de negócio
+│   ├── ai_service.py       # Integração com IA
+│   ├── file_processor.py   # Processamento de arquivos
+│   └── cache_service.py    # Sistema de cache
+├── 📁 processors/          # Processamento em lote
+│   ├── background_processor.py    # Processador principal
+│   ├── parallel_processor.py      # Processamento paralelo
+│   └── simple_processor.py        # Processamento simples
+├── 📁 uploads/             # Currículos enviados
+├── 📁 cache/               # Cache de análises IA
+├── app.py                  # Configuração da aplicação
+├── main.py                 # Ponto de entrada
+└── requirements.txt        # Dependências
+```
+
 ## ✨ Principais Funcionalidades
 
 ### 🤖 Análise Inteligente de Currículos
@@ -70,37 +105,6 @@ O **Viana e Moura** é uma solução completa de recrutamento inteligente que ut
 - **python-docx** - Processamento de documentos Word
 - **Werkzeug** - Handling seguro de uploads
 
-## 🏗 Arquitetura do Sistema
-
-```
-viana-moura/
-├── 📁 services/           # Serviços principais
-│   ├── ai_service.py      # Integração com IA
-│   ├── file_processor.py  # Processamento de arquivos
-│   └── cache_service.py   # Sistema de cache
-├── 📁 processors/         # Processamento em lote
-│   ├── background_processor.py    # Processador principal
-│   ├── parallel_processor.py      # Processamento paralelo
-│   └── streaming_upload.py        # Upload em lote
-├── 📁 utils/             # Utilitários
-│   ├── find_outdated_analysis.py  # Manutenção
-│   └── monitor_processing.py      # Monitoramento
-├── 📁 templates/         # Templates HTML
-│   ├── auth/             # Autenticação
-│   ├── jobs/             # Gerenciamento de vagas
-│   └── candidates/       # Gestão de candidatos
-├── 📁 static/            # Arquivos estáticos
-│   ├── css/              # Estilos personalizados
-│   ├── js/               # Scripts JavaScript
-│   └── images/           # Imagens e ícones
-├── 📁 uploads/           # Currículos enviados
-├── 📁 cache/             # Cache de análises IA
-├── app.py                # Configuração principal
-├── models.py             # Modelos de dados
-├── routes.py             # Rotas da aplicação
-└── main.py               # Ponto de entrada
-```
-
 ## 🚀 Instalação e Configuração
 
 ### Pré-requisitos
@@ -136,30 +140,12 @@ SESSION_SECRET=your_secret_key_here
 FLASK_ENV=production
 ```
 
-### 4. Configure o Banco de Dados
-
-#### Opção A: Supabase (Recomendado)
-1. Acesse [Supabase Dashboard](https://supabase.com/dashboard)
-2. Crie um novo projeto
-3. Vá em "Settings" > "Database" > "Connection string"
-4. Copie a URI de conexão e substitua a senha
-5. Use a URI no `DATABASE_URL`
-
-#### Opção B: PostgreSQL Local
-```bash
-# Instale PostgreSQL
-sudo apt-get install postgresql postgresql-contrib
-
-# Crie o banco
-sudo -u postgres createdb viana_moura
-```
-
-### 5. Execute as Migrações
+### 4. Execute as Migrações
 ```bash
 python -c "from app import app, db; app.app_context().push(); db.create_all()"
 ```
 
-### 6. Inicie a Aplicação
+### 5. Inicie a Aplicação
 ```bash
 # Desenvolvimento
 python main.py
@@ -367,7 +353,14 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 ## 📋 Changelog
 
-### v2.0.0 (Atual)
+### v2.1.0 (Atual) - Estrutura MVC
+- ✅ Reorganização completa na estrutura MVC
+- ✅ Models, Views e Controllers separados
+- ✅ Remoção de arquivos desnecessários
+- ✅ Imports atualizados para nova estrutura
+- ✅ Código limpo e organizado
+
+### v2.0.0
 - ✅ Arquitetura modular com pastas services/, processors/, utils/
 - ✅ Análise IA com formato estruturado (Resumo + Análise)
 - ✅ Download de currículos originais

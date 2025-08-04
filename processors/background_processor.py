@@ -12,7 +12,7 @@ from openai import OpenAI
 os.environ['DATABASE_URL'] = 'postgresql://postgres.bndkpowgvagtlxwmthma:5585858Vini%40@aws-0-sa-east-1.pooler.supabase.com:6543/postgres'
 
 from app import app, db
-from models import Candidate
+from models.models import Candidate
 from services.file_processor import extract_text_from_file
 from services.ai_service import generate_summary_and_analysis, generate_score_only
 

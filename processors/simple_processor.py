@@ -1,16 +1,23 @@
+#!/usr/bin/env python3
 """
-Simple and reliable processor for AI analysis
+Simple processor for AI analysis - optimized for speed
 """
 import os
-import threading
-import logging
 import time
+import threading
 from datetime import datetime
+from openai import OpenAI
+
+# Set environment
+os.environ['DATABASE_URL'] = 'postgresql://postgres.bndkpowgvagtlxwmthma:5585858Vini%40@aws-0-sa-east-1.pooler.supabase.com:6543/postgres'
+
 from app import app, db
-from models import Candidate
-from services.ai_service import analyze_resume
+from models.models import Candidate
+from services.file_processor import extract_text_from_file
+from services.ai_service import generate_score_only, generate_summary_and_analysis
 
 # Configure logging
+import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -32,7 +39,7 @@ def process_candidate_simple(candidate_id):
             db.session.commit()
             
             # Analyze with AI
-            result = analyze_resume(candidate.file_path, candidate.file_type, candidate.job)
+            result = generate_score_only(candidate.file_path, candidate.file_type, candidate.job)
             
             if result:
                 candidate.ai_score = result.get('score', 0)

@@ -8,7 +8,7 @@ import logging
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from app import app, db
-from models import Candidate
+from models.models import Candidate
 from services.ai_service import analyze_resume
 
 # Configure logging
