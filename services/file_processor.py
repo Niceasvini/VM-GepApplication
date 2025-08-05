@@ -10,17 +10,36 @@ def extract_text_from_file(file_path, file_type):
     Supports PDF, DOCX, and TXT formats
     """
     try:
+        # Check if file exists and has content
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"File not found: {file_path}")
+        
+        file_size = os.path.getsize(file_path)
+        if file_size == 0:
+            raise ValueError(f"File is empty: {file_path}")
+        
         if file_type == 'pdf':
-            return extract_text_from_pdf(file_path)
+            text = extract_text_from_pdf(file_path)
         elif file_type == 'docx':
-            return extract_text_from_docx(file_path)
+            text = extract_text_from_docx(file_path)
         elif file_type == 'txt':
-            return extract_text_from_txt(file_path)
+            text = extract_text_from_txt(file_path)
         else:
             raise ValueError(f"Unsupported file type: {file_type}")
+        
+        # Validate extracted text
+        if not text or len(text.strip()) < 10:
+            raise ValueError(f"Extracted text is too short or empty: {len(text)} characters")
+        
+        # Log extraction details
+        logging.info(f"Extracted text length: {len(text)}")
+        logging.info(f"First 500 characters: {text[:500]}")
+        
+        return text
+        
     except Exception as e:
         logging.error(f"Error extracting text from {file_path}: {e}")
-        return ""
+        raise
 
 def extract_text_from_pdf(file_path):
     """Extract text from PDF file"""
@@ -28,8 +47,20 @@ def extract_text_from_pdf(file_path):
     try:
         with open(file_path, 'rb') as file:
             pdf_reader = PdfReader(file)
+            
+            # Check if PDF has pages
+            if len(pdf_reader.pages) == 0:
+                raise ValueError("PDF file has no pages")
+            
             for page in pdf_reader.pages:
-                text += page.extract_text() + "\n"
+                page_text = page.extract_text()
+                if page_text:
+                    text += page_text + "\n"
+            
+            # Check if any text was extracted
+            if not text.strip():
+                raise ValueError("No text could be extracted from PDF (possibly scanned document)")
+                
     except Exception as e:
         logging.error(f"Error reading PDF {file_path}: {e}")
         raise
@@ -40,8 +71,19 @@ def extract_text_from_docx(file_path):
     text = ""
     try:
         doc = Document(file_path)
+        
+        # Check if document has paragraphs
+        if len(doc.paragraphs) == 0:
+            raise ValueError("DOCX file has no content")
+        
         for paragraph in doc.paragraphs:
-            text += paragraph.text + "\n"
+            if paragraph.text.strip():
+                text += paragraph.text + "\n"
+        
+        # Check if any text was extracted
+        if not text.strip():
+            raise ValueError("No text could be extracted from DOCX file")
+            
     except Exception as e:
         logging.error(f"Error reading DOCX {file_path}: {e}")
         raise
@@ -74,6 +116,16 @@ def process_uploaded_file(file_path, file_type):
         phone = extract_phone(text)
         
         return name, email, phone
+        
+    except FileNotFoundError:
+        logging.error(f"File not found: {file_path}")
+        filename = os.path.basename(file_path)
+        return filename.rsplit('.', 1)[0], None, None
+        
+    except ValueError as e:
+        logging.error(f"File validation error for {file_path}: {e}")
+        filename = os.path.basename(file_path)
+        return filename.rsplit('.', 1)[0], None, None
         
     except Exception as e:
         logging.error(f"Error processing file {file_path}: {e}")

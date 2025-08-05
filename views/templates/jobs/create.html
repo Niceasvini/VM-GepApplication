@@ -16,7 +16,13 @@
                                 <i class="fas fa-plus me-2"></i>Criar Nova Vaga
                             {% endif %}
                         </h2>
-                        <p class="text-muted">Preencha os detalhes da vaga abaixo</p>
+                        <p class="text-muted">
+                            {% if job %}
+                                Atualize os detalhes da vaga
+                            {% else %}
+                                Preencha os detalhes da vaga. Após criar, você poderá fazer upload de currículos para análise automática com IA.
+                            {% endif %}
+                        </p>
                     </div>
                     
                     <form method="POST">
@@ -27,25 +33,19 @@
                         </div>
                         
                         <div class="mb-3">
-                            <label for="description" class="form-label">Descrição *</label>
+                            <label for="description" class="form-label">Descrição da Vaga *</label>
                             <textarea class="form-control" id="description" name="description" 
                                       rows="4" required>{{ job.description if job else '' }}</textarea>
                             <div class="form-text">Descreva a vaga, responsabilidades e o que a empresa oferece.</div>
                         </div>
                         
-                        <div class="mb-3">
-                            <label for="requirements" class="form-label">Requisitos *</label>
-                            <textarea class="form-control" id="requirements" name="requirements" 
-                                      rows="4" required>{{ job.requirements if job else '' }}</textarea>
-                            <div class="form-text">Liste os requisitos técnicos e comportamentais necessários.</div>
-                        </div>
-                        
                         <div class="mb-4">
-                            <label for="dcf_content" class="form-label">DCF - Documento de Conteúdo Funcional</label>
-                            <textarea class="form-control" id="dcf_content" name="dcf_content" 
-                                      rows="6">{{ job.dcf_content if job else '' }}</textarea>
+                            <label for="requirements" class="form-label">Habilidades e Requisitos *</label>
+                            <textarea class="form-control" id="requirements" name="requirements" 
+                                      rows="8" required>{{ job.requirements if job else '' }}</textarea>
                             <div class="form-text">
-                                Documento detalhado com especificações técnicas e funcionais da vaga (opcional).
+                                <strong>💡 Dica de formatação:</strong> Use seções como "Funções", "Formação", "Conhecimentos" e "Habilidades" para melhor organização. 
+                                Use "•" para bullets e "Mínimo Exigido:" / "Desejável:" para especificar requisitos.
                             </div>
                         </div>
                         
@@ -57,7 +57,30 @@
                                 <i class="fas fa-save me-2"></i>{{ 'Atualizar' if job else 'Criar' }} Vaga
                             </button>
                         </div>
+                        
+                        {% if not job %}
+                        <div class="mt-4 text-center">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Próximo passo:</strong> Após criar a vaga, você será redirecionado para fazer upload de currículos e iniciar a análise com IA.
+                            </div>
+                        </div>
+                        {% endif %}
                     </form>
+                    
+                    {% if job %}
+                    <div class="mt-4 pt-4 border-top">
+                        <div class="text-center">
+                            <h5 class="text-primary-custom mb-3">
+                                <i class="fas fa-users me-2"></i>Análise de Candidatos
+                            </h5>
+                            <p class="text-muted mb-4">Faça upload de currículos e analise candidatos para esta vaga</p>
+                            <a href="{{ url_for('job_detail', job_id=job.id) }}" class="btn btn-success btn-lg">
+                                <i class="fas fa-upload me-2"></i>Upload de Currículos
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>

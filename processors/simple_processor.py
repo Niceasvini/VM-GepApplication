@@ -38,8 +38,9 @@ def process_candidate_simple(candidate_id):
             candidate.analysis_status = 'processing'
             db.session.commit()
             
-            # Analyze with AI
-            result = generate_score_only(candidate.file_path, candidate.file_type, candidate.job)
+            # Analyze with AI using the correct service
+            from services.ai_service import analyze_resume
+            result = analyze_resume(candidate.file_path, candidate.file_type, candidate.job)
             
             if result:
                 candidate.ai_score = result.get('score', 0)

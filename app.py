@@ -82,6 +82,83 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'Por favor, faça login para acessar esta página.'
 
+# Filtro personalizado para formatar requisitos da vaga
+@app.template_filter('format_requirements')
+def format_requirements(text):
+    """Formata os requisitos da vaga para exibição melhorada"""
+    if not text:
+        return text
+    
+    # Substitui marcadores comuns por HTML formatado
+    formatted = text.replace('*', '•')
+    
+    # Identifica seções específicas
+    sections = {
+        'Funções': 'fas fa-cogs',
+        'Formação': 'fas fa-graduation-cap',
+        'Conhecimentos': 'fas fa-brain',
+        'Habilidades': 'fas fa-star'
+    }
+    
+    # Formata cada seção
+    for section, icon in sections.items():
+        if section in formatted:
+            formatted = formatted.replace(
+                f'{section}',
+                f'<h6 class="mt-3 mb-2"><i class="{icon} me-2"></i>{section}</h6>'
+            )
+    
+    # Processa especificamente a formatação de "Mínimo Exigido" e "Desejável"
+    import re
+    
+    # Formata "Mínimo Exigido" e "Desejável"
+    formatted = re.sub(
+        r'(Mínimo Exigido|Desejável)\s*([^•\n]*)',
+        r'<strong>\1:</strong> \2',
+        formatted
+    )
+    
+    # Converte quebras de linha em parágrafos
+    paragraphs = formatted.split('\n')
+    formatted_paragraphs = []
+    
+    for para in paragraphs:
+        para = para.strip()
+        if para:
+            if para.startswith('•'):
+                # Lista com bullets
+                formatted_paragraphs.append(f'<li>{para[1:].strip()}</li>')
+            elif para.startswith('<h6'):
+                # Títulos de seção
+                formatted_paragraphs.append(para)
+            elif para.startswith('<strong>'):
+                # Texto com formatação especial
+                formatted_paragraphs.append(f'<p class="mb-2">{para}</p>')
+            else:
+                # Texto normal
+                formatted_paragraphs.append(f'<p class="mb-2">{para}</p>')
+    
+    # Agrupa itens de lista
+    result = []
+    in_list = False
+    
+    for item in formatted_paragraphs:
+        if item.startswith('<li>'):
+            if not in_list:
+                result.append('<ul class="mb-3">')
+                in_list = True
+            result.append(item)
+        else:
+            if in_list:
+                result.append('</ul>')
+                in_list = False
+            result.append(item)
+    
+    if in_list:
+        result.append('</ul>')
+    
+    return ''.join(result)
+
 @login_manager.user_loader
 def load_user(user_id):
     from models.models import User

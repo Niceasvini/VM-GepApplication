@@ -6,21 +6,47 @@
 <div class="container py-5">
     <!-- Header -->
     <div class="dashboard-header">
-        <div class="row align-items-center">
-            <div class="col-md-8">
+        <div class="row">
+            <div class="col-12">
                 <h1 class="dashboard-title">Dashboard de Recrutamento</h1>
                 <p class="dashboard-subtitle">Visão geral do processo de recrutamento inteligente com IA</p>
-            </div>
-            <div class="col-md-4 text-end">
-                <div class="btn-group" role="group">
-                    <a href="{{ url_for('create_job') }}" class="btn btn-primary">
-                        <i class="fas fa-plus me-2"></i>Nova Vaga
-                    </a>
-                    <a href="{{ url_for('jobs_list') }}" class="btn btn-outline-primary">
-                        <i class="fas fa-briefcase me-2"></i>Ver Vagas
-                    </a>
+                
+                <!-- App Description -->
+                <div class="app-description mt-3">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <h6 class="card-title text-primary mb-3">
+                                <i class="fas fa-robot me-2"></i>Sobre o Sistema
+                            </h6>
+                            <p class="card-text mb-2">
+                                <strong>Viana e Moura - Sistema de Recrutamento Inteligente</strong> é uma plataforma avançada que utiliza 
+                                Inteligência Artificial para automatizar e otimizar o processo de recrutamento e seleção.
+                            </p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-success mb-2"><i class="fas fa-check-circle me-1"></i>Funcionalidades Principais:</h6>
+                                    <ul class="list-unstyled small">
+                                        <li><i class="fas fa-upload me-1"></i>Upload em lote de currículos</li>
+                                        <li><i class="fas fa-brain me-1"></i>Análise automática com IA</li>
+                                        <li><i class="fas fa-chart-line me-1"></i>Pontuação inteligente</li>
+                                        <li><i class="fas fa-filter me-1"></i>Filtros avançados</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-info mb-2"><i class="fas fa-target me-1"></i>Objetivos:</h6>
+                                    <ul class="list-unstyled small">
+                                        <li><i class="fas fa-clock me-1"></i>Reduzir tempo de triagem</li>
+                                        <li><i class="fas fa-chart-pie me-1"></i>Melhorar qualidade da seleção</li>
+                                        <li><i class="fas fa-users me-1"></i>Otimizar processo de recrutamento</li>
+                                        <li><i class="fas fa-trophy me-1"></i>Identificar melhores candidatos</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
+
         </div>
     </div>
     
@@ -70,14 +96,20 @@
     </div>
     
     <!-- Charts Section -->
-    <div class="row mb-5">
+    <div class="row mb-5" id="chartsSection">
+
         <div class="col-md-8">
             <div class="chart-container">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h5 class="mb-0">
                         <i class="fas fa-chart-bar me-2 text-gradient"></i>Distribuição de Pontuações
                     </h5>
-                    <div class="badge badge-primary">{{ total_candidates }} candidatos</div>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="badge badge-primary">{{ total_candidates }} candidatos</div>
+                        <button id="clearScoreFilter" class="btn btn-sm btn-outline-secondary" onclick="clearFilters()" style="display: none;">
+                            <i class="fas fa-times me-1"></i>Limpar Filtro
+                        </button>
+                    </div>
                 </div>
                 <canvas id="scoreChart" width="400" height="200"></canvas>
             </div>
@@ -89,7 +121,12 @@
                     <h5 class="mb-0">
                         <i class="fas fa-chart-pie me-2 text-gradient"></i>Status dos Candidatos
                     </h5>
-                    <div class="badge badge-accent">{{ analyzed_candidates }} analisados</div>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="badge badge-accent">{{ analyzed_candidates }} analisados</div>
+                        <button id="clearStatusFilter" class="btn btn-sm btn-outline-secondary" onclick="clearFilters()" style="display: none;">
+                            <i class="fas fa-times me-1"></i>Limpar Filtro
+                        </button>
+                    </div>
                 </div>
                 <canvas id="statusChart" width="400" height="200"></canvas>
             </div>
@@ -145,15 +182,18 @@
         </div>
         
         <div class="col-md-6">
-            <div class="card border-0 shadow-sm">
+            <div class="card border-0 shadow-sm" id="topCandidatesCard">
                 <div class="card-header bg-transparent">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-star me-2"></i>Top Candidatos
-                    </h5>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-star me-2"></i>Top Candidatos
+                        </h5>
+                        <span class="badge bg-primary">{{ top_candidates|length }} candidatos</span>
+                    </div>
                 </div>
                 <div class="card-body">
                     {% if top_candidates %}
-                        <div class="list-group list-group-flush">
+                        <div class="list-group list-group-flush" id="topCandidatesList">
                             {% for candidate in top_candidates %}
                             <div class="list-group-item border-0 px-0">
                                 <div class="d-flex justify-content-between align-items-center">
@@ -163,7 +203,16 @@
                                                 {{ candidate.name }}
                                             </a>
                                         </h6>
-                                        <small class="text-muted">{{ candidate.job.title }}</small>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <small class="text-muted">{{ candidate.job.title }}</small>
+                                            <span class="badge bg-{{ 'primary' if candidate.status == 'pending' else 'success' if candidate.status == 'interested' else 'danger' if candidate.status == 'rejected' else 'info' }} fs-6">
+                                                {% if candidate.status == 'pending' %}Pendente
+                                                {% elif candidate.status == 'interested' %}Interessado
+                                                {% elif candidate.status == 'rejected' %}Reprovado
+                                                {% elif candidate.status == 'interview' %}Entrevista
+                                                {% else %}{{ candidate.status }}{% endif %}
+                                            </span>
+                                        </div>
                                     </div>
                                     <span class="badge bg-{{ 'success' if candidate.ai_score >= 7 else 'warning' if candidate.ai_score >= 5 else 'danger' }} fs-6">
                                         {{ "%.1f"|format(candidate.ai_score) }}
@@ -222,6 +271,14 @@
 
 {% block scripts %}
 <script>
+// Global variables for chart data
+let allCandidates = {{ top_candidates|tojson }};
+let currentFilter = null;
+
+// Debug: Log candidates data
+console.log('All candidates loaded:', allCandidates);
+console.log('Number of candidates:', allCandidates.length);
+
 // Score Distribution Chart
 const scoreCtx = document.getElementById('scoreChart').getContext('2d');
 const scoreChart = new Chart(scoreCtx, {
@@ -268,11 +325,18 @@ const scoreChart = new Chart(scoreCtx, {
                     stepSize: 1
                 }
             }
+        },
+        onClick: (event, elements) => {
+            if (elements.length > 0) {
+                const index = elements[0].index;
+                const labels = ['0-2', '2-4', '4-6', '6-8', '8-10'];
+                filterByScoreRange(labels[index]);
+            }
         }
     }
 });
 
-// Status Distribution Chart using real data
+// Status Distribution Chart
 const statusCtx = document.getElementById('statusChart').getContext('2d');
 const statusChart = new Chart(statusCtx, {
     type: 'doughnut',
@@ -303,8 +367,272 @@ const statusChart = new Chart(statusCtx, {
             legend: {
                 position: 'bottom'
             }
+        },
+        onClick: (event, elements) => {
+            if (elements.length > 0) {
+                const index = elements[0].index;
+                const labels = ['Pendente', 'Interessado', 'Reprovado'];
+                const statusMap = {
+                    'Pendente': 'pending',
+                    'Interessado': 'interested',
+                    'Reprovado': 'rejected'
+                };
+                filterByStatus(statusMap[labels[index]]);
+            }
         }
     }
+});
+
+// Filter functions
+function filterByScoreRange(range) {
+    console.log('Filtering by score range:', range);
+    currentFilter = { type: 'score', value: range };
+    updateTopCandidates();
+    updateScoreChart();
+    showClearButton('clearScoreFilter');
+}
+
+function filterByStatus(status) {
+    console.log('Filtering by status:', status);
+    currentFilter = { type: 'status', value: status };
+    updateTopCandidates();
+    updateStatusChart();
+    showClearButton('clearStatusFilter');
+}
+
+function clearFilters() {
+    currentFilter = null;
+    updateTopCandidates();
+    resetCharts();
+    hideClearButtons();
+}
+
+function showClearButton(buttonId) {
+    document.getElementById(buttonId).style.display = 'inline-block';
+}
+
+function hideClearButtons() {
+    document.getElementById('clearScoreFilter').style.display = 'none';
+    document.getElementById('clearStatusFilter').style.display = 'none';
+}
+
+function resetCharts() {
+    // Reset score chart to original data
+    scoreChart.data.datasets[0].data = [
+        {{ score_ranges['0-2'] }},
+        {{ score_ranges['2-4'] }},
+        {{ score_ranges['4-6'] }},
+        {{ score_ranges['6-8'] }},
+        {{ score_ranges['8-10'] }}
+    ];
+    scoreChart.update();
+    
+    // Reset status chart to original data
+    statusChart.data.datasets[0].data = [
+        {{ candidate_status.get('pending', 0) }},
+        {{ candidate_status.get('interested', 0) }},
+        {{ candidate_status.get('rejected', 0) }}
+    ];
+    statusChart.update();
+}
+
+function updateTopCandidates() {
+    // Find the correct container for top candidates using specific ID
+    const topCandidatesContainer = document.getElementById('topCandidatesList');
+    if (!topCandidatesContainer) {
+        console.log('Top candidates container not found');
+        return;
+    }
+    
+    console.log('Found top candidates container, updating...');
+
+    let filteredCandidates = allCandidates;
+
+    if (currentFilter) {
+        console.log('Applying filter:', currentFilter);
+        if (currentFilter.type === 'score') {
+            const [min, max] = currentFilter.value.split('-').map(Number);
+            filteredCandidates = allCandidates.filter(candidate => {
+                const score = candidate.ai_score || 0;
+                return score >= min && score < max;
+            });
+            console.log(`Filtered ${filteredCandidates.length} candidates by score range ${min}-${max}`);
+        } else if (currentFilter.type === 'status') {
+            filteredCandidates = allCandidates.filter(candidate => 
+                candidate.status === currentFilter.value
+            );
+            console.log(`Filtered ${filteredCandidates.length} candidates by status ${currentFilter.value}`);
+        }
+    } else {
+        console.log('No filter applied, showing all candidates');
+    }
+
+    // Update top candidates display
+    topCandidatesContainer.innerHTML = filteredCandidates.map(candidate => `
+        <div class="list-group-item border-0 px-0">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-1">
+                        <a href="/candidates/${candidate.id}" class="text-decoration-none">
+                            ${candidate.name}
+                        </a>
+                    </h6>
+                    <div class="d-flex align-items-center gap-2">
+                        <small class="text-muted">${candidate.job.title}</small>
+                        <span class="badge bg-${getStatusColor(candidate.status)} fs-6">
+                            ${getStatusLabel(candidate.status)}
+                        </span>
+                    </div>
+                </div>
+                <span class="badge bg-${getScoreColor(candidate.ai_score)} fs-6">
+                    ${candidate.ai_score ? candidate.ai_score.toFixed(1) : '-'}
+                </span>
+            </div>
+        </div>
+    `).join('');
+
+    // Update counter in the top candidates card
+    const topCandidatesCard = document.getElementById('topCandidatesCard');
+    const counter = topCandidatesCard.querySelector('.card-header .badge');
+    if (counter) {
+        counter.textContent = `${filteredCandidates.length} candidatos`;
+        console.log(`Updated counter to ${filteredCandidates.length} candidates`);
+    }
+}
+
+function updateScoreChart() {
+    if (currentFilter && currentFilter.type === 'status') {
+        // Filter score data based on status
+        const filteredData = calculateScoreRangesForStatus(currentFilter.value);
+        scoreChart.data.datasets[0].data = filteredData;
+        scoreChart.update();
+    }
+}
+
+function updateStatusChart() {
+    if (currentFilter && currentFilter.type === 'score') {
+        // Filter status data based on score range
+        const filteredData = calculateStatusForScoreRange(currentFilter.value);
+        statusChart.data.datasets[0].data = filteredData;
+        statusChart.update();
+    }
+}
+
+function getStatusColor(status) {
+    switch(status) {
+        case 'pending': return 'primary';
+        case 'interested': return 'success';
+        case 'rejected': return 'danger';
+        case 'interview': return 'info';
+        default: return 'secondary';
+    }
+}
+
+function getStatusLabel(status) {
+    switch(status) {
+        case 'pending': return 'Pendente';
+        case 'interested': return 'Interessado';
+        case 'rejected': return 'Reprovado';
+        case 'interview': return 'Entrevista';
+        default: return status;
+    }
+}
+
+function getScoreColor(score) {
+    if (!score) return 'secondary';
+    if (score >= 7) return 'success';
+    if (score >= 5) return 'warning';
+    return 'danger';
+}
+
+function calculateScoreRangesForStatus(status) {
+    const filteredCandidates = allCandidates.filter(c => c.status === status);
+    const ranges = [0, 0, 0, 0, 0];
+    
+    filteredCandidates.forEach(candidate => {
+        const score = candidate.ai_score || 0;
+        if (score >= 0 && score < 2) ranges[0]++;
+        else if (score >= 2 && score < 4) ranges[1]++;
+        else if (score >= 4 && score < 6) ranges[2]++;
+        else if (score >= 6 && score < 8) ranges[3]++;
+        else if (score >= 8 && score <= 10) ranges[4]++;
+    });
+    
+    return ranges;
+}
+
+function calculateStatusForScoreRange(range) {
+    const [min, max] = range.split('-').map(Number);
+    const filteredCandidates = allCandidates.filter(c => {
+        const score = c.ai_score || 0;
+        return score >= min && score < max;
+    });
+    
+    const statusCounts = [0, 0, 0]; // pending, interested, rejected
+    filteredCandidates.forEach(candidate => {
+        switch(candidate.status) {
+            case 'pending': statusCounts[0]++; break;
+            case 'interested': statusCounts[1]++; break;
+            case 'rejected': statusCounts[2]++; break;
+        }
+    });
+    
+    return statusCounts;
+}
+
+// Add click handlers to charts
+scoreChart.options.onClick = (event, elements) => {
+    if (elements.length > 0) {
+        const index = elements[0].index;
+        const labels = ['0-2', '2-4', '4-6', '6-8', '8-10'];
+        filterByScoreRange(labels[index]);
+    }
+};
+
+statusChart.options.onClick = (event, elements) => {
+    if (elements.length > 0) {
+        const index = elements[0].index;
+        const labels = ['Pendente', 'Interessado', 'Reprovado'];
+        const statusMap = {
+            'Pendente': 'pending',
+            'Interessado': 'interested',
+            'Reprovado': 'rejected'
+        };
+        filterByStatus(statusMap[labels[index]]);
+    }
+};
+
+// Update charts
+scoreChart.update();
+statusChart.update();
+
+// Add click outside functionality to clear filters
+document.addEventListener('click', function(event) {
+    // Check if click is outside of charts
+    const scoreChartCanvas = document.getElementById('scoreChart');
+    const statusChartCanvas = document.getElementById('statusChart');
+    const clearButtons = document.querySelectorAll('#clearScoreFilter, #clearStatusFilter');
+    
+    const isClickOnChart = scoreChartCanvas.contains(event.target) || 
+                          statusChartCanvas.contains(event.target);
+    const isClickOnClearButton = Array.from(clearButtons).some(button => 
+        button.contains(event.target)
+    );
+    
+    // If click is outside charts and not on clear button, and there's an active filter
+    if (!isClickOnChart && !isClickOnClearButton && currentFilter) {
+        console.log('Click outside charts detected, clearing filters');
+        clearFilters();
+    }
+});
+
+// Prevent event bubbling on chart clicks to avoid immediate clearing
+scoreChartCanvas.addEventListener('click', function(event) {
+    event.stopPropagation();
+});
+
+statusChartCanvas.addEventListener('click', function(event) {
+    event.stopPropagation();
 });
 </script>
 {% endblock %}

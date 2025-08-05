@@ -146,12 +146,31 @@ def dashboard():
     for status, count in status_counts:
         candidate_status[status] = count
     
+    # Convert top_candidates to serializable dictionaries
+    top_candidates_data = []
+    for candidate in top_candidates:
+        candidate_dict = {
+            'id': candidate.id,
+            'name': candidate.name,
+            'email': candidate.email,
+            'phone': candidate.phone,
+            'ai_score': candidate.ai_score,
+            'status': candidate.status,
+            'analysis_status': candidate.analysis_status,
+            'uploaded_at': candidate.uploaded_at.isoformat() if candidate.uploaded_at else None,
+            'job': {
+                'id': candidate.job.id,
+                'title': candidate.job.title
+            }
+        }
+        top_candidates_data.append(candidate_dict)
+    
     return render_template('dashboard.html',
                          total_jobs=total_jobs,
                          total_candidates=total_candidates,
                          analyzed_candidates=analyzed_candidates,
                          recent_jobs=recent_jobs,
-                         top_candidates=top_candidates,
+                         top_candidates=top_candidates_data,
                          score_ranges=score_ranges,
                          candidate_status=candidate_status)
 
@@ -173,20 +192,18 @@ def create_job():
         title = request.form['title']
         description = request.form['description']
         requirements = request.form['requirements']
-        dcf_content = request.form.get('dcf_content', '')
         
         job = Job(
             title=title,
             description=description,
             requirements=requirements,
-            dcf_content=dcf_content,
             created_by=current_user.id
         )
         
         db.session.add(job)
         db.session.commit()
         
-        flash('Vaga criada com sucesso!', 'success')
+        flash('Vaga criada com sucesso! Agora você pode fazer upload de currículos para análise.', 'success')
         return redirect(url_for('job_detail', job_id=job.id))
     
     return render_template('jobs/create.html')
@@ -232,7 +249,6 @@ def edit_job(job_id):
         job.title = request.form['title']
         job.description = request.form['description']
         job.requirements = request.form['requirements']
-        job.dcf_content = request.form.get('dcf_content', '')
         
         db.session.commit()
         flash('Vaga atualizada com sucesso!', 'success')
@@ -402,10 +418,10 @@ def bulk_upload_process(job_id):
         # Commit all at once
         db.session.commit()
         
-        # Start simple background processing
+        # Start fast parallel processing
         if candidate_ids:
-            from processors.simple_processor import start_simple_background_processing
-            start_simple_background_processing(candidate_ids)
+            from processors.fast_parallel_processor import start_fast_parallel_analysis
+            start_fast_parallel_analysis(candidate_ids)
         
         result = {
             'processed_count': processed_count,
@@ -432,88 +448,6 @@ def bulk_upload_process(job_id):
             'candidate_ids': [],
             'errors': [str(e)]
         }), 500
-    
-    for file in files:
-        if file and file.filename:
-            try:
-                filename = secure_filename(file.filename)
-                file_ext = filename.rsplit('.', 1)[1].lower()
-                
-                if file_ext not in ['pdf', 'docx', 'txt']:
-                    errors.append(f'Formato não suportado: {filename}')
-                    continue
-                
-                # Save file
-                file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-                file.save(file_path)
-                
-                # Process file to extract basic info
-                try:
-                    name, email, phone = process_uploaded_file(file_path, file_ext)
-                except Exception as e:
-                    logging.error(f"Error processing file {filename}: {e}")
-                    name = filename.rsplit('.', 1)[0]
-                    email = None
-                    phone = None
-                
-                # Create candidate record
-                candidate = Candidate(
-                    name=name,
-                    email=email,
-                    phone=phone,
-                    filename=filename,
-                    file_path=file_path,
-                    file_type=file_ext,
-                    job_id=job_id,
-                    status='pending',
-                    analysis_status='pending'
-                )
-                
-                try:
-                    db.session.add(candidate)
-                    db.session.flush()  # Flush to get ID without committing
-                    candidate_id = candidate.id
-                    db.session.commit()
-                    candidate_ids.append(candidate_id)
-                    processed_count += 1
-                    logging.info(f"Successfully saved candidate: {filename} with ID: {candidate_id}")
-                except SQLAlchemyError as db_error:
-                    logging.error(f"Database error for {filename}: {db_error}")
-                    db.session.rollback()
-                    errors.append(f'Erro de banco para {filename}: {str(db_error)}')
-                    continue
-                except Exception as e:
-                    logging.error(f"Unexpected error for {filename}: {e}")
-                    db.session.rollback()
-                    errors.append(f'Erro inesperado para {filename}: {str(e)}')
-                    continue
-            except Exception as e:
-                logging.error(f"Error processing file {file.filename}: {e}")
-                errors.append(f'Erro ao processar {file.filename}: {str(e)}')
-    
-    # Start parallel AI analysis for all uploaded candidates
-    try:
-        if candidate_ids:
-            logging.info(f"Starting parallel analysis for {len(candidate_ids)} candidates")
-            from processors.parallel_processor import start_parallel_analysis
-            start_parallel_analysis(candidate_ids)
-        
-        return jsonify({
-            'success': True,
-            'processed_count': processed_count,
-            'candidate_ids': candidate_ids,
-            'errors': errors,
-            'message': f'{processed_count} currículos processados. A IA vai analisar TODOS os candidatos (pode demorar alguns minutos).'
-        })
-    except Exception as e:
-        logging.error(f"Error in bulk upload response: {e}")
-        return jsonify({
-            'success': False,
-            'error': f'Erro no processamento: {str(e)}',
-            'processed_count': processed_count,
-            'candidate_ids': candidate_ids,
-            'errors': errors
-        }), 500
 
 # Candidate management
 @app.route('/candidates')
@@ -525,7 +459,21 @@ def candidates_list():
     else:
         user_job_ids = [job.id for job in Job.query.filter_by(created_by=current_user.id)]
         candidates = Candidate.query.filter(Candidate.job_id.in_(user_job_ids)).order_by(Candidate.ai_score.desc().nullslast()).all()
-    return render_template('candidates/list.html', candidates=candidates)
+    
+    # Group candidates by job
+    job_groups = {}
+    for candidate in candidates:
+        job_id = candidate.job.id
+        if job_id not in job_groups:
+            job_groups[job_id] = {
+                'job': candidate.job,
+                'candidates': []
+            }
+        job_groups[job_id]['candidates'].append(candidate)
+    
+
+    
+    return render_template('candidates/list.html', job_groups=job_groups)
 
 @app.route('/candidates/<int:candidate_id>')
 @login_required
@@ -641,6 +589,90 @@ def delete_candidate(candidate_id):
     flash(f'Candidato "{candidate_name}" excluído com sucesso!', 'success')
     return redirect(url_for('job_detail', job_id=job_id))
 
+@app.route('/api/test-text-extraction/<int:candidate_id>')
+@login_required
+def test_text_extraction(candidate_id):
+    """Test text extraction for debugging"""
+    try:
+        candidate = Candidate.query.get_or_404(candidate_id)
+        
+        # Check if user has access to this candidate
+        if not current_user.is_admin() and candidate.job.created_by != current_user.id:
+            return jsonify({'error': 'Acesso negado'}), 403
+        
+        from services.file_processor import extract_text_from_file
+        
+        # Extract text
+        resume_text = extract_text_from_file(candidate.file_path, candidate.file_type)
+        
+        return jsonify({
+            'success': True,
+            'text_length': len(resume_text),
+            'text_preview': resume_text[:1000],
+            'file_path': candidate.file_path,
+            'file_type': candidate.file_type
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/candidates/bulk-delete', methods=['POST'])
+@login_required
+def bulk_delete_candidates():
+    """Delete multiple candidates at once"""
+    try:
+        candidate_ids = request.form.getlist('candidate_ids')
+        
+        if not candidate_ids:
+            flash('Nenhum candidato selecionado.', 'error')
+            return redirect(url_for('candidates_list'))
+        
+        # Get candidates and check permissions
+        candidates = Candidate.query.filter(Candidate.id.in_(candidate_ids)).all()
+        
+        if not current_user.is_admin():
+            # Users can only delete candidates from their own jobs
+            user_job_ids = [job.id for job in Job.query.filter_by(created_by=current_user.id)]
+            candidates = [c for c in candidates if c.job_id in user_job_ids]
+        
+        if not candidates:
+            flash('Nenhum candidato válido selecionado.', 'error')
+            return redirect(url_for('candidates_list'))
+        
+        deleted_count = 0
+        deleted_names = []
+        
+        for candidate in candidates:
+            try:
+                # Delete the file from the filesystem
+                if candidate.file_path and os.path.exists(candidate.file_path):
+                    os.remove(candidate.file_path)
+                
+                # Delete from database
+                db.session.delete(candidate)
+                deleted_count += 1
+                deleted_names.append(candidate.name)
+                
+            except Exception as e:
+                logging.error(f"Error deleting candidate {candidate.id}: {e}")
+                continue
+        
+        db.session.commit()
+        
+        if deleted_count > 0:
+            if deleted_count == 1:
+                flash(f'Candidato {deleted_names[0]} excluído com sucesso!', 'success')
+            else:
+                flash(f'{deleted_count} candidatos excluídos com sucesso!', 'success')
+        else:
+            flash('Nenhum candidato foi excluído.', 'error')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao excluir candidatos: {str(e)}', 'error')
+    
+    return redirect(url_for('candidates_list'))
+
 # API endpoints for real-time updates
 @app.route('/api/candidate/<int:candidate_id>/status')
 @login_required
@@ -670,19 +702,24 @@ def api_job_processing_status(job_id):
             return jsonify({'error': 'Acesso negado'}), 403
         
         candidates = Candidate.query.filter_by(job_id=job_id).all()
+        candidate_ids = [c.id for c in candidates]
         
+        # Always use database status for accurate results
         status_counts = {
             'pending': 0,
             'processing': 0,
             'completed': 0,
             'failed': 0,
+            'deleted': 0,
             'total': len(candidates)
         }
+        
+        for candidate in candidates:
+            status_counts[candidate.analysis_status] += 1
         
         candidate_details = []
         
         for candidate in candidates:
-            status_counts[candidate.analysis_status] += 1
             candidate_details.append({
                 'id': candidate.id,
                 'name': candidate.name,
@@ -691,10 +728,14 @@ def api_job_processing_status(job_id):
                 'analyzed_at': candidate.analyzed_at.isoformat() if candidate.analyzed_at else None
             })
         
+        active_total = status_counts['total'] - status_counts['deleted']
+        progress_percentage = round((status_counts['completed'] + status_counts['failed']) / max(active_total, 1) * 100, 1) if active_total > 0 else 0
+        
         return jsonify({
             'status_counts': status_counts,
             'candidates': candidate_details,
-            'progress_percentage': round((status_counts['completed'] + status_counts['failed']) / max(status_counts['total'], 1) * 100, 1)
+            'progress_percentage': progress_percentage,
+            'is_complete': active_total > 0 and (status_counts['completed'] + status_counts['failed']) >= active_total
         })
         
     except Exception as e:
@@ -704,13 +745,26 @@ def api_job_processing_status(job_id):
 @app.route('/api/candidates/<int:candidate_id>/reprocess', methods=['POST'])
 @login_required
 def api_reprocess_candidate(candidate_id):
-    """Reprocess a failed candidate"""
+    """Reprocess a failed or outdated candidate"""
     try:
         candidate = Candidate.query.get_or_404(candidate_id)
         
         # Check if user has access to this candidate
         if not current_user.is_admin() and candidate.job.created_by != current_user.id:
             return jsonify({'error': 'Acesso negado'}), 403
+        
+        # Check if analysis is outdated (contains generic text)
+        is_outdated = False
+        if candidate.ai_analysis:
+            outdated_indicators = [
+                "Como o currículo não foi fornecido",
+                "caso você compartilhe o CV",
+                "currículo hipotético",
+                "João Silva",
+                "Empresa XYZ",
+                "Empresa ABC"
+            ]
+            is_outdated = any(indicator in candidate.ai_analysis for indicator in outdated_indicators)
         
         # Reset candidate status
         candidate.analysis_status = 'pending'
@@ -720,13 +774,18 @@ def api_reprocess_candidate(candidate_id):
         candidate.analyzed_at = None
         db.session.commit()
         
-        # Start background processing
-        from processors.background_processor import start_background_analysis
-        start_background_analysis([candidate_id])
+        # Start fast parallel processing
+        from processors.fast_parallel_processor import start_fast_parallel_analysis
+        start_fast_parallel_analysis([candidate_id])
+        
+        message = f'Candidato {candidate.name} foi colocado na fila para reprocessamento'
+        if is_outdated:
+            message += ' (análise antiga detectada)'
         
         return jsonify({
             'success': True,
-            'message': f'Candidato {candidate.name} foi colocado na fila para reprocessamento'
+            'message': message,
+            'was_outdated': is_outdated
         })
         
     except Exception as e:
@@ -739,32 +798,111 @@ def api_reprocess_candidate(candidate_id):
 @app.route('/api/process-pending')
 @login_required
 def api_process_pending():
-    """Manually trigger processing of pending candidates"""
+    """Manually trigger processing of pending and failed candidates"""
     try:
         # Users only process their own candidates, admin processes all
         if current_user.is_admin():
-            pending_candidates = Candidate.query.filter_by(analysis_status='pending').all()
+            candidates_to_process = Candidate.query.filter(
+                Candidate.analysis_status.in_(['pending', 'failed'])
+            ).all()
         else:
             user_job_ids = [job.id for job in Job.query.filter_by(created_by=current_user.id)]
-            pending_candidates = Candidate.query.filter(
+            candidates_to_process = Candidate.query.filter(
                 Candidate.job_id.in_(user_job_ids),
-                Candidate.analysis_status == 'pending'
+                Candidate.analysis_status.in_(['pending', 'failed'])
             ).all()
         
-        if not pending_candidates:
-            return jsonify({'success': False, 'message': 'Nenhum candidato pendente encontrado'})
+        if not candidates_to_process:
+            return jsonify({'success': False, 'message': 'Nenhum candidato pendente ou com falha encontrado'})
         
-        candidate_ids = [c.id for c in pending_candidates]
+        candidate_ids = [c.id for c in candidates_to_process]
         
-        from processors.background_processor import start_background_analysis
-        start_background_analysis(candidate_ids)
+        from processors.fast_parallel_processor import start_fast_parallel_analysis
+        start_fast_parallel_analysis(candidate_ids)
         
         return jsonify({
             'success': True, 
-            'message': f'Processamento iniciado para {len(candidate_ids)} candidatos',
+            'message': f'Processamento iniciado para {len(candidate_ids)} candidatos (incluindo reprocessamento de falhas)',
             'candidate_ids': candidate_ids
         })
     except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/jobs/<int:job_id>/reprocess-all')
+@login_required
+def api_reprocess_all_candidates(job_id):
+    """Reprocess ALL candidates from a specific job"""
+    try:
+        job = Job.query.get_or_404(job_id)
+        
+        # Check if user has access to this job
+        if not current_user.is_admin() and job.created_by != current_user.id:
+            return jsonify({'error': 'Acesso negado'}), 403
+        
+        # Get ALL candidates from this job (regardless of status)
+        candidates_to_process = Candidate.query.filter_by(job_id=job_id).all()
+        
+        if not candidates_to_process:
+            return jsonify({'success': False, 'message': 'Nenhum candidato encontrado para esta vaga'})
+        
+        # Reset all candidates to pending status (including stuck ones)
+        for candidate in candidates_to_process:
+            candidate.analysis_status = 'pending'
+            candidate.ai_score = None
+            candidate.ai_summary = None
+            candidate.ai_analysis = None
+            candidate.analyzed_at = None
+        
+        db.session.commit()
+        
+        candidate_ids = [c.id for c in candidates_to_process]
+        
+        from processors.fast_parallel_processor import start_fast_parallel_analysis
+        start_fast_parallel_analysis(candidate_ids)
+        
+        return jsonify({
+            'success': True, 
+            'message': f'Reanálise iniciada para {len(candidate_ids)} candidatos da vaga "{job.title}"',
+            'candidate_ids': candidate_ids
+        })
+    except Exception as e:
+        logging.error(f"Error reprocessing all candidates for job {job_id}: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/jobs/<int:job_id>/reset-stuck')
+@login_required
+def api_reset_stuck_candidates(job_id):
+    """Reset candidates stuck in processing status"""
+    try:
+        job = Job.query.get_or_404(job_id)
+        
+        # Check if user has access to this job
+        if not current_user.is_admin() and job.created_by != current_user.id:
+            return jsonify({'error': 'Acesso negado'}), 403
+        
+        # Find candidates stuck in processing
+        stuck_candidates = Candidate.query.filter_by(
+            job_id=job_id, 
+            analysis_status='processing'
+        ).all()
+        
+        if not stuck_candidates:
+            return jsonify({'success': False, 'message': 'Nenhum candidato preso em processamento encontrado'})
+        
+        # Reset stuck candidates to pending
+        for candidate in stuck_candidates:
+            candidate.analysis_status = 'pending'
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'{len(stuck_candidates)} candidatos foram resetados de "processando" para "pendente"',
+            'reset_count': len(stuck_candidates)
+        })
+        
+    except Exception as e:
+        logging.error(f"Error resetting stuck candidates for job {job_id}: {e}")
         return jsonify({'success': False, 'error': str(e)})
 
 from datetime import datetime

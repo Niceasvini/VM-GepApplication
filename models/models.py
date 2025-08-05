@@ -28,7 +28,6 @@ class Job(db.Model):
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=False)
     requirements = db.Column(db.Text, nullable=False)
-    dcf_content = db.Column(db.Text)  # Documento de Conteúdo Funcional
     status = db.Column(db.String(20), default='active')  # 'active', 'closed', 'draft'
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

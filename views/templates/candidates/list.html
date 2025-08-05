@@ -2,6 +2,99 @@
 
 {% block title %}Candidatos - Viana e Moura{% endblock %}
 
+{% block styles %}
+<style>
+    .candidate-checkbox {
+        cursor: pointer;
+    }
+    
+    .form-check {
+        margin: 0;
+    }
+    
+    .form-check-input:checked {
+        background-color: #B93A3E;
+        border-color: #B93A3E;
+    }
+    
+    .form-check-input:focus {
+        border-color: #B93A3E;
+        box-shadow: 0 0 0 0.2rem rgba(185, 58, 62, 0.25);
+    }
+    
+    #bulkActionsBar {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background: white;
+    }
+    
+    .candidate-card:hover {
+        transform: translateY(-2px);
+        transition: transform 0.2s ease;
+    }
+    
+    .job-group {
+        margin-bottom: 2rem;
+    }
+    
+    .job-header {
+        background: linear-gradient(135deg, #B93A3E 0%, #8B2E31 100%);
+        color: white;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .job-header:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(185, 58, 62, 0.3);
+    }
+    
+    .job-header.collapsed {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    }
+    
+    .job-content {
+        transition: all 0.3s ease;
+        overflow: hidden;
+        max-height: 2000px;
+        opacity: 1;
+    }
+    
+    .job-content.collapsed {
+        max-height: 0;
+        opacity: 0;
+        padding: 0;
+        margin: 0;
+        overflow: hidden;
+        display: none;
+    }
+    
+    .search-container {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 2rem;
+        border: 1px solid #e9ecef;
+    }
+    
+    .candidate-count {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+    
+    .search-highlight {
+        background-color: #fff3cd;
+        padding: 2px 4px;
+        border-radius: 3px;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -19,78 +112,163 @@
         </div>
     </div>
     
-    {% if candidates %}
-        <div class="row g-4">
-            {% for candidate in candidates %}
-            <div class="col-md-6 col-lg-4 candidate-card" data-status="{{ candidate.status }}" data-score="{{ candidate.ai_score or 0 }}">
-                <div class="card candidate-card-item border-0 shadow-sm h-100">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <h5 class="card-title">{{ candidate.name }}</h5>
-                            {% if candidate.ai_score %}
-                                <span class="badge bg-{{ 'success' if candidate.ai_score >= 7 else 'warning' if candidate.ai_score >= 5 else 'danger' }} fs-6">
-                                    {{ "%.1f"|format(candidate.ai_score) }}
-                                </span>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-3">
-                            <p class="text-muted mb-2">
-                                <i class="fas fa-briefcase me-1"></i>{{ candidate.job.title }}
-                            </p>
-                            {% if candidate.email %}
-                            <p class="text-muted mb-1">
-                                <i class="fas fa-envelope me-1"></i>{{ candidate.email }}
-                            </p>
-                            {% endif %}
-                            {% if candidate.phone %}
-                            <p class="text-muted mb-1">
-                                <i class="fas fa-phone me-1"></i>{{ candidate.phone }}
-                            </p>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-3">
-                            <span class="badge bg-{{ 'primary' if candidate.status == 'pending' else 'success' if candidate.status == 'interested' else 'danger' if candidate.status == 'rejected' else 'info' }} me-2">
-                                {% if candidate.status == 'pending' %}Pendente
-                                {% elif candidate.status == 'interested' %}Interessado
-                                {% elif candidate.status == 'rejected' %}Reprovado
-                                {% elif candidate.status == 'interview' %}Entrevista
-                                {% else %}{{ candidate.status }}{% endif %}
-                            </span>
-                            <span class="badge bg-{{ 'success' if candidate.analysis_status == 'completed' else 'warning' if candidate.analysis_status == 'processing' else 'danger' if candidate.analysis_status == 'failed' else 'secondary' }}">
-                                {% if candidate.analysis_status == 'completed' %}Analisado
-                                {% elif candidate.analysis_status == 'processing' %}Processando
-                                {% elif candidate.analysis_status == 'failed' %}Falhou
-                                {% else %}Pendente{% endif %}
-                            </span>
-                        </div>
-                        
-                        {% if candidate.ai_summary %}
-                        <p class="card-text text-muted small">{{ candidate.ai_summary[:100] }}...</p>
-                        {% endif %}
-                        
-                        <div class="d-flex justify-content-between align-items-center mt-3">
-                            <small class="text-muted">
-                                <i class="fas fa-calendar me-1"></i>{{ candidate.uploaded_at.strftime('%d/%m/%Y') }}
-                            </small>
-                            <div class="d-flex gap-1">
-                                <a href="{{ url_for('candidate_detail', candidate_id=candidate.id) }}" class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-eye me-1"></i>Ver Detalhes
-                                </a>
-                                <a href="{{ url_for('download_candidate_file', candidate_id=candidate.id) }}" class="btn btn-sm btn-outline-success" title="Baixar currículo">
-                                    <i class="fas fa-download"></i>
-                                </a>
-                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDeleteCandidate({{ candidate.id }}, '{{ candidate.name }}')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+    <!-- Search Bar -->
+    <div class="search-container">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" class="form-control" id="nameSearch" 
+                           placeholder="Pesquisar por nome do candidato..." 
+                           onkeyup="searchCandidates()">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary" onclick="expandAllJobs()">
+                        <i class="fas fa-expand-alt me-1"></i>Expandir Todos
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="collapseAllJobs()">
+                        <i class="fas fa-compress-alt me-1"></i>Colapsar Todos
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bulk Actions Bar -->
+    <div class="card border-0 shadow-sm mb-4" id="bulkActionsBar" style="display: none;">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="text-muted">
+                        <i class="fas fa-check-square me-2"></i>
+                        <span id="selectedCount">0</span> candidato(s) selecionado(s)
+                    </span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectAllCandidates()">
+                        <i class="fas fa-check-double me-1"></i>Selecionar Todos
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="deselectAllCandidates()">
+                        <i class="fas fa-square me-1"></i>Desmarcar Todos
+                    </button>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-danger" onclick="confirmBulkDelete()" id="bulkDeleteBtn">
+                        <i class="fas fa-trash me-2"></i>Excluir Selecionados
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if job_groups %}
+        {% for job_id, job_data in job_groups.items() %}
+            {% set job = job_data.job %}
+            {% set job_candidates = job_data.candidates %}
+            <!-- Debug: Job {{ job.id }} - {{ job.title }} - {{ job_candidates|length }} candidates -->
+            <div class="job-group" data-job-id="{{ job.id }}">
+
+                <div class="job-header p-3 mb-3" onclick="toggleJobGroup({{ job.id }})">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-3">
+                            <i class="fas fa-briefcase fa-2x"></i>
+                            <div>
+                                <h4 class="mb-1">{{ job.title }}</h4>
+                                <p class="mb-0 opacity-75">{{ job_candidates|length }} candidato(s) • Clique para expandir</p>
                             </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="candidate-count">{{ job_candidates|length }}</span>
+                            <i class="fas fa-chevron-down" id="chevron-{{ job.id }}"></i>
                         </div>
                     </div>
                 </div>
+                
+                <div class="job-content" id="job-content-{{ job.id }}">
+                    <div class="row g-4">
+                        {% for candidate in job_candidates %}
+                        <div class="col-md-6 col-lg-4 candidate-card" 
+                             data-status="{{ candidate.status }}" 
+                             data-score="{{ candidate.ai_score or 0 }}"
+                             data-name="{{ candidate.name|lower }}">
+                            <div class="card candidate-card-item border-0 shadow-sm h-100">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="form-check">
+                                                <input class="form-check-input candidate-checkbox" type="checkbox" 
+                                                       value="{{ candidate.id }}" id="candidate_{{ candidate.id }}"
+                                                       onchange="updateBulkActions()">
+                                                <label class="form-check-label" for="candidate_{{ candidate.id }}"></label>
+                                            </div>
+                                            <h5 class="card-title mb-0 candidate-name">{{ candidate.name }}</h5>
+                                        </div>
+                                        {% if candidate.ai_score %}
+                                            <span class="badge bg-{{ 'success' if candidate.ai_score >= 7 else 'warning' if candidate.ai_score >= 5 else 'danger' }} fs-6">
+                                                {{ "%.1f"|format(candidate.ai_score) }}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        {% if candidate.email %}
+                                        <p class="text-muted mb-1">
+                                            <i class="fas fa-envelope me-1"></i>{{ candidate.email }}
+                                        </p>
+                                        {% endif %}
+                                        {% if candidate.phone %}
+                                        <p class="text-muted mb-1">
+                                            <i class="fas fa-phone me-1"></i>{{ candidate.phone }}
+                                        </p>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <span class="badge bg-{{ 'primary' if candidate.status == 'pending' else 'success' if candidate.status == 'interested' else 'danger' if candidate.status == 'rejected' else 'info' }} me-2">
+                                            {% if candidate.status == 'pending' %}Pendente
+                                            {% elif candidate.status == 'interested' %}Interessado
+                                            {% elif candidate.status == 'rejected' %}Reprovado
+                                            {% elif candidate.status == 'interview' %}Entrevista
+                                            {% else %}{{ candidate.status }}{% endif %}
+                                        </span>
+                                        <span class="badge bg-{{ 'success' if candidate.analysis_status == 'completed' else 'warning' if candidate.analysis_status == 'processing' else 'danger' if candidate.analysis_status == 'failed' else 'secondary' }}">
+                                            {% if candidate.analysis_status == 'completed' %}Analisado
+                                            {% elif candidate.analysis_status == 'processing' %}Processando
+                                            {% elif candidate.analysis_status == 'failed' %}Falhou
+                                            {% else %}Pendente{% endif %}
+                                        </span>
+                                    </div>
+                                    
+                                    {% if candidate.ai_summary %}
+                                    <p class="card-text text-muted small">{{ candidate.ai_summary[:100] }}...</p>
+                                    {% endif %}
+                                    
+                                    <div class="d-flex justify-content-between align-items-center mt-3">
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar me-1"></i>{{ candidate.uploaded_at.strftime('%d/%m/%Y') }}
+                                        </small>
+                                        <div class="d-flex gap-1">
+                                            <a href="{{ url_for('candidate_detail', candidate_id=candidate.id) }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye me-1"></i>Ver Detalhes
+                                            </a>
+                                            <a href="{{ url_for('download_candidate_file', candidate_id=candidate.id) }}" class="btn btn-sm btn-outline-success" title="Baixar currículo">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDeleteCandidate({{ candidate.id }}, '{{ candidate.name }}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
-            {% endfor %}
-        </div>
+        {% endfor %}
     {% else %}
         <div class="text-center py-5">
             <i class="fas fa-users fa-4x text-muted mb-4"></i>
@@ -106,6 +284,143 @@
 
 {% block scripts %}
 <script>
+function toggleJobGroup(jobId) {
+    const jobGroup = document.querySelector(`[data-job-id="${jobId}"]`);
+    const header = jobGroup.querySelector('.job-header');
+    const content = jobGroup.querySelector('.job-content');
+    const chevron = jobGroup.querySelector('.fa-chevron-down, .fa-chevron-right');
+    
+    if (content.classList.contains('collapsed')) {
+        content.classList.remove('collapsed');
+        content.style.display = '';
+        header.classList.remove('collapsed');
+        chevron.classList.remove('fa-chevron-right');
+        chevron.classList.add('fa-chevron-down');
+    } else {
+        content.classList.add('collapsed');
+        content.style.display = 'none';
+        header.classList.add('collapsed');
+        chevron.classList.remove('fa-chevron-down');
+        chevron.classList.add('fa-chevron-right');
+    }
+}
+
+function expandAllJobs() {
+    const jobGroups = document.querySelectorAll('.job-group');
+    jobGroups.forEach(group => {
+        const header = group.querySelector('.job-header');
+        const content = group.querySelector('.job-content');
+        const chevron = group.querySelector('.fa-chevron-down, .fa-chevron-right');
+        
+        content.classList.remove('collapsed');
+        content.style.display = '';
+        header.classList.remove('collapsed');
+        chevron.classList.remove('fa-chevron-right');
+        chevron.classList.add('fa-chevron-down');
+    });
+}
+
+function collapseAllJobs() {
+    const jobGroups = document.querySelectorAll('.job-group');
+    jobGroups.forEach(group => {
+        const header = group.querySelector('.job-header');
+        const content = group.querySelector('.job-content');
+        const chevron = group.querySelector('.fa-chevron-down, .fa-chevron-right');
+        
+        content.classList.add('collapsed');
+        content.style.display = 'none';
+        header.classList.add('collapsed');
+        chevron.classList.remove('fa-chevron-down');
+        chevron.classList.add('fa-chevron-right');
+    });
+}
+
+function searchCandidates() {
+    const searchTerm = document.getElementById('nameSearch').value.toLowerCase();
+    const cards = document.querySelectorAll('.candidate-card');
+    let hasVisibleCandidates = false;
+    
+    cards.forEach(card => {
+        const candidateName = card.getAttribute('data-name');
+        const nameElement = card.querySelector('.candidate-name');
+        const displayName = nameElement ? nameElement.textContent : candidateName;
+        
+        // Simple and effective search in the entire name
+        const searchTermLower = searchTerm.toLowerCase();
+        const candidateNameLower = candidateName.toLowerCase();
+        const displayNameLower = displayName.toLowerCase();
+        
+        // Check if search term is found anywhere in the name
+        const matchesSearch = searchTerm === '' || 
+                            candidateNameLower.includes(searchTermLower) ||
+                            displayNameLower.includes(searchTermLower);
+        
+        // Debug: Log search details
+        if (searchTerm !== '') {
+            console.log(`Searching for "${searchTermLower}" in:`);
+            console.log(`  - candidateName: "${candidateNameLower}"`);
+            console.log(`  - displayName: "${displayNameLower}"`);
+            console.log(`  - matches: ${matchesSearch}`);
+        }
+        
+        if (matchesSearch) {
+            card.style.display = '';
+            hasVisibleCandidates = true;
+            
+            // Highlight search term in the displayed name
+            if (searchTerm !== '' && nameElement) {
+                const originalText = nameElement.textContent;
+                const highlightedText = originalText.replace(
+                    new RegExp(searchTerm, 'gi'),
+                    match => `<span class="search-highlight">${match}</span>`
+                );
+                nameElement.innerHTML = highlightedText;
+            }
+        } else {
+            card.style.display = 'none';
+        }
+    });
+    
+    // Show/hide job groups and expand if candidates found
+    const jobGroups = document.querySelectorAll('.job-group');
+    jobGroups.forEach(group => {
+        const visibleCandidates = group.querySelectorAll('.candidate-card[style=""]');
+        const content = group.querySelector('.job-content');
+        const header = group.querySelector('.job-header');
+        const chevron = group.querySelector('.fa-chevron-down, .fa-chevron-right');
+        
+        if (visibleCandidates.length === 0) {
+            group.style.display = 'none';
+        } else {
+            group.style.display = '';
+            
+            // If searching and candidates found, expand the job group
+            if (searchTerm !== '' && visibleCandidates.length > 0) {
+                content.classList.remove('collapsed');
+                content.style.display = '';
+                header.classList.remove('collapsed');
+                chevron.classList.remove('fa-chevron-right');
+                chevron.classList.add('fa-chevron-down');
+            }
+        }
+    });
+    
+    // If no search term, collapse all job groups
+    if (searchTerm === '') {
+        jobGroups.forEach(group => {
+            const content = group.querySelector('.job-content');
+            const header = group.querySelector('.job-header');
+            const chevron = group.querySelector('.fa-chevron-down, .fa-chevron-right');
+            
+            content.classList.add('collapsed');
+            content.style.display = 'none';
+            header.classList.add('collapsed');
+            chevron.classList.remove('fa-chevron-down');
+            chevron.classList.add('fa-chevron-right');
+        });
+    }
+}
+
 function filterCandidates() {
     const statusFilter = document.getElementById('statusFilter').value;
     const minScoreFilter = parseFloat(document.getElementById('minScoreFilter').value) || 0;
@@ -127,10 +442,120 @@ function filterCandidates() {
         
         card.style.display = showCard ? '' : 'none';
     });
+    
+    // Show/hide job groups and expand if candidates found
+    const jobGroups = document.querySelectorAll('.job-group');
+    jobGroups.forEach(group => {
+        const visibleCandidates = group.querySelectorAll('.candidate-card[style=""]');
+        const content = group.querySelector('.job-content');
+        const header = group.querySelector('.job-header');
+        const chevron = group.querySelector('.fa-chevron-down, .fa-chevron-right');
+        
+        if (visibleCandidates.length === 0) {
+            group.style.display = 'none';
+        } else {
+            group.style.display = '';
+            
+            // If filtering and candidates found, expand the job group
+            if ((statusFilter || minScoreFilter > 0) && visibleCandidates.length > 0) {
+                content.classList.remove('collapsed');
+                content.style.display = '';
+                header.classList.remove('collapsed');
+                chevron.classList.remove('fa-chevron-right');
+                chevron.classList.add('fa-chevron-down');
+            }
+        }
+    });
+    
+    // If no filters, collapse all job groups
+    if (!statusFilter && minScoreFilter === 0) {
+        jobGroups.forEach(group => {
+            const content = group.querySelector('.job-content');
+            const header = group.querySelector('.job-header');
+            const chevron = group.querySelector('.fa-chevron-down, .fa-chevron-right');
+            
+            content.classList.add('collapsed');
+            content.style.display = 'none';
+            header.classList.add('collapsed');
+            chevron.classList.remove('fa-chevron-down');
+            chevron.classList.add('fa-chevron-right');
+        });
+    }
+}
+
+function updateBulkActions() {
+    const checkboxes = document.querySelectorAll('.candidate-checkbox:checked');
+    const bulkActionsBar = document.getElementById('bulkActionsBar');
+    const selectedCount = document.getElementById('selectedCount');
+    
+    if (checkboxes.length > 0) {
+        bulkActionsBar.style.display = 'block';
+        selectedCount.textContent = checkboxes.length;
+    } else {
+        bulkActionsBar.style.display = 'none';
+    }
+}
+
+function selectAllCandidates() {
+    const checkboxes = document.querySelectorAll('.candidate-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = true;
+    });
+    updateBulkActions();
+}
+
+function deselectAllCandidates() {
+    const checkboxes = document.querySelectorAll('.candidate-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    updateBulkActions();
+}
+
+function confirmBulkDelete() {
+    const checkboxes = document.querySelectorAll('.candidate-checkbox:checked');
+    if (checkboxes.length === 0) {
+        alert('Nenhum candidato selecionado.');
+        return;
+    }
+    
+    const candidateNames = Array.from(checkboxes).map(cb => {
+        const candidateCard = cb.closest('.candidate-card');
+        const nameElement = candidateCard.querySelector('.candidate-name');
+        return nameElement ? nameElement.textContent.trim() : 'Candidato';
+    });
+    
+    const message = `Tem certeza que deseja excluir ${checkboxes.length} candidato(s) selecionado(s)?`;
+    
+    showCustomConfirm(message, candidateNames, () => {
+        const candidateIds = Array.from(checkboxes).map(cb => cb.value);
+        
+        fetch('/candidates/bulk-delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ candidate_ids: candidateIds })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erro ao excluir candidatos: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Erro ao excluir candidatos.');
+        });
+    });
 }
 
 function confirmDeleteCandidate(candidateId, candidateName) {
-    if (confirm(`Tem certeza que deseja excluir o candidato "${candidateName}"?\n\nEsta ação não pode ser desfeita.`)) {
+    const message = `Tem certeza que deseja excluir o candidato "${candidateName}"?`;
+    
+    showCustomConfirm(message, [candidateName], () => {
         // Create form to submit DELETE request
         const form = document.createElement('form');
         form.method = 'POST';
@@ -148,7 +573,7 @@ function confirmDeleteCandidate(candidateId, candidateName) {
         
         document.body.appendChild(form);
         form.submit();
-    }
+    });
 }
 </script>
 {% endblock %}

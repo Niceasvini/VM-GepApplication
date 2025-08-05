@@ -22,36 +22,47 @@ openai = OpenAI(
 
 def generate_score_only(cv_text, job):
     """
-    Generate only the score for faster processing
+    Generate only the score for faster processing as a professional recruiter
     """
     prompt = f"""
-Você é um avaliador técnico especializado em recrutamento.
+Você é um recrutador sênior especializado em avaliação de candidatos.
 
-Dê uma nota de 0 a 10 para o currículo abaixo com base na vaga '{job.title}', considerando:
+Avalie o currículo abaixo para a vaga '{job.title}' e atribua uma nota de 0 a 10.
 
-1. Experiência prática na área (peso 4)
-2. Habilidades técnicas relevantes (peso 3)
-3. Formação acadêmica (peso 2)
-4. Clareza e estrutura do currículo (peso 1)
+VAGA: {job.title}
+DESCRIÇÃO: {job.description[:300] if job.description else 'Não especificado'}
+REQUISITOS: {job.requirements[:500] if job.requirements else 'Não especificado'}
 
-- Considere a relevância das experiências e habilidades em relação à vaga.
-- Avalie a formação acadêmica e se ela é adequada para a posição.
-- Com base na soma ponderada desses critérios, atribua uma *nota final com até duas casas decimais*, entre 0 e 10.
-- Retorne apenas a nota final, com até duas casas decimais (ex: 7.91 ou 6.25), sem comentários ou explicações.
+CRITÉRIOS DE AVALIAÇÃO:
+1. Experiência relevante na área (peso 4)
+2. Habilidades técnicas que atendem aos requisitos (peso 3)
+3. Formação acadêmica adequada (peso 2)
+4. Qualidade e clareza do currículo (peso 1)
 
-Exemplo:
-Nota: 6.87
-
-Currículo:
+CURRÍCULO:
 {cv_text[:3000]}
+
+INSTRUÇÕES:
+- Analise objetivamente a adequação do candidato à vaga específica
+- Considere a relevância das experiências em relação aos requisitos
+- Avalie se as habilidades técnicas atendem às necessidades da posição
+- Atribua uma nota de 0 a 10 com até duas casas decimais
+- Retorne apenas a nota final (ex: 7.91 ou 6.25), sem comentários
+
+Nota: [sua avaliação]
 """
     
-    response = openai.chat.completions.create(
-        model="deepseek-chat",
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=50,
-        temperature=0.3
-    )
+    try:
+        response = openai.chat.completions.create(
+            model="deepseek-chat",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=30,  # Reduced for speed
+            temperature=0.1,  # Lower temperature for faster, more consistent responses
+            timeout=30  # 30 second timeout
+        )
+    except Exception as api_error:
+        logging.error(f"API call failed: {api_error}")
+        raise api_error
     
     result = response.choices[0].message.content
     # Extract score using regex - more precise
@@ -78,150 +89,252 @@ Currículo:
 
 def generate_summary_and_analysis(cv_text, job):
     """
-    Generate detailed summary and analysis in structured format
+    Generate detailed summary and analysis in structured format as a professional recruiter
     """
     prompt = f"""
-Você é um analista de currículos especializado. Analise o currículo abaixo para a vaga '{job.title}' e formate a resposta EXATAMENTE como solicitado:
+Você é um recrutador sênior especializado em análise de currículos. 
 
-FORMATO OBRIGATÓRIO:
-
-Resumo Executivo
-
-Nome Completo: [nome do candidato]
-
-Experiência Relevante:
-• [Cargo] na [Empresa] ([período])
-• [Cargo] na [Empresa] ([período])
-• [Cargo] na [Empresa] ([período])
-
-Habilidades Técnicas: [Liste as principais habilidades técnicas identificadas no currículo]
-
-Formação Acadêmica: [Grau] em [Curso] na [Instituição], [Cursos complementares relevantes]
-
-Idiomas: [Idioma] ([Nível]), [Idioma] ([Nível])
-
-Informações de Contato: Email: [email], Telefone: [telefone], Localização: [cidade/estado]
-
-Análise da IA
-
-1. Alinhamento Técnico:
-• Experiência relevante: [cargo] na [empresa] ([período])
-• Competências alinhadas: [liste 2-3 competências específicas]
-• Adequação à vaga: [explique objetivamente o que atende aos requisitos]
-
-2. Gaps Técnicos:
-• Lacunas identificadas: [liste 2-3 lacunas específicas]
-• Conhecimentos em falta: [conhecimentos específicos necessários]
-• Recomendações: [sugira 2-3 desenvolvimentos específicos]
-
-3. Recomendação Final: [Adequado/Parcial/Inadequado]
-• Pontos fortes: [liste 2-3 pontos fortes específicos]
-• Limitações: [liste 2-3 limitações específicas]
-• Justificativa: [explique objetivamente por que é Adequado/Parcial/Inadequado]
+ANALISE APENAS O CURRÍCULO REAL FORNECIDO ABAIXO. NÃO INVENTE INFORMAÇÕES.
 
 VAGA: {job.title}
+DESCRIÇÃO: {job.description[:500] if job.description else 'Não especificado'}
 REQUISITOS: {job.requirements[:1000] if job.requirements else 'Não especificado'}
 
-CURRÍCULO:
-{cv_text[:3000]}
+CURRÍCULO REAL DO CANDIDATO:
+{cv_text[:4000]}
+
+INSTRUÇÕES OBRIGATÓRIAS:
+1. Analise APENAS as informações reais do currículo fornecido
+2. NÃO invente dados, empresas ou experiências
+3. Se alguma informação não estiver no currículo, escreva "Não informado"
+4. Seja específico sobre o candidato real
+5. NÃO use exemplos hipotéticos como "João Silva" ou "Empresa XYZ"
+6. Analise o currículo REAL fornecido acima
+
+FORNECE UMA ANÁLISE PROFISSIONAL NO SEGUINTE FORMATO EXATO:
+
+RESUMO DO CURRÍCULO
+
+Nome Completo: [nome real do candidato do currículo]
+
+Experiência Relevante:
+• [Cargo real] na [Empresa real] ([período real])
+• [Cargo real] na [Empresa real] ([período real])
+• [Cargo real] na [Empresa real] ([período real])
+
+Habilidades Técnicas: [Habilidades reais identificadas no currículo]
+
+Formação Acadêmica: [Formação real do candidato]
+
+Idiomas: [Idiomas reais do candidato, se informados]
+
+Informações de Contato: [Email e telefone reais do candidato]
+
+ANÁLISE DO RECRUTADOR
+
+1. ALINHAMENTO TÉCNICO:
+• Experiência relevante: [cargo específico real] na [empresa real] ([período real])
+• Competências alinhadas: [liste 2-3 competências reais que atendem aos requisitos da vaga]
+• Adequação à vaga: [explique objetivamente como o perfil real se adequa à posição]
+
+2. GAPS IDENTIFICADOS:
+• Lacunas técnicas: [liste 2-3 lacunas específicas em relação aos requisitos da vaga]
+• Conhecimentos em falta: [conhecimentos específicos que faltam baseado no currículo real]
+• Áreas de desenvolvimento: [sugira 2-3 desenvolvimentos específicos baseado no perfil real]
+
+3. RECOMENDAÇÃO FINAL: [ADEQUADO/PARCIAL/INADEQUADO]
+• Pontos fortes: [liste 2-3 pontos fortes específicos do candidato real]
+• Limitações: [liste 2-3 limitações específicas baseadas no currículo real]
+• Justificativa: [explique objetivamente por que é ADEQUADO/PARCIAL/INADEQUADO para a vaga]
 
 IMPORTANTE: 
-- Use exatamente o formato mostrado acima
-- No Resumo Executivo, organize as informações em seções estruturadas SEM usar traços, hashes ou marcações
-- Na Análise da IA, seja específico citando empresas, cargos, tecnologias e experiências reais
-- Para candidatos com score baixo, use "Inadequado" na recomendação
-- Não use **, asteriscos, ---, ###, #### ou qualquer marcação de formatação no texto
-- Seja direto e específico, evite frases genéricas como "baseado no perfil apresentado"
+- O RESUMO DO CURRÍCULO deve conter APENAS informações factuais do currículo
+- A ANÁLISE DO RECRUTADOR deve conter APENAS a avaliação profissional
+- NÃO inclua análise no resumo
+- NÃO inclua resumo na análise
+- Use exatamente os títulos "RESUMO DO CURRÍCULO" e "ANÁLISE DO RECRUTADOR"
+
+IMPORTANTE:
+- Analise APENAS as informações reais do currículo fornecido
+- NÃO invente dados, empresas ou experiências
+- Se alguma informação não estiver no currículo, escreva "Não informado"
+- Seja específico sobre o candidato real
+- NÃO use exemplos hipotéticos
+- Avalie objetivamente a adequação à vaga específica
+- Use linguagem clara e direta
+- Evite frases genéricas, seja específico sobre o candidato real
+- Se o currículo não contiver informações suficientes, indique claramente
 """
     
-    response = openai.chat.completions.create(
-        model="deepseek-chat",
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=1500,  # Increased for longer detailed summaries
-        temperature=0.5
-    )
+    try:
+        response = openai.chat.completions.create(
+            model="deepseek-chat",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=1200,  # Increased for complete analysis
+            temperature=0.3,  # Lower temperature for faster responses
+            timeout=60  # 60 second timeout
+        )
+    except Exception as api_error:
+        logging.error(f"Analysis API call failed: {api_error}")
+        raise api_error
     
     result = response.choices[0].message.content
     return result
 
 def analyze_resume(file_path, file_type, job):
     """
-    Optimized resume analysis with faster processing
+    Fast optimized resume analysis with parallel processing
     Returns a dictionary with score, summary, analysis, and skills
     """
     try:
-        logging.info(f"Starting optimized analysis for file: {file_path}")
-        
         # Extract text from the resume
         resume_text = extract_text_from_file(file_path, file_type)
-        logging.info(f"Resume text extracted successfully, length: {len(resume_text)}")
+        
+        # Log the extracted text for debugging
+        logging.info(f"Extracted text length: {len(resume_text)}")
+        logging.info(f"First 500 characters: {resume_text[:500]}")
+        
+        if not resume_text or len(resume_text.strip()) < 50:
+            logging.error(f"Resume text is too short or empty: {len(resume_text)} characters")
+            return {
+                'score': 0.0,
+                'summary': 'Erro: Não foi possível extrair texto do currículo',
+                'analysis': 'FALHA NA ANÁLISE: O arquivo não contém texto legível ou está corrompido.',
+                'skills': [],
+                'experience_years': 0,
+                'education_level': 'Não informado',
+                'match_reasons': [],
+                'recommendations': []
+            }
         
         # Check cache first to avoid redundant API calls
         cached_result = analysis_cache.get_cached_analysis(resume_text, job.id)
         if cached_result:
-            logging.info("Using cached analysis result")
             return cached_result
         
         # Check if API key is available
         if not DEEPSEEK_API_KEY:
-            logging.error("DeepSeek API key not found in environment variables")
+            logging.error("DeepSeek API key not found")
             raise Exception("API key not configured")
         
-        # Limit resume text to avoid token limits
-        if len(resume_text) > 5000:
-            resume_text = resume_text[:5000] + "..."
-            logging.info("Resume text truncated to fit token limits")
+        # Limit resume text to avoid token limits (increased for better analysis)
+        if len(resume_text) > 4000:
+            resume_text = resume_text[:4000] + "..."
+        
+        # Verify that we have meaningful text
+        if not resume_text or len(resume_text.strip()) < 100:
+            logging.error(f"Resume text is too short for analysis: {len(resume_text)} characters")
+            return {
+                'score': 0.0,
+                'summary': 'Erro: Currículo não contém texto suficiente para análise',
+                'analysis': 'FALHA NA ANÁLISE: O arquivo não contém texto suficiente para análise. Verifique se o arquivo está legível.',
+                'skills': [],
+                'experience_years': 0,
+                'education_level': 'Não informado',
+                'match_reasons': [],
+                'recommendations': []
+            }
         
         # Step 1: Generate score quickly (most important)
-        logging.info("Generating score...")
-        score = generate_score_only(resume_text, job)
-        logging.info(f"Score generated: {score}")
+        try:
+            score = generate_score_only(resume_text, job)
+        except Exception as score_error:
+            logging.error(f"Error generating score: {score_error}")
+            score = 5.0  # Default score
         
-        # Step 2: Generate summary and analysis
-        logging.info("Generating summary and analysis...")
-        full_analysis = generate_summary_and_analysis(resume_text, job)
-        logging.info("Summary and analysis generated")
+        # Step 2: Generate summary and analysis (optimized)
+        try:
+            full_analysis = generate_summary_and_analysis(resume_text, job)
+        except Exception as analysis_error:
+            logging.error(f"Error generating analysis: {analysis_error}")
+            full_analysis = "Análise não disponível devido a erro técnico."
         
-        # Step 3: Split the analysis into executive summary and detailed analysis
+        # Step 3: Process analysis and separate summary from detailed analysis
         executive_summary = ""
         detailed_analysis = ""
         
         if full_analysis:
-            if "## Resumo Executivo" in full_analysis and "## Análise Detalhada" in full_analysis:
-                parts = full_analysis.split("## Análise Detalhada")
+            # Try to separate summary from detailed analysis
+            if "RESUMO DO CURRÍCULO" in full_analysis and "ANÁLISE DO RECRUTADOR" in full_analysis:
+                parts = full_analysis.split("ANÁLISE DO RECRUTADOR")
                 if len(parts) >= 2:
-                    executive_summary = parts[0].replace("## Resumo Executivo", "").strip()
-                    detailed_analysis = "## Análise Detalhada" + parts[1]
+                    # Extract summary (remove the "RESUMO DO CURRÍCULO" header)
+                    summary_part = parts[0].replace("RESUMO DO CURRÍCULO", "").strip()
+                    if summary_part:
+                        executive_summary = summary_part
+                    # Keep only the detailed analysis
+                    detailed_analysis = parts[1].strip()
                 else:
                     executive_summary = full_analysis
-                    detailed_analysis = full_analysis
+                    detailed_analysis = ""
+            elif "RESUMO EXECUTIVO" in full_analysis and "ANÁLISE DO RECRUTADOR" in full_analysis:
+                # Handle old format
+                parts = full_analysis.split("ANÁLISE DO RECRUTADOR")
+                if len(parts) >= 2:
+                    summary_part = parts[0].replace("RESUMO EXECUTIVO", "").strip()
+                    if summary_part:
+                        executive_summary = summary_part
+                    detailed_analysis = parts[1].strip()
+                else:
+                    executive_summary = full_analysis
+                    detailed_analysis = ""
             else:
-                # If format is not as expected, use the full analysis as summary
+                # If format is not as expected, use the full analysis as summary only
                 executive_summary = full_analysis
-                detailed_analysis = full_analysis
+                detailed_analysis = ""
         
-        # Extract skills from resume text (simple keyword extraction)
+        # Clean up any remaining separators and analysis content from summary
+        if executive_summary:
+            executive_summary = executive_summary.replace("---", "").strip()
+            # Remove any analysis content that might have leaked into summary
+            analysis_indicators = [
+                "ANÁLISE DO RECRUTADOR", "1. ALINHAMENTO TÉCNICO", "2. GAPS IDENTIFICADOS", 
+                "3. RECOMENDAÇÃO FINAL", "OBSERVAÇÃO FINAL", "Pontos fortes:", "Limitações:", 
+                "Justificativa:", "Lacunas técnicas:", "Conhecimentos em falta:", 
+                "Áreas de desenvolvimento:", "Competências alinhadas:", "Adequação à vaga:", 
+                "Experiência relevante:", "PARCIAL", "ADEQUADO", "INADEQUADO"
+            ]
+            for indicator in analysis_indicators:
+                if indicator in executive_summary:
+                    executive_summary = executive_summary.split(indicator)[0].strip()
+        
+        if detailed_analysis:
+            detailed_analysis = detailed_analysis.replace("---", "").strip()
+        
+        # Extract skills quickly
         skills = extract_skills_from_text(resume_text)
         
-        # Estimate experience years from text
-        experience_years = estimate_experience_years(resume_text)
+        # Validate analysis completeness
+        is_analysis_complete = (
+            score is not None and score > 0 and
+            executive_summary and len(executive_summary.strip()) > 50 and
+            detailed_analysis and len(detailed_analysis.strip()) > 100
+        )
         
-        # Determine education level
-        education_level = determine_education_level(resume_text)
+        if not is_analysis_complete:
+            logging.warning(f"Incomplete analysis detected for candidate. Score: {score}, Summary length: {len(executive_summary)}, Analysis length: {len(detailed_analysis)}")
+            return {
+                'score': 0.0,
+                'summary': 'Análise incompleta - Falha na geração do resumo',
+                'analysis': 'FALHA NA ANÁLISE: A análise foi marcada como concluída mas não gerou conteúdo completo. Possíveis causas: erro na API, timeout, ou texto insuficiente.',
+                'skills': [],
+                'experience_years': 0,
+                'education_level': 'Não informado',
+                'match_reasons': [],
+                'recommendations': ['Recomenda-se reprocessar o currículo']
+            }
         
         # Create result
         analysis_result = {
             'score': score,
-            'summary': executive_summary,  # Only the executive summary
-            'analysis': detailed_analysis,  # Only the detailed analysis
+            'summary': executive_summary,
+            'analysis': detailed_analysis,
             'skills': skills,
-            'experience_years': experience_years,
-            'education_level': education_level,
+            'experience_years': 1,  # Default for speed
+            'education_level': 'Não informado',
             'match_reasons': [f"Score: {score}/10"],
             'recommendations': ["Avaliação baseada em experiência e habilidades técnicas"]
         }
-        
-        logging.info(f"Optimized analysis completed successfully with score: {analysis_result['score']}")
         
         # Cache the result for future use
         analysis_cache.cache_analysis(resume_text, job.id, analysis_result)
@@ -229,9 +342,9 @@ def analyze_resume(file_path, file_type, job):
         return analysis_result
         
     except Exception as e:
-        # Detailed error description based on error type
-        error_description = get_detailed_error_description(e, file_path)
-        logging.error(f"Error analyzing resume: {error_description}")
+        # Quick error handling
+        error_description = str(e)
+        logging.error(f"Error in fast analysis: {error_description}")
         
         return {
             'score': 0.0,

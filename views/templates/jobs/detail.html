@@ -2,6 +2,159 @@
 
 {% block title %}{{ job.title }} - Viana e Moura{% endblock %}
 
+{% block head %}
+<style>
+.job-description-formatted {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 15px 0;
+    border-left: 4px solid var(--primary-color);
+}
+
+/* Bulk actions styling */
+.candidate-checkbox {
+    cursor: pointer;
+}
+
+.form-check {
+    margin: 0;
+}
+
+.form-check-input:checked {
+    background-color: #B93A3E;
+    border-color: #B93A3E;
+}
+
+.form-check-input:focus {
+    border-color: #B93A3E;
+    box-shadow: 0 0 0 0.2rem rgba(185, 58, 62, 0.25);
+}
+
+#bulkActionsBar {
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.table th:first-child,
+.table td:first-child {
+    width: 50px;
+    text-align: center;
+}
+
+.candidate-row:hover {
+    background-color: #f8f9fa;
+}
+
+.job-description-formatted h6 {
+    color: var(--primary-color);
+    font-weight: 600;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 5px;
+}
+
+.job-description-formatted ul {
+    margin-bottom: 15px;
+    padding-left: 20px;
+}
+
+.job-description-formatted li {
+    margin-bottom: 5px;
+    color: #495057;
+}
+
+.job-requirements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 15px;
+}
+
+.requirement-section {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    border: 1px solid #e9ecef;
+}
+
+.requirement-section h6 {
+    color: var(--primary-color);
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.requirement-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.requirement-label {
+    font-weight: 500;
+    color: #6c757d;
+}
+
+.requirement-value {
+    color: #495057;
+    text-align: right;
+}
+
+.skills-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.skill-tag {
+    background: var(--primary-color);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.job-requirements-content {
+    line-height: 1.6;
+}
+
+.job-requirements-content h6 {
+    color: var(--primary-color);
+    font-weight: 600;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.job-requirements-content ul {
+    margin-bottom: 15px;
+    padding-left: 20px;
+}
+
+.job-requirements-content li {
+    margin-bottom: 8px;
+    color: #495057;
+    line-height: 1.5;
+}
+
+.job-requirements-content p {
+    margin-bottom: 10px;
+    color: #495057;
+}
+
+.job-requirements-content strong {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-5">
     <!-- Job Header -->
@@ -23,15 +176,9 @@
                     <a href="{{ url_for('edit_job', job_id=job.id) }}" class="btn btn-outline-primary">
                         <i class="fas fa-edit me-2"></i>Editar
                     </a>
-                    <a href="{{ url_for('bulk_upload_page', job_id=job.id) }}" class="btn btn-warning">
-                        <i class="fas fa-rocket me-2"></i>Upload em Lote
-                    </a>
                     <a href="{{ url_for('processing_monitor', job_id=job.id) }}" class="btn btn-info">
                         <i class="fas fa-chart-line me-2"></i>Monitor IA
                     </a>
-                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#uploadModal">
-                        <i class="fas fa-upload me-2"></i>Carregar Individual
-                    </button>
                     {% if current_user.is_admin() %}
                     <button type="button" class="btn btn-danger" onclick="confirmDeleteJob({{ job.id }}, '{{ job.title }}')">
                         <i class="fas fa-trash me-2"></i>Excluir Vaga
@@ -42,16 +189,17 @@
             
             <div class="row mt-4">
                 <div class="col-md-8">
-                    <h5>Descrição</h5>
-                    <p class="text-muted">{{ job.description }}</p>
+                    <div class="job-description-formatted">
+                        <h6><i class="fas fa-briefcase me-2"></i>Descrição da Vaga</h6>
+                        <p class="text-muted">{{ job.description }}</p>
+                    </div>
                     
-                    <h5>Requisitos</h5>
-                    <p class="text-muted">{{ job.requirements }}</p>
-                    
-                    {% if job.dcf_content %}
-                    <h5>DCF - Documento de Conteúdo Funcional</h5>
-                    <p class="text-muted">{{ job.dcf_content }}</p>
-                    {% endif %}
+                    <div class="job-description-formatted">
+                        <h6><i class="fas fa-tasks me-2"></i>Habilidades e Requisitos</h6>
+                        <div class="job-requirements-content">
+                            {{ job.requirements|format_requirements|safe }}
+                        </div>
+                    </div>
                 </div>
                 <div class="col-md-4">
                     <div class="card bg-light border-0">
@@ -59,14 +207,23 @@
                             <h6 class="card-title">Estatísticas</h6>
                             <div class="row text-center">
                                 <div class="col-6">
-                                    <div class="stat-number text-primary-custom">{{ candidates|length }}</div>
+                                    <div class="stat-number text-primary-custom" id="totalCandidates">{{ candidates|length }}</div>
                                     <small class="text-muted">Candidatos</small>
                                 </div>
                                 <div class="col-6">
-                                    {% set analyzed = candidates|selectattr('analysis_status', 'equalto', 'completed')|list|length %}
-                                    <div class="stat-number text-success">{{ analyzed }}</div>
+                                    <div class="stat-number text-success" id="analyzedCandidates">
+                                        {% set analyzed = candidates|selectattr('analysis_status', 'equalto', 'completed')|list|length %}
+                                        {{ analyzed }}
+                                    </div>
                                     <small class="text-muted">Analisados</small>
                                 </div>
+                            </div>
+                            
+                            <!-- Start Processing Button -->
+                            <div class="mt-3 text-center">
+                                <button type="button" class="btn btn-primary btn-sm" id="startProcessingBtn" onclick="startProcessing()">
+                                    <i class="fas fa-play me-1"></i>Iniciar Processamento
+                                </button>
                             </div>
                             
                             <!-- Progress Bar for AI Analysis -->
@@ -76,7 +233,7 @@
                                     <small class="text-muted" id="progressText">0%</small>
                                 </div>
                                 <div class="progress" style="height: 8px;">
-                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 0%" 
+                                    <div class="progress-bar" role="progressbar" style="width: 0%; background: linear-gradient(45deg, #007bff, #0056b3);" 
                                          aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="progressBar">
                                     </div>
                                 </div>
@@ -106,6 +263,45 @@
         </div>
     </div>
     
+    <!-- Upload Section -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body text-center py-5">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <h3 class="text-primary-custom mb-3">
+                        <i class="fas fa-upload me-2"></i>Upload de Currículos
+                    </h3>
+                    <p class="text-muted mb-4">
+                        Faça upload de currículos para análise automática com IA. 
+                        A plataforma irá analisar cada candidato e gerar scores de compatibilidade.
+                    </p>
+                    
+                    <div class="row justify-content-center">
+                        <div class="col-md-4 mb-3">
+                            <a href="{{ url_for('bulk_upload_page', job_id=job.id) }}" class="btn btn-warning btn-lg w-100">
+                                <i class="fas fa-rocket me-2"></i>Upload em Lote
+                                <br><small>Múltiplos currículos</small>
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <button type="button" class="btn btn-success btn-lg w-100" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                                <i class="fas fa-upload me-2"></i>Upload Individual
+                                <br><small>Um currículo por vez</small>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Formatos aceitos:</strong> PDF, DOCX, TXT (máximo 16MB por arquivo)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Candidates Section -->
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-transparent">
@@ -126,12 +322,41 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Bulk Actions Bar -->
+        <div class="card-body border-bottom" id="bulkActionsBar" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="text-muted">
+                        <i class="fas fa-check-square me-2"></i>
+                        <span id="selectedCount">0</span> candidato(s) selecionado(s)
+                    </span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectAllCandidates()">
+                        <i class="fas fa-check-double me-1"></i>Selecionar Todos
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="deselectAllCandidates()">
+                        <i class="fas fa-square me-1"></i>Desmarcar Todos
+                    </button>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="confirmBulkDelete()" id="bulkDeleteBtn">
+                        <i class="fas fa-trash me-2"></i>Excluir Selecionados
+                    </button>
+                </div>
+            </div>
+        </div>
         <div class="card-body">
             {% if candidates %}
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
                             <tr>
+                                <th>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="selectAllCandidates" onchange="toggleSelectAll()">
+                                        <label class="form-check-label" for="selectAllCandidates"></label>
+                                    </div>
+                                </th>
                                 <th>Candidato</th>
                                 <th>Score IA</th>
                                 <th>Status</th>
@@ -143,6 +368,14 @@
                         <tbody id="candidatesTable">
                             {% for candidate in candidates %}
                             <tr class="candidate-row" data-status="{{ candidate.status }}" data-score="{{ candidate.ai_score or 0 }}" data-candidate-id="{{ candidate.id }}" data-analysis-status="{{ candidate.analysis_status }}">
+                                <td>
+                                    <div class="form-check">
+                                        <input class="form-check-input candidate-checkbox" type="checkbox" 
+                                               value="{{ candidate.id }}" id="candidate_{{ candidate.id }}"
+                                               onchange="updateBulkActions()">
+                                        <label class="form-check-label" for="candidate_{{ candidate.id }}"></label>
+                                    </div>
+                                </td>
                                 <td>
                                     <div>
                                         <strong>{{ candidate.name }}</strong>
@@ -277,7 +510,9 @@ function filterCandidates() {
 }
 
 function confirmDeleteJob(jobId, jobTitle) {
-    if (confirm(`Tem certeza que deseja excluir a vaga "${jobTitle}"?\n\nEsta ação não pode ser desfeita e todos os candidatos associados também serão excluídos.`)) {
+    const message = `Tem certeza que deseja excluir a vaga "${jobTitle}"?\n\nEsta ação não pode ser desfeita e todos os candidatos associados também serão excluídos.`;
+    
+    showCustomConfirm(message, [jobTitle], () => {
         // Create form to submit DELETE request
         const form = document.createElement('form');
         form.method = 'POST';
@@ -295,11 +530,13 @@ function confirmDeleteJob(jobId, jobTitle) {
         
         document.body.appendChild(form);
         form.submit();
-    }
+    });
 }
 
 function confirmDeleteCandidate(candidateId, candidateName) {
-    if (confirm(`Tem certeza que deseja excluir o candidato "${candidateName}"?\n\nEsta ação não pode ser desfeita.`)) {
+    const message = `Tem certeza que deseja excluir o candidato "${candidateName}"?`;
+    
+    showCustomConfirm(message, [candidateName], () => {
         // Create form to submit DELETE request
         const form = document.createElement('form');
         form.method = 'POST';
@@ -317,7 +554,119 @@ function confirmDeleteCandidate(candidateId, candidateName) {
         
         document.body.appendChild(form);
         form.submit();
+    });
+}
+
+// Bulk actions functions
+function updateBulkActions() {
+    const checkboxes = document.querySelectorAll('.candidate-checkbox:checked');
+    const selectedCount = checkboxes.length;
+    const bulkActionsBar = document.getElementById('bulkActionsBar');
+    const selectedCountSpan = document.getElementById('selectedCount');
+    const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+    const selectAllCheckbox = document.getElementById('selectAllCandidates');
+    
+    selectedCountSpan.textContent = selectedCount;
+    
+    if (selectedCount > 0) {
+        bulkActionsBar.style.display = 'block';
+        bulkDeleteBtn.disabled = false;
+    } else {
+        bulkActionsBar.style.display = 'none';
+        bulkDeleteBtn.disabled = true;
     }
+    
+    // Update select all checkbox
+    const totalCheckboxes = document.querySelectorAll('.candidate-checkbox');
+    const checkedCheckboxes = document.querySelectorAll('.candidate-checkbox:checked');
+    
+    if (checkedCheckboxes.length === 0) {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
+    } else if (checkedCheckboxes.length === totalCheckboxes.length) {
+        selectAllCheckbox.checked = true;
+        selectAllCheckbox.indeterminate = false;
+    } else {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = true;
+    }
+}
+
+function toggleSelectAll() {
+    const selectAllCheckbox = document.getElementById('selectAllCandidates');
+    const checkboxes = document.querySelectorAll('.candidate-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+    });
+    
+    updateBulkActions();
+}
+
+function selectAllCandidates() {
+    const checkboxes = document.querySelectorAll('.candidate-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = true;
+    });
+    updateBulkActions();
+}
+
+function deselectAllCandidates() {
+    const checkboxes = document.querySelectorAll('.candidate-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    updateBulkActions();
+}
+
+function confirmBulkDelete() {
+    const checkboxes = document.querySelectorAll('.candidate-checkbox:checked');
+    const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+    
+    if (selectedIds.length === 0) {
+        const message = 'Nenhum candidato selecionado. Selecione pelo menos um candidato para excluir.';
+        showCustomConfirm(message, [], () => {
+            // User clicked OK, do nothing
+        });
+        return;
+    }
+    
+    const candidateNames = Array.from(checkboxes).map(cb => {
+        const row = cb.closest('tr');
+        const nameElement = row.querySelector('td:nth-child(2) strong');
+        return nameElement.textContent.trim();
+    });
+    
+    const message = `Tem certeza que deseja excluir ${selectedIds.length} candidato(s)?`;
+    
+    showCustomConfirm(message, candidateNames, () => {
+        // Create form to submit bulk DELETE request
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/candidates/bulk-delete';
+        
+        // Add CSRF token if available
+        const csrfToken = document.querySelector('meta[name="csrf-token"]');
+        if (csrfToken) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrf_token';
+            csrfInput.value = csrfToken.content;
+            form.appendChild(csrfInput);
+        }
+        
+        // Add candidate IDs
+        selectedIds.forEach(id => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'candidate_ids';
+            input.value = id;
+            form.appendChild(input);
+        });
+        
+        document.body.appendChild(form);
+        form.submit();
+    });
 }
 
 // Real-time progress monitoring
@@ -337,8 +686,8 @@ function startProgressMonitoring() {
                 // Stop monitoring if all processing is complete
                 if (data.status_counts.processing === 0 && data.status_counts.pending === 0) {
                     stopProgressMonitoring();
-                    // Reload page to show updated results
-                    setTimeout(() => location.reload(), 2000);
+                    // Show completion message instead of reloading
+                    showCompletionMessage();
                 }
             })
             .catch(error => {
@@ -370,11 +719,23 @@ function updateProgressDisplay(data) {
     progressBar.setAttribute('aria-valuenow', progress_percentage);
     progressText.textContent = progress_percentage + '%';
     
+    // Update progress bar color based on percentage
+    if (progress_percentage >= 80) {
+        progressBar.style.background = 'linear-gradient(45deg, #28a745, #1e7e34)';
+    } else if (progress_percentage >= 50) {
+        progressBar.style.background = 'linear-gradient(45deg, #007bff, #0056b3)';
+    } else {
+        progressBar.style.background = 'linear-gradient(45deg, #ffc107, #e0a800)';
+    }
+    
     // Update counters
     document.getElementById('processingCount').textContent = status_counts.processing;
     document.getElementById('completedCount').textContent = status_counts.completed;
     document.getElementById('failedCount').textContent = status_counts.failed;
     document.getElementById('pendingCount').textContent = status_counts.pending;
+    
+    // Update main statistics
+    updateMainStatistics(data);
     
     // Update table rows in real-time
     data.candidates.forEach(candidate => {
@@ -408,6 +769,113 @@ function updateProgressDisplay(data) {
             }
         }
     });
+}
+
+function updateMainStatistics(data) {
+    // Update total candidates
+    const totalCandidates = document.getElementById('totalCandidates');
+    if (totalCandidates) {
+        totalCandidates.textContent = data.status_counts.total;
+    }
+    
+    // Update analyzed candidates
+    const analyzedCandidates = document.getElementById('analyzedCandidates');
+    if (analyzedCandidates) {
+        analyzedCandidates.textContent = data.status_counts.completed;
+    }
+    
+    // Add animation to changed numbers
+    if (totalCandidates) {
+        totalCandidates.style.transform = 'scale(1.1)';
+        totalCandidates.style.transition = 'transform 0.3s ease';
+        setTimeout(() => {
+            totalCandidates.style.transform = 'scale(1)';
+        }, 300);
+    }
+    
+    if (analyzedCandidates) {
+        analyzedCandidates.style.transform = 'scale(1.1)';
+        analyzedCandidates.style.transition = 'transform 0.3s ease';
+        setTimeout(() => {
+            analyzedCandidates.style.transform = 'scale(1)';
+        }, 300);
+    }
+}
+
+function showCompletionMessage() {
+    // Create success message
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-success alert-dismissible fade show';
+    alertDiv.innerHTML = `
+        <i class="fas fa-check-circle me-2"></i>
+        <strong>Análise Concluída!</strong> Todos os currículos foram analisados com sucesso.
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Insert at the top of the page
+    const container = document.querySelector('.container');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+function startProcessing() {
+    const button = document.getElementById('startProcessingBtn');
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Processando...';
+    
+    fetch(`/api/jobs/${jobId}/reprocess-all`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                alertDiv.innerHTML = `
+                    <i class="fas fa-check-circle"></i>
+                    <strong>Processamento iniciado!</strong> A IA está reanalisando todos os currículos da vaga.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.row'));
+                
+                // Start monitoring
+                startProgressMonitoring();
+                
+                // Hide the start button
+                button.style.display = 'none';
+            } else {
+                // Show error message without modal
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-warning alert-dismissible fade show';
+                alertDiv.innerHTML = `
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Aviso:</strong> ${data.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.row'));
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-play me-1"></i>Iniciar Processamento';
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao iniciar processamento:', error);
+            // Show error message without modal
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+            alertDiv.innerHTML = `
+                <i class="fas fa-exclamation-circle"></i>
+                <strong>Erro:</strong> Erro ao iniciar processamento. Verifique se há currículos na vaga.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.row'));
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-play me-1"></i>Iniciar Processamento';
+        });
 }
 
 // Check if there are any pending/processing candidates on page load

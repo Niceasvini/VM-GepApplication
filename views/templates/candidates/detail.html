@@ -13,15 +13,182 @@
         white-space: normal;
         max-height: none !important;
         height: auto !important;
+        background: #ffffff;
+        border-radius: 8px;
+        padding: 20px;
+        border: 1px solid #e9ecef;
+        box-shadow: 0 1px 5px rgba(0,0,0,0.05);
     }
     
     .analysis-content p {
-        margin-bottom: 12px;
+        margin-bottom: 15px;
+        color: #495057;
+        line-height: 1.7;
     }
     
     .analysis-content strong {
         color: #B93A3E;
+        font-weight: 700;
+        font-size: 15px;
+    }
+    
+    .analysis-content ul {
+        margin-bottom: 15px;
+        padding-left: 20px;
+    }
+    
+    .analysis-content li {
+        margin-bottom: 8px;
+        color: #495057;
+        line-height: 1.6;
+    }
+    
+    .professional-analysis {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 25px;
+        margin: 20px 0;
+        border: 1px solid #e9ecef;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        font-size: 14px;
+        line-height: 1.7;
+    }
+    
+    .professional-analysis h4 {
+        color: #B93A3E;
+        font-weight: 700;
+        margin-top: 25px;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 3px solid #B93A3E;
+        font-size: 18px;
+    }
+    
+    .professional-analysis h5 {
+        color: #2c3e50;
+        font-weight: 700;
+        margin-top: 25px;
+        margin-bottom: 15px;
+        font-size: 16px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .professional-analysis ul {
+        margin-bottom: 20px;
+        padding-left: 25px;
+    }
+    
+    .professional-analysis li {
+        margin-bottom: 10px;
+        color: #495057;
+        line-height: 1.8;
+        font-size: 14px;
+    }
+    
+    .professional-analysis p {
+        margin-bottom: 15px;
+        color: #495057;
+        line-height: 1.7;
+    }
+    
+    .professional-analysis .recommendation {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0;
+        border-left: 5px solid #28a745;
+    }
+    
+    /* Sidebar positioning */
+    .sidebar-fixed {
+        position: sticky;
+        top: 20px;
+        height: fit-content;
+    }
+    
+    @media (max-width: 768px) {
+        .sidebar-fixed {
+            position: static;
+            margin-top: 20px;
+        }
+    }
+        box-shadow: 0 2px 8px rgba(40, 167, 69, 0.1);
+    }
+    
+    .professional-analysis .gaps {
+        background: linear-gradient(135deg, #fff8e1 0%, #fff3cd 100%);
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0;
+        border-left: 5px solid #ffc107;
+        box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1);
+    }
+    
+    .professional-analysis .alignment {
+        background: linear-gradient(135deg, #e3f2fd 0%, #d1ecf1 100%);
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0;
+        border-left: 5px solid #17a2b8;
+        box-shadow: 0 2px 8px rgba(23, 162, 184, 0.1);
+    }
+    
+    .professional-analysis .alignment br,
+    .professional-analysis .gaps br,
+    .professional-analysis .recommendation br {
+        display: none;
+    }
+    
+    .professional-analysis br {
+        margin-bottom: 10px;
+    }
+    
+    .professional-analysis strong {
+        color: #B93A3E;
+        font-weight: 700;
+        font-size: 15px;
+    }
+    
+    .professional-analysis .section-title {
+        background: #B93A3E;
+        color: white;
+        padding: 8px 15px;
+        border-radius: 5px;
+        margin-bottom: 15px;
         font-weight: 600;
+        text-align: center;
+    }
+    
+    .info-item {
+        padding: 10px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .info-item:last-child {
+        border-bottom: none;
+    }
+    
+    .info-item label {
+        font-size: 12px;
+        margin-bottom: 5px;
+    }
+    
+    .comments-list {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .comment-item {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 10px;
+    }
+    
+    .comment-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
     }
     
     .text-primary-custom {
@@ -147,20 +314,57 @@
                 <div class="card border-0 shadow-sm mb-4">
                     <div class="card-header bg-info text-white">
                         <h5 class="card-title mb-0">
-                            <i class="fas fa-user me-2"></i>Resumo Executivo
+                            <i class="fas fa-user me-2"></i>Resumo do Currículo
                         </h5>
                     </div>
                     <div class="card-body" style="min-height: 350px; max-height: none;">
                         <div class="analysis-content" style="max-height: none; overflow: visible; word-wrap: break-word;">
                             {% if candidate.ai_summary and candidate.ai_summary != '' %}
                                 {{ candidate.ai_summary|replace('**', '')|replace('*', '')|replace('\n', '<br>')|safe }}
-                            {% elif 'Resumo Executivo' in candidate.ai_analysis %}
-                                {% set resume_section = candidate.ai_analysis.split('Resumo Executivo')[1].split('Análise da IA')[0] %}
-                                {{ resume_section.strip()|replace('**', '')|replace('*', '')|replace('\n', '<br>')|safe }}
+                            {% elif 'RESUMO DO CURRÍCULO' in candidate.ai_analysis %}
+                                {% set resume_section = candidate.ai_analysis.split('RESUMO DO CURRÍCULO')[1].split('ANÁLISE DO RECRUTADOR')[0] %}
+                                {% set clean_summary = resume_section.strip() %}
+                                {% set clean_summary = clean_summary|replace('**', '')|replace('*', '')|replace('\n', '<br>') %}
+                                {% set clean_summary = clean_summary|replace('---', '')|replace('### ANÁLISE DO RECRUTADOR', '')|replace('#### 1. ALINHAMENTO TÉCNICO:', '')|replace('#### 2. GAPS IDENTIFICADOS:', '')|replace('#### 3. RECOMENDAÇÃO FINAL:', '')|replace('OBSERVAÇÃO FINAL:', '') %}
+                                {% set clean_summary = clean_summary|replace('1. ALINHAMENTO TÉCNICO', '')|replace('2. GAPS IDENTIFICADOS', '')|replace('3. RECOMENDAÇÃO FINAL', '')|replace('PARCIAL', '')|replace('ADEQUADO', '')|replace('INADEQUADO', '') %}
+                                {% set clean_summary = clean_summary|replace('Pontos fortes:', '')|replace('Limitações:', '')|replace('Justificativa:', '')|replace('Lacunas técnicas:', '')|replace('Conhecimentos em falta:', '')|replace('Áreas de desenvolvimento:', '')|replace('Competências alinhadas:', '')|replace('Adequação à vaga:', '')|replace('Experiência relevante:', '') %}
+                                {% if 'ANÁLISE DO RECRUTADOR' in clean_summary %}
+                                    {% set clean_summary = clean_summary.split('ANÁLISE DO RECRUTADOR')[0] %}
+                                {% endif %}
+                                {% if '### ANÁLISE DO RECRUTADOR' in clean_summary %}
+                                    {% set clean_summary = clean_summary.split('### ANÁLISE DO RECRUTADOR')[0] %}
+                                {% endif %}
+                                {% if '#### 1. ALINHAMENTO TÉCNICO' in clean_summary %}
+                                    {% set clean_summary = clean_summary.split('#### 1. ALINHAMENTO TÉCNICO')[0] %}
+                                {% endif %}
+                                {% if 'OBSERVAÇÃO FINAL' in clean_summary %}
+                                    {% set clean_summary = clean_summary.split('OBSERVAÇÃO FINAL')[0] %}
+                                {% endif %}
+                                {{ clean_summary|safe }}
+                            {% elif 'RESUMO EXECUTIVO' in candidate.ai_analysis %}
+                                {% set resume_section = candidate.ai_analysis.split('RESUMO EXECUTIVO')[1].split('ANÁLISE DO RECRUTADOR')[0] %}
+                                {% set clean_summary = resume_section.strip() %}
+                                {% set clean_summary = clean_summary|replace('**', '')|replace('*', '')|replace('\n', '<br>') %}
+                                {% set clean_summary = clean_summary|replace('---', '')|replace('### ANÁLISE DO RECRUTADOR', '')|replace('#### 1. ALINHAMENTO TÉCNICO:', '')|replace('#### 2. GAPS IDENTIFICADOS:', '')|replace('#### 3. RECOMENDAÇÃO FINAL:', '')|replace('OBSERVAÇÃO FINAL:', '') %}
+                                {% set clean_summary = clean_summary|replace('1. ALINHAMENTO TÉCNICO', '')|replace('2. GAPS IDENTIFICADOS', '')|replace('3. RECOMENDAÇÃO FINAL', '')|replace('PARCIAL', '')|replace('ADEQUADO', '')|replace('INADEQUADO', '') %}
+                                {% set clean_summary = clean_summary|replace('Pontos fortes:', '')|replace('Limitações:', '')|replace('Justificativa:', '')|replace('Lacunas técnicas:', '')|replace('Conhecimentos em falta:', '')|replace('Áreas de desenvolvimento:', '')|replace('Competências alinhadas:', '')|replace('Adequação à vaga:', '')|replace('Experiência relevante:', '') %}
+                                {% if 'ANÁLISE DO RECRUTADOR' in clean_summary %}
+                                    {% set clean_summary = clean_summary.split('ANÁLISE DO RECRUTADOR')[0] %}
+                                {% endif %}
+                                {% if '### ANÁLISE DO RECRUTADOR' in clean_summary %}
+                                    {% set clean_summary = clean_summary.split('### ANÁLISE DO RECRUTADOR')[0] %}
+                                {% endif %}
+                                {% if '#### 1. ALINHAMENTO TÉCNICO' in clean_summary %}
+                                    {% set clean_summary = clean_summary.split('#### 1. ALINHAMENTO TÉCNICO')[0] %}
+                                {% endif %}
+                                {% if 'OBSERVAÇÃO FINAL' in clean_summary %}
+                                    {% set clean_summary = clean_summary.split('OBSERVAÇÃO FINAL')[0] %}
+                                {% endif %}
+                                {{ clean_summary|safe }}
                             {% else %}
                                 <div class="alert alert-info">
                                     <i class="fas fa-info-circle me-2"></i>
-                                    <strong>Resumo Executivo será gerado automaticamente</strong><br>
+                                    <strong>Resumo do Currículo será gerado automaticamente</strong><br>
                                     O resumo detalhado do candidato será exibido aqui após o processamento da análise de IA.
                                 </div>
                             {% endif %}
@@ -176,10 +380,63 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        <div class="analysis-content">
-                            {% if 'Análise da IA' in candidate.ai_analysis %}
-                                {% set analysis_section = candidate.ai_analysis.split('Análise da IA')[1] %}
-                                {{ analysis_section.strip()|replace('**', '')|replace('*', '')|replace('\n', '<br>')|safe }}
+                                                <div class="analysis-content">
+                            {% set is_outdated = false %}
+                            {% if candidate.ai_analysis %}
+                                {% set outdated_indicators = [
+                                    "Como o currículo não foi fornecido",
+                                    "caso você compartilhe o CV",
+                                    "currículo hipotético",
+                                    "João Silva",
+                                    "Empresa XYZ",
+                                    "Empresa ABC",
+                                    "Preenchido com base em um currículo hipotético",
+                                    "modelo estruturado de como seria a avaliação",
+                                    "currículo REAL fornecido acima",
+                                    "Não foi possível extrair texto do currículo",
+                                    "arquivo não contém texto legível"
+                                ] %}
+                                {% for indicator in outdated_indicators %}
+                                    {% if indicator in candidate.ai_analysis %}
+                                        {% set is_outdated = true %}
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                            
+                            {% if is_outdated %}
+                                <!-- Show message for outdated analysis -->
+                                <div class="alert alert-warning">
+                                    <h6 class="alert-heading">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>Análise Desatualizada
+                                    </h6>
+                                    <p class="mb-3">Este candidato possui uma análise genérica que não analisa o currículo real. A IA gerou uma análise hipotética em vez de analisar as informações reais do candidato.</p>
+                                    <p class="mb-3"><strong>Para obter a nova análise da IA:</strong></p>
+                                    <ul class="mb-3">
+                                        <li>Clique no botão "Reprocessar Análise" abaixo</li>
+                                        <li>A nova análise analisará o currículo real do candidato</li>
+                                        <li>Receberá uma avaliação específica baseada nas informações reais</li>
+                                    </ul>
+                                    <div class="text-center">
+                                        <button type="button" class="btn btn-primary btn-lg" onclick="reprocessCandidate({{ candidate.id }})">
+                                            <i class="fas fa-redo me-2"></i>Reprocessar Análise
+                                        </button>
+                                    </div>
+                                </div>
+                            {% elif '1. ALINHAMENTO TÉCNICO:' in candidate.ai_analysis and '2. GAPS IDENTIFICADOS:' in candidate.ai_analysis and '3. RECOMENDAÇÃO FINAL:' in candidate.ai_analysis %}
+                                <div class="professional-analysis">
+                                    {% set formatted_analysis = candidate.ai_analysis|replace('**', '')|replace('*', '')|replace('\n', '<br>') %}
+                                    {% set formatted_analysis = formatted_analysis|replace('1. ALINHAMENTO TÉCNICO:', '<h5><i class="fas fa-check-circle me-2"></i>1. ALINHAMENTO TÉCNICO</h5><div class="alignment">') %}
+                                    {% set formatted_analysis = formatted_analysis|replace('2. GAPS IDENTIFICADOS:', '<h5><i class="fas fa-exclamation-triangle me-2"></i>2. GAPS IDENTIFICADOS</h5><div class="gaps">') %}
+                                    {% set formatted_analysis = formatted_analysis|replace('3. RECOMENDAÇÃO FINAL:', '<h5><i class="fas fa-star me-2"></i>3. RECOMENDAÇÃO FINAL</h5><div class="recommendation">') %}
+                                    {% set formatted_analysis = formatted_analysis|replace('####', '<h5>') %}
+                                    {% set formatted_analysis = formatted_analysis|replace('####', '</h5>') %}
+                                    {% set formatted_analysis = formatted_analysis|replace('---', '') %}
+                                    {% set formatted_analysis = formatted_analysis|replace('Observação final:', '<strong>Observação final:</strong>') %}
+                                    {% set formatted_analysis = formatted_analysis|replace('OBSERVAÇÃO FINAL:', '<strong>OBSERVAÇÃO FINAL:</strong>') %}
+                                    {% set formatted_analysis = formatted_analysis|replace('- ', '<li>') %}
+                                    {% set formatted_analysis = formatted_analysis|replace('<br>- ', '<br><li>') %}
+                                    {{ formatted_analysis|safe }}
+                                </div>
                             {% else %}
                                 <!-- Show message for outdated analysis format -->
                                 <div class="alert alert-warning">
@@ -286,41 +543,39 @@
         </div>
         
         <!-- Sidebar -->
-        <div class="col-md-4">
+        <div class="col-md-4 sidebar-fixed">
             <!-- File Information -->
             <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-transparent">
+                <div class="card-header bg-info text-white">
                     <h6 class="card-title mb-0">
                         <i class="fas fa-file me-2"></i>Informações do Arquivo
                     </h6>
                 </div>
                 <div class="card-body">
-                    <table class="table table-sm">
-                        <tr>
-                            <th>Arquivo:</th>
-                            <td>
-                                <a href="{{ url_for('download_candidate_file', candidate_id=candidate.id) }}" 
-                                   class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-download me-1"></i>
-                                    {{ candidate.filename }}
-                                </a>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Tipo:</th>
-                            <td>{{ candidate.file_type.upper() }}</td>
-                        </tr>
-                        <tr>
-                            <th>Upload:</th>
-                            <td>{{ candidate.uploaded_at.strftime('%d/%m/%Y') }}</td>
-                        </tr>
-                    </table>
+                    <div class="info-item mb-3">
+                        <label class="form-label fw-bold text-muted">Arquivo:</label>
+                        <div>
+                            <a href="{{ url_for('download_candidate_file', candidate_id=candidate.id) }}" 
+                               class="btn btn-sm btn-outline-primary w-100">
+                                <i class="fas fa-download me-1"></i>
+                                {{ candidate.filename }}
+                            </a>
+                        </div>
+                    </div>
+                    <div class="info-item mb-3">
+                        <label class="form-label fw-bold text-muted">Tipo:</label>
+                        <div class="badge bg-secondary">{{ candidate.file_type.upper() }}</div>
+                    </div>
+                    <div class="info-item mb-3">
+                        <label class="form-label fw-bold text-muted">Upload:</label>
+                        <div class="text-muted">{{ candidate.uploaded_at.strftime('%d/%m/%Y') }}</div>
+                    </div>
                 </div>
             </div>
             
             <!-- Comments Section -->
             <div class="card border-0 shadow-sm">
-                <div class="card-header bg-transparent">
+                <div class="card-header bg-secondary text-white">
                     <h6 class="card-title mb-0">
                         <i class="fas fa-comments me-2"></i>Comentários
                     </h6>
@@ -331,8 +586,8 @@
                         <div class="mb-3">
                             <textarea class="form-control" name="content" rows="3" placeholder="Adicione um comentário..." required></textarea>
                         </div>
-                        <button type="submit" class="btn btn-sm btn-primary-custom">
-                            <i class="fas fa-plus me-1"></i>Adicionar
+                        <button type="submit" class="btn btn-sm btn-primary-custom w-100">
+                            <i class="fas fa-plus me-1"></i>Adicionar Comentário
                         </button>
                     </form>
                     
@@ -372,7 +627,9 @@ setTimeout(function() {
 {% endif %}
 
 function confirmDeleteCandidate(candidateId, candidateName) {
-    if (confirm(`Tem certeza que deseja excluir o candidato "${candidateName}"?\n\nEsta ação não pode ser desfeita.`)) {
+    const message = `Tem certeza que deseja excluir o candidato "${candidateName}"?`;
+    
+    showCustomConfirm(message, [candidateName], () => {
         // Create form to submit DELETE request
         const form = document.createElement('form');
         form.method = 'POST';
@@ -390,11 +647,13 @@ function confirmDeleteCandidate(candidateId, candidateName) {
         
         document.body.appendChild(form);
         form.submit();
-    }
+    });
 }
 
 function reprocessCandidate(candidateId) {
-    if (confirm('Deseja tentar reprocessar este candidato?\n\nIsso pode levar alguns minutos.')) {
+    const message = 'Deseja tentar reprocessar este candidato?\n\nIsso pode levar alguns minutos.';
+    
+    showCustomConfirm(message, [], () => {
         // Show loading state
         const button = event.target;
         const originalText = button.innerHTML;
