@@ -162,7 +162,7 @@
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <h1 class="text-primary-custom mb-2">{{ job.title }}</h1>
+                    <h1 class="text-primary mb-2">{{ job.title }}</h1>
                     <div class="mb-3">
                         <span class="badge bg-{{ 'success' if job.status == 'active' else 'secondary' }} me-2">
                             {{ 'Ativa' if job.status == 'active' else 'Fechada' }}
@@ -202,12 +202,12 @@
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="card bg-light border-0">
+                    <div class="card border-0">
                         <div class="card-body">
                             <h6 class="card-title">Estatísticas</h6>
                             <div class="row text-center">
                                 <div class="col-6">
-                                    <div class="stat-number text-primary-custom" id="totalCandidates">{{ candidates|length }}</div>
+                                    <div class="stat-number text-primary" id="totalCandidates">{{ candidates|length }}</div>
                                     <small class="text-muted">Candidatos</small>
                                 </div>
                                 <div class="col-6">
@@ -268,7 +268,7 @@
         <div class="card-body text-center py-5">
             <div class="row justify-content-center">
                 <div class="col-md-8">
-                    <h3 class="text-primary-custom mb-3">
+                                                <h3 class="text-primary mb-3">
                         <i class="fas fa-upload me-2"></i>Upload de Currículos
                     </h3>
                     <p class="text-muted mb-4">
@@ -440,7 +440,7 @@
                     <i class="fas fa-users fa-4x text-muted mb-4"></i>
                     <h5 class="text-muted">Nenhum candidato ainda</h5>
                     <p class="text-muted mb-4">Faça upload de currículos para começar a análise</p>
-                    <button type="button" class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
                         <i class="fas fa-upload me-2"></i>Carregar Currículos
                     </button>
                 </div>
@@ -474,7 +474,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary-custom">
+                                                <button type="submit" class="btn btn-primary">
                         <i class="fas fa-upload me-2"></i>Carregar
                     </button>
                 </div>

@@ -7,9 +7,9 @@
     <div class="row">
         <div class="col-12">
             <div class="hero-section text-center mb-5">
-                <h1 class="display-4 text-primary-custom mb-3">Bem-vindo ao Sistema de Recrutamento Inteligente</h1>
+                <h1 class="display-4 text-primary mb-3">Bem-vindo ao Sistema de Recrutamento Inteligente</h1>
                 <p class="lead text-muted mb-4">Otimize seu processo de recrutamento com análise automática de currículos powered by IA</p>
-                <a href="{{ url_for('create_job') }}" class="btn btn-primary-custom btn-lg">
+                <a href="{{ url_for('create_job') }}" class="btn btn-primary btn-lg">
                     <i class="fas fa-plus me-2"></i>Criar Nova Vaga
                 </a>
             </div>
@@ -20,10 +20,10 @@
         <div class="col-md-4">
             <div class="card stat-card border-0 shadow-sm">
                 <div class="card-body text-center">
-                    <div class="stat-icon bg-primary-custom text-white rounded-circle mx-auto mb-3">
+                    <div class="stat-icon bg-primary text-white rounded-circle mx-auto mb-3">
                         <i class="fas fa-briefcase"></i>
                     </div>
-                    <h3 class="stat-number text-primary-custom">{{ total_jobs }}</h3>
+                    <h3 class="stat-number text-primary">{{ total_jobs }}</h3>
                     <p class="text-muted mb-0">Vagas Ativas</p>
                 </div>
             </div>
@@ -79,7 +79,7 @@
                                             <i class="fas fa-calendar me-1"></i>{{ job.created_at.strftime('%d/%m/%Y') }}
                                         </small>
                                     </div>
-                                    <span class="badge bg-primary-custom">{{ job.candidates|length }} candidatos</span>
+                                    <span class="badge bg-primary">{{ job.candidates|length }} candidatos</span>
                                 </div>
                             </div>
                             {% endfor %}
@@ -88,7 +88,7 @@
                         <div class="text-center py-4">
                             <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
                             <p class="text-muted">Nenhuma vaga criada ainda.</p>
-                            <a href="{{ url_for('create_job') }}" class="btn btn-primary-custom">
+                            <a href="{{ url_for('create_job') }}" class="btn btn-primary">
                                 <i class="fas fa-plus me-2"></i>Criar Primeira Vaga
                             </a>
                         </div>
