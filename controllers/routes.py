@@ -305,12 +305,14 @@ def upload_resume(job_id):
             
             # Process file to extract basic info
             try:
-                name, email, phone = process_uploaded_file(file_path, file_ext)
+                name, email, phone, address, birth_date = process_uploaded_file(file_path, file_ext)
             except Exception as e:
                 logging.error(f"Error processing file {filename}: {e}")
                 name = filename.rsplit('.', 1)[0]
                 email = None
                 phone = None
+                address = None
+                birth_date = None
             
             # Create candidate record
             candidate = Candidate(
@@ -324,6 +326,13 @@ def upload_resume(job_id):
                 status='pending',
                 analysis_status='pending'
             )
+            
+            # Store additional extracted info in candidate metadata
+            if address or birth_date:
+                candidate.extracted_metadata = {
+                    'extracted_address': address,
+                    'extracted_birth_date': birth_date
+                }
             
             db.session.add(candidate)
             db.session.commit()

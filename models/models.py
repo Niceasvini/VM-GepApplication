@@ -62,6 +62,9 @@ class Candidate(db.Model):
     ai_analysis = db.Column(db.Text)
     extracted_skills = db.Column(db.Text)  # JSON string of skills
     
+    # Extracted Information
+    extracted_metadata = db.Column(db.Text)  # JSON string with additional extracted info
+    
     # Status Management
     status = db.Column(db.String(20), default='pending')  # 'pending', 'analyzing', 'analyzed', 'interested', 'rejected'
     analysis_status = db.Column(db.String(20), default='pending')  # 'pending', 'processing', 'completed', 'failed'

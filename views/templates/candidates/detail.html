@@ -64,25 +64,7 @@
         z-index: 100 !important;
     }
     
-    /* CSS adicional para garantir layout correto */
-    .candidate-detail-layout {
-        display: flex !important;
-        flex-direction: row !important;
-        gap: 2rem !important;
-    }
-    
-    .candidate-detail-layout .main-content {
-        flex: 2 !important;
-        min-width: 0 !important;
-    }
-    
-    .candidate-detail-layout .sidebar-content {
-        flex: 1 !important;
-        min-width: 300px !important;
-        max-width: 400px !important;
-    }
-    
-    /* Fallback para telas menores */
+    /* CSS responsivo para layout em duas colunas */
     @media (max-width: 767px) {
         .candidate-detail-layout {
             flex-direction: column !important;
@@ -91,6 +73,29 @@
         .candidate-detail-layout .sidebar-content {
             max-width: none !important;
         }
+    }
+    
+    /* CSS inline para garantir layout correto */
+    .layout-container {
+        display: flex !important;
+        gap: 2rem !important;
+        align-items: flex-start !important;
+        flex-wrap: wrap !important;
+    }
+    
+    .main-content {
+        flex: 2 !important;
+        min-width: 0 !important;
+        width: 100% !important;
+    }
+    
+    .sidebar-content {
+        flex: 1 !important;
+        min-width: 300px !important;
+        max-width: 400px !important;
+        position: sticky !important;
+        top: 20px !important;
+        width: 100% !important;
     }
     
     /* Layout responsivo para a sidebar */
@@ -425,7 +430,7 @@
         </div>
     </div>
     
-    <div class="candidate-detail-layout">
+    <div class="layout-container">
         <!-- AI Analysis Results -->
         <div class="main-content">
             {% if candidate.analysis_status == 'completed' and candidate.ai_analysis %}
@@ -662,7 +667,7 @@
         </div>
         
         <!-- Sidebar -->
-        <div class="sidebar-content sidebar-fixed">
+        <div class="sidebar-content">
             <!-- File Information -->
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-info text-white">

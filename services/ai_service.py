@@ -111,39 +111,63 @@ INSTRUÇÕES OBRIGATÓRIAS:
 4. Seja específico sobre o candidato real
 5. NÃO use exemplos hipotéticos como "João Silva" ou "Empresa XYZ"
 6. Analise o currículo REAL fornecido acima
+7. SEMPRE extraia e coloque o NOME e INFORMAÇÕES DE CONTATO como PRIMEIRAS informações
+8. Formate o texto de forma PROFISSIONAL e ORGANIZADA
+9. Use emojis e formatação para melhor visualização
 
 FORNECE UMA ANÁLISE PROFISSIONAL NO SEGUINTE FORMATO EXATO:
 
 RESUMO DO CURRÍCULO
 
+📋 **INFORMAÇÕES PESSOAIS**
 Nome Completo: [nome real do candidato do currículo]
 
-Experiência Relevante:
-• [Cargo real] na [Empresa real] ([período real])
-• [Cargo real] na [Empresa real] ([período real])
-• [Cargo real] na [Empresa real] ([período real])
+📞 **INFORMAÇÕES DE CONTATO**
+Email: [email real do candidato]
+Telefone: [telefone real do candidato]
+{f'Endereço: [endereço real]' if '[endereço real]' in cv_text else ''}
+{f'Data de Nascimento: [data real]' if '[data real]' in cv_text else ''}
 
-Habilidades Técnicas: [Habilidades reais identificadas no currículo]
+💼 **EXPERIÊNCIA PROFISSIONAL**
+• [Cargo real] na [Empresa real] ([período real com DATAS COMPLETAS])
+• [Cargo real] na [Empresa real] ([período real com DATAS COMPLETAS])
+• [Cargo real] na [Empresa real] ([período real com DATAS COMPLETAS)]
 
-Formação Acadêmica: [Formação real do candidato]
+IMPORTANTE SOBRE INFORMAÇÕES DE CONTATO:
+- SEMPRE extraia o email e telefone do currículo
+- Coloque essas informações logo após o nome
+- Formate de forma clara e organizada
+- Se não encontrar, indique "Não informado"
 
-Idiomas: [Idiomas reais do candidato, se informados]
+IMPORTANTE SOBRE DATAS:
+- EXTRAIA TODAS as datas de experiência profissional do currículo
+- Formate as datas de forma clara: DD/MM/AAAA - DD/MM/AAAA
+- Se encontrar datas como "2021-2024", converta para formato completo
+- Se não encontrar datas específicas, indique "Período não especificado"
+- Para cada experiência, inclua: Cargo, Empresa, Período e Responsabilidades
 
-Informações de Contato: [Email e telefone reais do candidato]
+🔧 **HABILIDADES TÉCNICAS**
+[Habilidades reais identificadas no currículo]
 
-ANÁLISE DO RECRUTADOR
+🎓 **FORMAÇÃO ACADÊMICA**
+[Formação real do candidato]
 
-1. ALINHAMENTO TÉCNICO:
+🌍 **IDIOMAS**
+[Idiomas reais do candidato, se informados]
+
+📊 **ANÁLISE DO RECRUTADOR**
+
+🎯 **1. ALINHAMENTO TÉCNICO**
 • Experiência relevante: [cargo específico real] na [empresa real] ([período real])
 • Competências alinhadas: [liste 2-3 competências reais que atendem aos requisitos da vaga]
 • Adequação à vaga: [explique objetivamente como o perfil real se adequa à posição]
 
-2. GAPS IDENTIFICADOS:
+⚠️ **2. GAPS IDENTIFICADOS**
 • Lacunas técnicas: [liste 2-3 lacunas específicas em relação aos requisitos da vaga]
 • Conhecimentos em falta: [conhecimentos específicos que faltam baseado no currículo real]
 • Áreas de desenvolvimento: [sugira 2-3 desenvolvimentos específicos baseado no perfil real]
 
-3. RECOMENDAÇÃO FINAL: [ADEQUADO/PARCIAL/INADEQUADO]
+🏆 **3. RECOMENDAÇÃO FINAL: [ADEQUADO/PARCIAL/INADEQUADO]**
 • Pontos fortes: [liste 2-3 pontos fortes específicos do candidato real]
 • Limitações: [liste 2-3 limitações específicas baseadas no currículo real]
 • Justificativa: [explique objetivamente por que é ADEQUADO/PARCIAL/INADEQUADO para a vaga]
@@ -154,6 +178,9 @@ IMPORTANTE:
 - NÃO inclua análise no resumo
 - NÃO inclua resumo na análise
 - Use exatamente os títulos "RESUMO DO CURRÍCULO" e "ANÁLISE DO RECRUTADOR"
+- SEMPRE comece com NOME e INFORMAÇÕES DE CONTATO
+- Use emojis e formatação para melhor visualização
+- Mantenha o layout PROFISSIONAL e ORGANIZADO
 
 IMPORTANTE:
 - Analise APENAS as informações reais do currículo fornecido
@@ -181,32 +208,40 @@ IMPORTANTE:
         return f"""
 RESUMO DO CURRÍCULO
 
-Nome Completo: [Nome não identificado no currículo]
+📋 **INFORMAÇÕES PESSOAIS**
+Nome Completo: {extracted_name or '[Nome não identificado]'}
 
-Experiência Relevante:
+📞 **INFORMAÇÕES DE CONTATO**
+Email: {extracted_email or '[Email não disponível]'}
+Telefone: {extracted_phone or '[Telefone não disponível]'}
+{f'Endereço: {extracted_address}' if extracted_address else ''}
+{f'Data de Nascimento: {extracted_birth_date}' if extracted_birth_date else ''}
+
+💼 **EXPERIÊNCIA PROFISSIONAL**
 • [Experiência não detalhada no currículo]
 
-Habilidades Técnicas: [Habilidades não especificadas]
+🔧 **HABILIDADES TÉCNICAS**
+[Habilidades não especificadas]
 
-Formação Acadêmica: [Formação não informada]
+🎓 **FORMAÇÃO ACADÊMICA**
+[Formação não informada]
 
-Idiomas: [Idiomas não informados]
+🌍 **IDIOMAS**
+[Idiomas não informados]
 
-Informações de Contato: [Contato não disponível]
+📊 **ANÁLISE DO RECRUTADOR**
 
-ANÁLISE DO RECRUTADOR
-
-1. ALINHAMENTO TÉCNICO:
+🎯 **1. ALINHAMENTO TÉCNICO**
 • Experiência relevante: [Não foi possível analisar devido a erro técnico]
 • Competências alinhadas: [Análise não disponível]
 • Adequação à vaga: [Avaliação não possível]
 
-2. GAPS IDENTIFICADOS:
+⚠️ **2. GAPS IDENTIFICADOS**
 • Lacunas técnicas: [Não foi possível identificar]
 • Conhecimentos em falta: [Análise não disponível]
 • Áreas de desenvolvimento: [Não especificado]
 
-3. RECOMENDAÇÃO FINAL: PARCIAL
+🏆 **3. RECOMENDAÇÃO FINAL: PARCIAL**
 • Pontos fortes: [Não foi possível identificar]
 • Limitações: [Análise técnica não disponível]
 • Justificativa: Erro técnico na análise. Recomenda-se reprocessar o currículo.
@@ -220,32 +255,38 @@ ANÁLISE DO RECRUTADOR
         return f"""
 RESUMO DO CURRÍCULO
 
+📋 **INFORMAÇÕES PESSOAIS**
 Nome Completo: [Nome não identificado]
 
-Experiência Relevante:
+📞 **INFORMAÇÕES DE CONTATO**
+Email: [Email não disponível]
+Telefone: [Telefone não disponível]
+
+💼 **EXPERIÊNCIA PROFISSIONAL**
 • [Experiência não detalhada]
 
-Habilidades Técnicas: [Habilidades não especificadas]
+🔧 **HABILIDADES TÉCNICAS**
+[Habilidades não especificadas]
 
-Formação Acadêmica: [Formação não informada]
+🎓 **FORMAÇÃO ACADÊMICA**
+[Formação não informada]
 
-Idiomas: [Idiomas não informados]
+🌍 **IDIOMAS**
+[Idiomas não informados]
 
-Informações de Contato: [Contato não disponível]
+📊 **ANÁLISE DO RECRUTADOR**
 
-ANÁLISE DO RECRUTADOR
-
-1. ALINHAMENTO TÉCNICO:
+🎯 **1. ALINHAMENTO TÉCNICO**
 • Experiência relevante: [Análise não disponível]
 • Competências alinhadas: [Não foi possível identificar]
 • Adequação à vaga: [Avaliação não possível]
 
-2. GAPS IDENTIFICADOS:
+⚠️ **2. GAPS IDENTIFICADOS**
 • Lacunas técnicas: [Não foi possível identificar]
 • Conhecimentos em falta: [Análise não disponível]
 • Áreas de desenvolvimento: [Não especificado]
 
-3. RECOMENDAÇÃO FINAL: PARCIAL
+🏆 **3. RECOMENDAÇÃO FINAL: PARCIAL**
 • Pontos fortes: [Não foi possível identificar]
 • Limitações: [Análise técnica não disponível]
 • Justificativa: Resposta da API muito curta. Recomenda-se reprocessar o currículo.
@@ -278,6 +319,15 @@ def analyze_resume(file_path, file_type, job):
                 'match_reasons': [],
                 'recommendations': []
             }
+        
+        # Extract basic information first
+        from services.file_processor import extract_name, extract_email, extract_phone, extract_address, extract_birth_date
+        
+        extracted_name = extract_name(resume_text)
+        extracted_email = extract_email(resume_text)
+        extracted_phone = extract_phone(resume_text)
+        extracted_address = extract_address(resume_text)
+        extracted_birth_date = extract_birth_date(resume_text)
         
         # Check cache first to avoid redundant API calls
         cached_result = analysis_cache.get_cached_analysis(resume_text, job.id)
