@@ -130,6 +130,7 @@ Crie um arquivo `.env` na raiz do projeto:
 ```env
 # Banco de Dados
 DATABASE_URL=postgresql://user:password@host:port/database
+DB_SCHEMA=public  # opcional: defina o schema onde as tabelas serão criadas
 
 # IA - DeepSeek API
 OPENAI_API_KEY=your_deepseek_api_key
@@ -139,6 +140,10 @@ OPENAI_BASE_URL=https://api.deepseek.com/v1
 SESSION_SECRET=your_secret_key_here
 FLASK_ENV=production
 ```
+
+Observações sobre schema:
+- Se `DB_SCHEMA` não for informado, o padrão é `public`.
+- Ao inicializar a aplicação, o schema definido em `DB_SCHEMA` será criado automaticamente (se não existir) antes da criação das tabelas.
 
 ### 4. Execute as Migrações
 ```bash
