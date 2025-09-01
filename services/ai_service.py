@@ -10,15 +10,22 @@ from services.cache_service import analysis_cache
 # do not change this unless explicitly requested by the user
 from openai import OpenAI
 
-DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY")
-if not DEEPSEEK_API_KEY:
-    DEEPSEEK_API_KEY = os.environ.get("OPENAI_API_KEY")
-
-# Configure OpenAI client for DeepSeek API
-openai = OpenAI(
-    api_key=DEEPSEEK_API_KEY,
-    base_url="https://api.deepseek.com/v1"
-)
+def get_openai_client():
+    """Get OpenAI client with proper API key loading"""
+    from dotenv import load_dotenv
+    load_dotenv()
+    
+    deepseek_api_key = os.environ.get("DEEPSEEK_API_KEY")
+    if not deepseek_api_key:
+        deepseek_api_key = os.environ.get("OPENAI_API_KEY")
+    
+    if not deepseek_api_key:
+        raise ValueError("DEEPSEEK_API_KEY ou OPENAI_API_KEY não encontrada")
+    
+    return OpenAI(
+        api_key=deepseek_api_key,
+        base_url="https://api.deepseek.com/v1"
+    )
 
 def generate_score_only(cv_text, job):
     """
@@ -53,6 +60,7 @@ Nota: [sua avaliação]
 """
     
     try:
+        openai = get_openai_client()
         response = openai.chat.completions.create(
             model="deepseek-chat",
             messages=[{"role": "user", "content": prompt}],
@@ -195,6 +203,7 @@ IMPORTANTE:
 """
     
     try:
+        openai = get_openai_client()
         response = openai.chat.completions.create(
             model="deepseek-chat",
             messages=[{"role": "user", "content": prompt}],
@@ -335,8 +344,10 @@ def analyze_resume(file_path, file_type, job):
             return cached_result
         
         # Check if API key is available
-        if not DEEPSEEK_API_KEY:
-            logging.error("DeepSeek API key not found")
+        try:
+            openai = get_openai_client()
+        except Exception as api_key_error:
+            logging.error(f"DeepSeek API key not found: {api_key_error}")
             raise Exception("API key not configured")
         
         # Limit resume text to avoid token limits (increased for better analysis)
@@ -633,6 +644,7 @@ def generate_batch_analysis_report(candidates):
         }}
         """
         
+        openai = get_openai_client()
         response = openai.chat.completions.create(
             model="deepseek-chat",
             messages=[
