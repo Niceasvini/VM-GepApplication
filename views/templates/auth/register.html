@@ -1,56 +1,345 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - Viana e Moura Construções</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    
+    <style>
+        .register-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .register-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            width: 100%;
+            max-width: 500px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .register-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .company-logo {
+            margin-bottom: 20px;
+        }
+        
+        .company-logo-img {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 25px;
+            display: block;
+            border-radius: 18px;
+            box-shadow: 0 8px 25px rgba(185, 58, 62, 0.3);
+            object-fit: contain;
+            background: #FFFFFF;
+            padding: 12px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .company-logo-img:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 30px rgba(185, 58, 62, 0.4);
+        }
+        
+        .company-name {
+            margin-bottom: 15px;
+        }
+        
+        .company-name .main-text {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #B93A3E;
+            text-transform: lowercase;
+            letter-spacing: 1px;
+            margin: 0;
+            line-height: 1.2;
+        }
+        
+        .company-name .sub-text {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #E4A230;
+            text-transform: lowercase;
+            letter-spacing: 0.5px;
+            margin: 0;
+        }
+        
 
-{% block title %}Criar Usuário - Viana e Moura{% endblock %}
-
-{% block content %}
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card border-0 shadow-lg">
-                <div class="card-body p-5">
-                    <div class="text-center mb-4">
-                        <h2 class="text-primary-custom">Criar Novo Usuário</h2>
-                        <p class="text-muted">Adicione um novo membro à equipe</p>
-                    </div>
-                    
-                    <form method="POST">
-                        <div class="mb-3">
-                            <label for="username" class="form-label">Nome de Usuário</label>
-                            <input type="text" class="form-control" id="username" name="username" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="email" name="email" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Senha</label>
-                            <input type="password" class="form-control" id="password" name="password" required>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label for="role" class="form-label">Função</label>
-                            <select class="form-select" id="role" name="role">
-                                <option value="recruiter">Recrutador</option>
-                                {% if current_user.is_admin() %}
-                                <option value="admin">Administrador</option>
-                                {% endif %}
-                            </select>
-                        </div>
-                        
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary me-md-2">
-                                <i class="fas fa-arrow-left me-2"></i>Voltar
-                            </a>
-                            <button type="submit" class="btn btn-primary-custom">
-                                <i class="fas fa-user-plus me-2"></i>Criar Usuário
-                            </button>
-                        </div>
-                    </form>
+        
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+            margin: 20px 0 10px 0;
+        }
+        
+        .page-subtitle {
+            font-size: 0.95rem;
+            color: #666;
+            margin-bottom: 0;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+        
+        .form-control, .form-select {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 15px 20px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #B93A3E;
+            box-shadow: 0 0 0 0.2rem rgba(185, 58, 62, 0.25);
+            background: #fff;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #B93A3E 0%, #E4A230 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(185, 58, 62, 0.3);
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #A52A2A 0%, #D4A017 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(185, 58, 62, 0.4);
+        }
+        
+        .btn-outline-secondary {
+            border: 2px solid #6c757d;
+            color: #6c757d;
+            border-radius: 12px;
+            padding: 15px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-outline-secondary:hover {
+            background: #6c757d;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.8s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .form-control::placeholder {
+            color: #999;
+            font-style: italic;
+        }
+        
+        .input-icon {
+            position: relative;
+        }
+        
+        .input-icon .form-control {
+            padding-left: 50px;
+        }
+        
+        .input-icon .icon {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #B93A3E;
+            font-size: 1.1rem;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        @media (max-width: 576px) {
+            .register-card {
+                padding: 30px 25px;
+                margin: 20px;
+            }
+            
+            .company-name .main-text {
+                font-size: 1.5rem;
+            }
+            
+            .company-name .sub-text {
+                font-size: 0.9rem;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-card fade-in">
+            <div class="register-header">
+                <div class="company-logo">
+                    <img src="{{ url_for('static', filename='images/logo.jpeg') }}" alt="Viana e Moura Construções" class="company-logo-img">
                 </div>
+                <div class="company-name">
+                    <h1 class="main-text">viana e moura</h1>
+                    <p class="sub-text">construções</p>
+                </div>
+                <h2 class="page-title">Criar Novo Usuário</h2>
+                <p class="page-subtitle">Adicione um novo membro à equipe</p>
+            </div>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'info' }}">
+                            <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' if category == 'success' else 'info-circle' }}"></i>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form method="POST" class="fade-in">
+                <div class="form-group">
+                    <label for="username" class="form-label">
+                        <i class="fas fa-user me-2"></i>Nome de Usuário
+                    </label>
+                    <div class="input-icon">
+                        <i class="fas fa-user icon"></i>
+                        <input type="text" class="form-control" id="username" name="username" required 
+                               placeholder="Digite o nome de usuário">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email" class="form-label">
+                        <i class="fas fa-envelope me-2"></i>Email
+                    </label>
+                    <div class="input-icon">
+                        <i class="fas fa-envelope icon"></i>
+                        <input type="email" class="form-control" id="email" name="email" required 
+                               placeholder="Digite o email">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password" class="form-label">
+                        <i class="fas fa-lock me-2"></i>Senha
+                    </label>
+                    <div class="input-icon">
+                        <i class="fas fa-lock icon"></i>
+                        <input type="password" class="form-control" id="password" name="password" required 
+                               placeholder="Digite a senha">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="role" class="form-label">
+                        <i class="fas fa-user-tag me-2"></i>Função
+                    </label>
+                    <select class="form-select" id="role" name="role">
+                        <option value="recruiter">Recrutador</option>
+                        {% if current_user.is_admin() %}
+                        <option value="admin">Administrador</option>
+                        {% endif %}
+                    </select>
+                </div>
+                
+                <div class="button-group">
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary flex-fill">
+                        <i class="fas fa-arrow-left me-2"></i>Voltar
+                    </a>
+                    <button type="submit" class="btn btn-primary flex-fill">
+                        <i class="fas fa-user-plus me-2"></i>Criar Usuário
+                    </button>
+                </div>
+            </form>
+            
+            <div class="text-center mt-4">
+                <small class="text-muted">
+                    <i class="fas fa-shield-alt me-1"></i>
+                    Sistema seguro e confiável
+                </small>
             </div>
         </div>
     </div>
-</div>
-{% endblock %}
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Auto-focus no primeiro campo
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('username').focus();
+        });
+        
+        // Adicionar efeito de loading ao form
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const button = this.querySelector('button[type="submit"]');
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Criando...';
+            button.disabled = true;
+        });
+        
+        // Efeito de hover nos campos
+        document.querySelectorAll('.form-control, .form-select').forEach(input => {
+            input.addEventListener('focus', function() {
+                this.style.transform = 'scale(1.02)';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.style.transform = 'scale(1)';
+            });
+        });
+    </script>
+</body>
+</html>

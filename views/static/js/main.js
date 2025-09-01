@@ -10,6 +10,8 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeSearchAndFilter();
     initializeDashboardCharts();
     initializeNotifications();
+    initializeThemeToggle();
+    initializeLanguageSelector();
 });
 
 // Form Validation Enhancement
@@ -545,6 +547,133 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+// Theme Toggle System
+function initializeThemeToggle() {
+    console.log('🔍 Iniciando sistema de tema...');
+    
+    // Aguarda um pouco para garantir que o DOM esteja pronto
+    setTimeout(() => {
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        
+        console.log('🔍 Elementos encontrados:');
+        console.log('Theme toggle:', themeToggle);
+        console.log('Theme icon:', themeIcon);
+        
+        if (!themeToggle) {
+            console.error('❌ Botão de tema não encontrado!');
+            return;
+        }
+        
+        // Carrega tema salvo
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        console.log('📱 Tema salvo:', savedTheme);
+        
+        // Aplica tema imediatamente
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        updateThemeIcon(savedTheme);
+        
+        // Adiciona evento de clique
+        themeToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log('🖱️ Botão de tema clicado!');
+            
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            console.log('🔄 Alterando tema de', currentTheme, 'para', newTheme);
+            
+            // Aplica novo tema
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+            
+            // Mostra notificação
+            const themeName = newTheme === 'light' ? 'Claro' : 'Escuro';
+            showNotification(`Tema alterado para ${themeName}`, 'success', 2000);
+            
+            console.log('✅ Tema alterado com sucesso para:', newTheme);
+        });
+        
+        console.log('✅ Sistema de tema inicializado com sucesso');
+    }, 100);
+}
+
+function updateThemeIcon(theme) {
+    const themeIcon = document.getElementById('themeIcon');
+    if (themeIcon) {
+        if (theme === 'dark') {
+            themeIcon.className = 'fas fa-sun';
+            themeIcon.title = 'Mudar para tema claro';
+        } else {
+            themeIcon.className = 'fas fa-moon';
+            themeIcon.title = 'Mudar para tema escuro';
+        }
+    }
+}
+
+// Language Selector System
+function initializeLanguageSelector() {
+    const languageDropdown = document.getElementById('languageDropdown');
+    const currentLanguageSpan = document.getElementById('currentLanguage');
+    const languageOptions = document.querySelectorAll('.language-option');
+    
+    if (!languageDropdown) return;
+    
+    // Load saved language from localStorage
+    const savedLanguage = localStorage.getItem('language') || 'pt';
+    updateCurrentLanguage(savedLanguage);
+    
+    languageOptions.forEach(option => {
+        option.addEventListener('click', function(e) {
+            e.preventDefault();
+            const lang = this.getAttribute('data-lang');
+            changeLanguage(lang);
+        });
+    });
+}
+
+function changeLanguage(lang) {
+    // Save language preference
+    localStorage.setItem('language', lang);
+    
+    // Update UI
+    updateCurrentLanguage(lang);
+    
+    // Show notification
+    const langNames = {
+        'pt': 'Português',
+        'en': 'English',
+        'es': 'Español'
+    };
+    
+    showNotification(`Idioma alterado para ${langNames[lang]}`, 'success', 2000);
+    
+    // Here you would typically reload the page with new language
+    // or make AJAX calls to get translated content
+    // For now, we'll just update the display
+}
+
+function updateCurrentLanguage(lang) {
+    const currentLanguageSpan = document.getElementById('currentLanguage');
+    if (currentLanguageSpan) {
+        currentLanguageSpan.textContent = lang.toUpperCase();
+    }
+    
+    // Update page title based on language
+    const titles = {
+        'pt': 'Viana e Moura - Recrutamento Inteligente',
+        'en': 'Viana e Moura - Intelligent Recruitment',
+        'es': 'Viana e Moura - Reclutamiento Inteligente'
+    };
+    
+    if (titles[lang]) {
+        document.title = titles[lang];
+    }
+}
+
 // Export functions for global use
 window.VianaeMoura = {
     showNotification,
@@ -552,5 +681,7 @@ window.VianaeMoura = {
     hideLoadingState,
     formatDate,
     formatScore,
-    validateForm
+    validateForm,
+    changeLanguage,
+    updateThemeIcon
 };

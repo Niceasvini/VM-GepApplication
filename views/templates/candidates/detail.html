@@ -516,7 +516,6 @@
                                     "Empresa ABC",
                                     "Preenchido com base em um currículo hipotético",
                                     "modelo estruturado de como seria a avaliação",
-                                    "currículo REAL fornecido acima",
                                     "Não foi possível extrair texto do currículo",
                                     "arquivo não contém texto legível"
                                 ] %}
@@ -546,12 +545,15 @@
                                         </button>
                                     </div>
                                 </div>
-                            {% elif '1. ALINHAMENTO TÉCNICO:' in candidate.ai_analysis and '2. GAPS IDENTIFICADOS:' in candidate.ai_analysis and '3. RECOMENDAÇÃO FINAL:' in candidate.ai_analysis %}
+                            {% elif ('1. ALINHAMENTO TÉCNICO:' in candidate.ai_analysis or '🎯 **1. ALINHAMENTO TÉCNICO**' in candidate.ai_analysis) and ('2. GAPS IDENTIFICADOS:' in candidate.ai_analysis or '⚠️ **2. GAPS IDENTIFICADOS**' in candidate.ai_analysis) and ('3. RECOMENDAÇÃO FINAL:' in candidate.ai_analysis or '🏆 **3. RECOMENDAÇÃO FINAL**' in candidate.ai_analysis) %}
                                 <div class="professional-analysis">
                                     {% set formatted_analysis = candidate.ai_analysis|replace('**', '')|replace('*', '')|replace('\n', '<br>') %}
                                     {% set formatted_analysis = formatted_analysis|replace('1. ALINHAMENTO TÉCNICO:', '<h5><i class="fas fa-check-circle me-2"></i>1. ALINHAMENTO TÉCNICO</h5><div class="alignment">') %}
+                                    {% set formatted_analysis = formatted_analysis|replace('🎯 **1. ALINHAMENTO TÉCNICO**', '<h5><i class="fas fa-check-circle me-2"></i>1. ALINHAMENTO TÉCNICO</h5><div class="alignment">') %}
                                     {% set formatted_analysis = formatted_analysis|replace('2. GAPS IDENTIFICADOS:', '<h5><i class="fas fa-exclamation-triangle me-2"></i>2. GAPS IDENTIFICADOS</h5><div class="gaps">') %}
+                                    {% set formatted_analysis = formatted_analysis|replace('⚠️ **2. GAPS IDENTIFICADOS**', '<h5><i class="fas fa-exclamation-triangle me-2"></i>2. GAPS IDENTIFICADOS</h5><div class="gaps">') %}
                                     {% set formatted_analysis = formatted_analysis|replace('3. RECOMENDAÇÃO FINAL:', '<h5><i class="fas fa-star me-2"></i>3. RECOMENDAÇÃO FINAL</h5><div class="recommendation">') %}
+                                    {% set formatted_analysis = formatted_analysis|replace('🏆 **3. RECOMENDAÇÃO FINAL**', '<h5><i class="fas fa-star me-2"></i>3. RECOMENDAÇÃO FINAL</h5><div class="recommendation">') %}
                                     {% set formatted_analysis = formatted_analysis|replace('####', '<h5>') %}
                                     {% set formatted_analysis = formatted_analysis|replace('####', '</h5>') %}
                                     {% set formatted_analysis = formatted_analysis|replace('---', '') %}

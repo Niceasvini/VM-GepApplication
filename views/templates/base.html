@@ -25,7 +25,7 @@
         <div class="container">
             <a class="navbar-brand d-flex align-items-center" href="{{ url_for('dashboard') }}">
                 <img src="{{ url_for('static', filename='images/logo.jpeg') }}" alt="Viana e Moura" class="brand-logo me-2">
-                <span class="brand-text">Viana <span class="brand-accent">e</span> Moura</span>
+                <span class="brand-text">Viana e Moura</span>
             </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -53,6 +53,35 @@
                 </ul>
                 
                 <ul class="navbar-nav">
+                    <!-- Theme Toggle -->
+                    <li class="nav-item me-2">
+                        <button class="btn btn-outline-secondary btn-sm theme-toggle" id="themeToggle" title="Alternar Tema">
+                            <i class="fas fa-moon" id="themeIcon"></i>
+                        </button>
+                    </li>
+                    
+                    <!-- Language Selector -->
+                    <li class="nav-item me-2">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" title="Selecionar Idioma">
+                                <i class="fas fa-globe me-1"></i>
+                                <span id="currentLanguage">PT</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item language-option" href="#" data-lang="pt">
+                                    <span class="flag-icon">🇧🇷</span> Português
+                                </a></li>
+                                <li><a class="dropdown-item language-option" href="#" data-lang="en">
+                                    <span class="flag-icon">🇺🇸</span> English
+                                </a></li>
+                                <li><a class="dropdown-item language-option" href="#" data-lang="es">
+                                    <span class="flag-icon">🇪🇸</span> Español
+                                </a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    
+                    <!-- User Profile -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-user me-1"></i>{{ current_user.username }}
@@ -101,7 +130,7 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-6">
-                    <h5>Viana e Moura</h5>
+                    <h5 class="company-name-footer">Viana e Moura</h5>
                     <p class="text-muted">Recrutamento Inteligente com IA</p>
                 </div>
                 <div class="col-md-6 text-end">

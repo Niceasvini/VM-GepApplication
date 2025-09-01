@@ -165,12 +165,32 @@ def dashboard():
         }
         top_candidates_data.append(candidate_dict)
     
+    # Convert ALL candidates with scores to serializable dictionaries for filtering
+    all_candidates_data = []
+    for candidate in candidates_with_scores:
+        candidate_dict = {
+            'id': candidate.id,
+            'name': candidate.name,
+            'email': candidate.email,
+            'phone': candidate.phone,
+            'ai_score': candidate.ai_score,
+            'status': candidate.status,
+            'analysis_status': candidate.analysis_status,
+            'uploaded_at': candidate.uploaded_at.isoformat() if candidate.uploaded_at else None,
+            'job': {
+                'id': candidate.job.id,
+                'title': candidate.job.title
+            }
+        }
+        all_candidates_data.append(candidate_dict)
+    
     return render_template('dashboard.html',
                          total_jobs=total_jobs,
                          total_candidates=total_candidates,
                          analyzed_candidates=analyzed_candidates,
                          recent_jobs=recent_jobs,
                          top_candidates=top_candidates_data,
+                         all_candidates=all_candidates_data,
                          score_ranges=score_ranges,
                          candidate_status=candidate_status)
 

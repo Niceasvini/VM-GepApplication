@@ -184,12 +184,12 @@
         <div class="col-md-6">
             <div class="card border-0 shadow-sm" id="topCandidatesCard">
                 <div class="card-header bg-transparent">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-star me-2"></i>Top Candidatos
-                        </h5>
-                        <span class="badge bg-primary">{{ top_candidates|length }} candidatos</span>
-                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0" id="topCandidatesTitle">
+                        <i class="fas fa-star me-2"></i>Top Candidatos
+                    </h5>
+                    <span class="badge bg-primary">{{ top_candidates|length }} candidatos</span>
+                </div>
                 </div>
                 <div class="card-body">
                     {% if top_candidates %}
@@ -272,12 +272,15 @@
 {% block scripts %}
 <script>
 // Global variables for chart data
-let allCandidates = {{ top_candidates|tojson }};
+let topCandidates = {{ top_candidates|tojson }};
+let allCandidates = {{ all_candidates|tojson }};
 let currentFilter = null;
 
 // Debug: Log candidates data
+console.log('Top candidates loaded:', topCandidates);
 console.log('All candidates loaded:', allCandidates);
-console.log('Number of candidates:', allCandidates.length);
+console.log('Number of top candidates:', topCandidates.length);
+console.log('Number of all candidates:', allCandidates.length);
 
 // Score Distribution Chart
 const scoreCtx = document.getElementById('scoreChart').getContext('2d');
@@ -405,6 +408,12 @@ function clearFilters() {
     updateTopCandidates();
     resetCharts();
     hideClearButtons();
+    
+    // Restore original title
+    const title = document.getElementById('topCandidatesTitle');
+    if (title) {
+        title.innerHTML = `<i class="fas fa-star me-2"></i>Top Candidatos`;
+    }
 }
 
 function showClearButton(buttonId) {
@@ -446,7 +455,7 @@ function updateTopCandidates() {
     
     console.log('Found top candidates container, updating...');
 
-    let filteredCandidates = allCandidates;
+    let filteredCandidates = topCandidates; // Default to top candidates
 
     if (currentFilter) {
         console.log('Applying filter:', currentFilter);
@@ -464,7 +473,7 @@ function updateTopCandidates() {
             console.log(`Filtered ${filteredCandidates.length} candidates by status ${currentFilter.value}`);
         }
     } else {
-        console.log('No filter applied, showing all candidates');
+        console.log('No filter applied, showing top candidates');
     }
 
     // Update top candidates display
@@ -491,12 +500,27 @@ function updateTopCandidates() {
         </div>
     `).join('');
 
-    // Update counter in the top candidates card
+    // Update counter and title in the top candidates card
     const topCandidatesCard = document.getElementById('topCandidatesCard');
     const counter = topCandidatesCard.querySelector('.card-header .badge');
+    const title = document.getElementById('topCandidatesTitle');
+    
     if (counter) {
         counter.textContent = `${filteredCandidates.length} candidatos`;
         console.log(`Updated counter to ${filteredCandidates.length} candidates`);
+    }
+    
+    if (title) {
+        if (currentFilter) {
+            if (currentFilter.type === 'score') {
+                title.innerHTML = `<i class="fas fa-filter me-2"></i>Candidatos ${currentFilter.value}`;
+            } else if (currentFilter.type === 'status') {
+                const statusLabel = getStatusLabel(currentFilter.value);
+                title.innerHTML = `<i class="fas fa-filter me-2"></i>Candidatos ${statusLabel}`;
+            }
+        } else {
+            title.innerHTML = `<i class="fas fa-star me-2"></i>Top Candidatos`;
+        }
     }
 }
 

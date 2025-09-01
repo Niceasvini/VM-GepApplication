@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Viana e Moura</title>
+    <title>Login - Viana e Moura Construções</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -13,16 +13,209 @@
     
     <!-- Custom CSS -->
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    
+    <style>
+        .login-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            width: 100%;
+            max-width: 450px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .company-logo {
+            margin-bottom: 20px;
+        }
+        
+        .company-logo-img {
+            width: 140px;
+            height: 140px;
+            margin: 0 auto 25px;
+            display: block;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(185, 58, 62, 0.3);
+            object-fit: contain;
+            background: #FFFFFF;
+            padding: 15px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .company-logo-img:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 35px rgba(185, 58, 62, 0.4);
+        }
+        
+        .company-name {
+            margin-bottom: 15px;
+        }
+        
+        .company-name .main-text {
+            font-size: 2.4rem;
+            font-weight: 700;
+            color: #B93A3E;
+            text-transform: lowercase;
+            letter-spacing: 1px;
+            margin: 0;
+            line-height: 1.2;
+        }
+        
+        .company-name .sub-text {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: #E4A230;
+            text-transform: lowercase;
+            letter-spacing: 0.5px;
+            margin: 0;
+        }
+        
+        .system-subtitle {
+            font-size: 1rem;
+            color: #666;
+            margin-top: 15px;
+            font-weight: 400;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+        
+        .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 15px 20px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+        
+        .form-control:focus {
+            border-color: #B93A3E;
+            box-shadow: 0 0 0 0.2rem rgba(185, 58, 62, 0.25);
+            background: #fff;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #B93A3E 0%, #E4A230 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(185, 58, 62, 0.3);
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #A52A2A 0%, #D4A017 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(185, 58, 62, 0.4);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        
+        .alert {
+            border-radius: 12px;
+            border: none;
+            padding: 15px 20px;
+            margin-bottom: 25px;
+            font-weight: 500;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.8s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .form-control::placeholder {
+            color: #999;
+            font-style: italic;
+        }
+        
+        .input-icon {
+            position: relative;
+        }
+        
+        .input-icon .form-control {
+            padding-left: 50px;
+        }
+        
+        .input-icon .icon {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #B93A3E;
+            font-size: 1.1rem;
+        }
+        
+        @media (max-width: 576px) {
+            .login-card {
+                padding: 30px 25px;
+                margin: 20px;
+            }
+            
+            .company-name .main-text {
+                font-size: 1.8rem;
+            }
+            
+            .company-name .sub-text {
+                font-size: 1rem;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="login-container">
         <div class="login-card fade-in">
             <div class="login-header">
-                <div class="login-logo">
-                    <img src="{{ url_for('static', filename='images/logo.jpeg') }}" alt="Viana e Moura Logo" class="login-brand-logo">
+                <div class="company-logo">
+                    <img src="{{ url_for('static', filename='images/logo.jpeg') }}" alt="Viana e Moura Construções" class="company-logo-img">
                 </div>
-                <h1 class="login-title">Viana <span class="brand-accent">e</span> Moura</h1>
-                <p class="login-subtitle">Recrutamento Inteligente com IA</p>
+                <div class="company-name">
+                    <h1 class="main-text">viana e moura</h1>
+                    <p class="sub-text">construções</p>
+                </div>
+                <p class="system-subtitle">
+                    <i class="fas fa-robot me-2"></i>Sistema de Recrutamento Inteligente com IA
+                </p>
             </div>
             
             {% with messages = get_flashed_messages(with_categories=true) %}
@@ -41,16 +234,22 @@
                     <label for="username" class="form-label">
                         <i class="fas fa-user me-2"></i>Usuário ou Email
                     </label>
-                    <input type="text" class="form-control" id="username" name="username" required 
-                           placeholder="Digite seu usuário ou email">
+                    <div class="input-icon">
+                        <i class="fas fa-user icon"></i>
+                        <input type="text" class="form-control" id="username" name="username" required 
+                               placeholder="Digite seu usuário ou email">
+                    </div>
                 </div>
                 
                 <div class="form-group">
                     <label for="password" class="form-label">
                         <i class="fas fa-lock me-2"></i>Senha
                     </label>
-                    <input type="password" class="form-control" id="password" name="password" required 
-                           placeholder="Digite sua senha">
+                    <div class="input-icon">
+                        <i class="fas fa-lock icon"></i>
+                        <input type="password" class="form-control" id="password" name="password" required 
+                               placeholder="Digite sua senha">
+                    </div>
                 </div>
                 
                 <button type="submit" class="btn btn-primary btn-lg w-100">
@@ -58,7 +257,12 @@
                 </button>
             </form>
             
-
+            <div class="text-center mt-4">
+                <small class="text-muted">
+                    <i class="fas fa-shield-alt me-1"></i>
+                    Sistema seguro e confiável
+                </small>
+            </div>
         </div>
     </div>
     
@@ -78,7 +282,16 @@
             button.disabled = true;
         });
         
-
+        // Efeito de hover nos campos
+        document.querySelectorAll('.form-control').forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.style.transform = 'scale(1.02)';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.style.transform = 'scale(1)';
+            });
+        });
     </script>
 </body>
 </html>
