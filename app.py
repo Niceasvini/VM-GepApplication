@@ -10,6 +10,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
+from sqlalchemy import MetaData, text
 
 # Configuração de logging
 logging.basicConfig(level=logging.DEBUG)
@@ -17,7 +18,10 @@ logging.basicConfig(level=logging.DEBUG)
 class Base(DeclarativeBase):
     pass
 
-db = SQLAlchemy(model_class=Base)
+DB_SCHEMA = os.environ.get("DB_SCHEMA", "public")
+
+metadata = MetaData(schema=DB_SCHEMA)
+db = SQLAlchemy(model_class=Base, metadata=metadata)
 login_manager = LoginManager()
 
 # Cria a aplicação Flask
@@ -168,6 +172,16 @@ def load_user(user_id):
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 with app.app_context():
+    # Garante que o schema exista antes de criar as tabelas
+    try:
+        if DB_SCHEMA and DB_SCHEMA != "public":
+            with db.engine.connect() as conn:
+                conn.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{DB_SCHEMA}"'))
+                conn.commit()
+            logging.info(f"Schema '{DB_SCHEMA}' verificado/criado com sucesso")
+    except Exception as e:
+        logging.error(f"Erro ao garantir schema '{DB_SCHEMA}': {e}")
+
     # Certifique-se de importar os models aqui, senão as tabelas não serão criadas
     import models.models  # noqa: F401
     import controllers.routes  # noqa: F401
