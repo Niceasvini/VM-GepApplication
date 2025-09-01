@@ -16,11 +16,10 @@ RUN apt-get update && apt-get install -y \
 
 # Copiar arquivos de dependências
 COPY requirements.txt .
-COPY dependencies.txt .
 
 # Instalar dependências Python
 RUN pip install --no-cache-dir --upgrade pip
-RUN pip install --no-cache-dir -r dependencies.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Criar diretórios necessários
 RUN mkdir -p uploads cache static/css static/js static/images \
