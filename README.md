@@ -129,7 +129,8 @@ uv sync
 Crie um arquivo `.env` na raiz do projeto:
 ```env
 # Banco de Dados
-DATABASE_URL=postgresql://user:password@host:port/database
+DATABASE_URL=postgresql://postgres.your-project:your-password@aws-0-sa-east-1.pooler.supabase.com:6543/postgres
+DB_SCHEMA=appcurriculos
 
 # IA - DeepSeek API
 OPENAI_API_KEY=your_deepseek_api_key
@@ -140,8 +141,21 @@ SESSION_SECRET=your_secret_key_here
 FLASK_ENV=production
 ```
 
-### 4. Execute as Migrações
+**⚠️ Importante sobre o Schema:**
+- O schema padrão é `appcurriculos` (não `public`)
+- O schema será criado automaticamente no Supabase se não existir
+- Se quiser usar o schema `public`, defina `DB_SCHEMA=public` no arquivo `.env`
+- Veja o arquivo `env_example.txt` para um exemplo completo das configurações
+
+### 4. Configure o Banco de Dados
 ```bash
+# Opção 1: Usar o script de configuração (recomendado)
+python setup_database.py
+
+# Opção 2: Verificar status atual do banco
+python check_database.py
+
+# Opção 3: Configuração manual (se necessário)
 python -c "from app import app, db; app.app_context().push(); db.create_all()"
 ```
 

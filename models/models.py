@@ -4,6 +4,9 @@ from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 
 class User(UserMixin, db.Model):
+    __tablename__ = 'user'
+    __table_args__ = {'schema': 'appcurriculos'}
+    
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -24,6 +27,9 @@ class User(UserMixin, db.Model):
         return self.role == 'admin'
 
 class Job(db.Model):
+    __tablename__ = 'job'
+    __table_args__ = {'schema': 'appcurriculos'}
+    
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=False)
@@ -33,12 +39,15 @@ class Job(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Foreign Keys
-    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_by = db.Column(db.Integer, db.ForeignKey('appcurriculos.user.id'), nullable=False)
     
     # Relationships
     candidates = db.relationship('Candidate', backref='job', lazy=True, cascade='all, delete-orphan')
 
 class Candidate(db.Model):
+    __tablename__ = 'candidate'
+    __table_args__ = {'schema': 'appcurriculos'}
+    
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
     email = db.Column(db.String(120))
@@ -62,7 +71,7 @@ class Candidate(db.Model):
     analyzed_at = db.Column(db.DateTime)
     
     # Foreign Keys
-    job_id = db.Column(db.Integer, db.ForeignKey('job.id'), nullable=False)
+    job_id = db.Column(db.Integer, db.ForeignKey('appcurriculos.job.id'), nullable=False)
     
     def get_skills_list(self):
         if self.extracted_skills:
@@ -78,13 +87,16 @@ class Candidate(db.Model):
         self.extracted_skills = json.dumps(skills_list)
 
 class CandidateComment(db.Model):
+    __tablename__ = 'candidate_comment'
+    __table_args__ = {'schema': 'appcurriculos'}
+    
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Foreign Keys
-    candidate_id = db.Column(db.Integer, db.ForeignKey('candidate.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    candidate_id = db.Column(db.Integer, db.ForeignKey('appcurriculos.candidate.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('appcurriculos.user.id'), nullable=False)
     
     # Relationships
     candidate = db.relationship('Candidate', backref='comments')

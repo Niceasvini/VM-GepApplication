@@ -747,10 +747,14 @@ def api_job_processing_status(job_id):
 def api_reprocess_candidate(candidate_id):
     """Reprocess a failed or outdated candidate"""
     try:
+        logging.info(f"Reprocessamento solicitado para candidato {candidate_id}")
+        
         candidate = Candidate.query.get_or_404(candidate_id)
+        logging.info(f"Candidato encontrado: {candidate.name}")
         
         # Check if user has access to this candidate
         if not current_user.is_admin() and candidate.job.created_by != current_user.id:
+            logging.warning(f"Acesso negado para candidato {candidate_id}")
             return jsonify({'error': 'Acesso negado'}), 403
         
         # Check if analysis is outdated (contains generic text)
@@ -766,6 +770,8 @@ def api_reprocess_candidate(candidate_id):
             ]
             is_outdated = any(indicator in candidate.ai_analysis for indicator in outdated_indicators)
         
+        logging.info(f"Status atual: {candidate.analysis_status}, Score: {candidate.ai_score}")
+        
         # Reset candidate status
         candidate.analysis_status = 'pending'
         candidate.ai_score = None
@@ -774,9 +780,13 @@ def api_reprocess_candidate(candidate_id):
         candidate.analyzed_at = None
         db.session.commit()
         
+        logging.info(f"Status resetado para 'pending'")
+        
         # Start fast parallel processing
         from processors.fast_parallel_processor import start_fast_parallel_analysis
         start_fast_parallel_analysis([candidate_id])
+        
+        logging.info(f"Processamento iniciado para candidato {candidate_id}")
         
         message = f'Candidato {candidate.name} foi colocado na fila para reprocessamento'
         if is_outdated:

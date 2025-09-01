@@ -35,3 +35,10 @@ Flask-Dance==7.0.0
 
 # Document processing
 docx==0.2.4
+
+# Async processing
+aiohttp>=3.8.0
+asyncio-throttle==1.0.2
+
+# Additional utilities
+requests==2.31.0

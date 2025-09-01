@@ -9,7 +9,7 @@ from datetime import datetime
 from openai import OpenAI
 
 # Set environment
-os.environ['DATABASE_URL'] = 'postgresql://postgres.bndkpowgvagtlxwmthma:5585858Vini%40@aws-0-sa-east-1.pooler.supabase.com:6543/postgres'
+os.environ['DATABASE_URL'] = 'postgresql://postgres.dxznqzpnsijpcmigpnfm:vYAeipsI0DBlO1sw@aws-0-sa-east-1.pooler.supabase.com:5432/postgres'
 
 from app import app, db
 from models.models import Candidate

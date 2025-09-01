@@ -20,6 +20,77 @@
         box-shadow: 0 1px 5px rgba(0,0,0,0.05);
     }
     
+    /* Garantir que a sidebar fique na lateral */
+    .sidebar-fixed {
+        position: sticky;
+        top: 20px;
+        height: fit-content;
+        z-index: 100;
+    }
+    
+    /* Forçar layout em duas colunas */
+    @media (min-width: 768px) {
+        .row.g-4 {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+        
+        .col-lg-8, .col-md-7 {
+            grid-column: 1;
+        }
+        
+        .col-lg-4, .col-md-5 {
+            grid-column: 2;
+        }
+    }
+    
+    /* Layout responsivo para a sidebar */
+    @media (min-width: 768px) {
+        .col-md-8 {
+            padding-right: 20px;
+        }
+        .col-md-4 {
+            padding-left: 20px;
+        }
+    }
+    
+    /* Garantir que as colunas não quebrem */
+    .row {
+        display: flex;
+        flex-wrap: wrap;
+        margin-left: -15px;
+        margin-right: -15px;
+    }
+    
+    .col-lg-8 {
+        flex: 0 0 66.666667%;
+        max-width: 66.666667%;
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    
+    .col-lg-4 {
+        flex: 0 0 33.333333%;
+        max-width: 33.333333%;
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    
+    .col-md-7 {
+        flex: 0 0 58.333333%;
+        max-width: 58.333333%;
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    
+    .col-md-5 {
+        flex: 0 0 41.666667%;
+        max-width: 41.666667%;
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    
     .analysis-content p {
         margin-bottom: 15px;
         color: #495057;
@@ -306,9 +377,9 @@
         </div>
     </div>
     
-    <div class="row">
+    <div class="row g-4">
         <!-- AI Analysis Results -->
-        <div class="col-md-8">
+        <div class="col-lg-8 col-md-7">
             {% if candidate.analysis_status == 'completed' and candidate.ai_analysis %}
                 <!-- Always show Resumo Executivo -->
                 <div class="card border-0 shadow-sm mb-4">
@@ -525,7 +596,7 @@
                         {% endif %}
                         
                         <div class="text-center mt-3">
-                            <button type="button" class="btn btn-outline-primary" onclick="reprocessCandidate({{ candidate.id }})">
+                            <button type="button" class="btn btn-outline-primary" onclick="reprocessCandidate({{ candidate.id }})" id="reprocess-btn">
                                 <i class="fas fa-redo me-2"></i>Tentar Novamente
                             </button>
                         </div>
@@ -543,7 +614,7 @@
         </div>
         
         <!-- Sidebar -->
-        <div class="col-md-4 sidebar-fixed">
+        <div class="col-lg-4 col-md-5 sidebar-fixed">
             <!-- File Information -->
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-info text-white">
@@ -651,46 +722,98 @@ function confirmDeleteCandidate(candidateId, candidateName) {
 }
 
 function reprocessCandidate(candidateId) {
+    console.log('Função reprocessCandidate chamada para candidato:', candidateId);
+    
     const message = 'Deseja tentar reprocessar este candidato?\n\nIsso pode levar alguns minutos.';
     
-    showCustomConfirm(message, [], () => {
-        // Show loading state
-        const button = event.target;
+    if (confirm(message)) {
+        console.log('Usuário confirmou reprocessamento');
+        
+        // Find the button that was clicked
+        const button = event.target.closest('button');
+        if (!button) {
+            console.error('Button not found');
+            alert('Erro: Botão não encontrado');
+            return;
+        }
+        
         const originalText = button.innerHTML;
+        const originalClass = button.className;
+        
+        // Show loading state
         button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Reprocessando...';
         button.disabled = true;
+        button.className = 'btn btn-warning';
+        
+        console.log('Iniciando reprocessamento do candidato:', candidateId);
         
         // Make request to reprocess
         fetch(`/api/candidates/${candidateId}/reprocess`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-            }
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin' // Include cookies for authentication
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
+            
+            if (response.redirected) {
+                console.log('Response was redirected to:', response.url);
+                throw new Error('Redirecionamento detectado - possível problema de autenticação');
+            }
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            return response.json();
+        })
         .then(data => {
+            console.log('Response data:', data);
+            
             if (data.success) {
+                // Show success message
+                button.innerHTML = '<i class="fas fa-check me-2"></i>Reprocessando...';
+                button.className = 'btn btn-success';
+                
+                // Show success message
+                alert('Reprocessamento iniciado com sucesso! A página será recarregada em 3 segundos.');
+                
                 // Reload page after 3 seconds
                 setTimeout(() => {
                     location.reload();
                 }, 3000);
-                
-                // Show success message
-                button.innerHTML = '<i class="fas fa-check me-2"></i>Reprocessando...';
-                button.className = 'btn btn-success';
             } else {
                 // Show error and restore button
-                alert('Erro ao reprocessar candidato: ' + (data.error || 'Erro desconhecido'));
+                const errorMsg = data.error || 'Erro desconhecido';
+                alert('Erro ao reprocessar candidato: ' + errorMsg);
                 button.innerHTML = originalText;
                 button.disabled = false;
+                button.className = originalClass;
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Erro ao reprocessar candidato');
+            
+            let errorMessage = 'Erro ao reprocessar candidato. ';
+            if (error.message.includes('Redirecionamento')) {
+                errorMessage += 'Problema de autenticação. Faça login novamente.';
+            } else if (error.message.includes('HTTP error')) {
+                errorMessage += 'Erro de conexão com o servidor.';
+            } else {
+                errorMessage += 'Verifique a conexão e tente novamente.';
+            }
+            
+            alert(errorMessage);
             button.innerHTML = originalText;
             button.disabled = false;
+            button.className = originalClass;
         });
+    } else {
+        console.log('Usuário cancelou reprocessamento');
     }
 }
 </script>
