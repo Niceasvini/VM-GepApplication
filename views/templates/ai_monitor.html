@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block title %}Monitor de IA - Viana e Moura{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="page-title">Monitor de IA</h1>
+            <p class="text-muted">Acompanhe o processamento de todos os currículos com Inteligência Artificial</p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card fade-in">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-number">{{ total_candidates }}</div>
+                <div class="stat-label">Total de Currículos</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card fade-in">
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-number">{{ pending_candidates }}</div>
+                <div class="stat-label">Pendentes</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card fade-in">
+                <div class="stat-icon">
+                    <i class="fas fa-cogs"></i>
+                </div>
+                <div class="stat-number">{{ processing_candidates }}</div>
+                <div class="stat-label">Processando</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card fade-in">
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-number">{{ completed_candidates }}</div>
+                <div class="stat-label">Concluídos</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line"></i> 
+                        Progresso Geral da IA
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">Progresso Geral</span>
+                            <span class="text-primary font-weight-bold">
+                                {% if total_candidates > 0 %}
+                                    {{ "%.1f"|format((completed_candidates / total_candidates * 100)) }}%
+                                {% else %}
+                                    0%
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="progress" style="height: 25px; border-radius: 15px; background-color: #e9ecef;">
+                            <div class="progress-bar" 
+                                 role="progressbar" 
+                                 style="width: {% if total_candidates > 0 %}{{ (completed_candidates / total_candidates * 100) }}{% else %}0{% endif %}%; border-radius: 15px; transition: width 0.5s ease; background: linear-gradient(45deg, #B93A3E, #8B2E31);" 
+                                 id="progress-bar">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button id="start-all-processing" class="btn btn-primary btn-lg me-2">
+                            <i class="fas fa-play"></i> Iniciar Processamento Geral
+                        </button>
+                        <button id="reset-failed" class="btn btn-warning btn-sm" onclick="resetFailedCandidates()">
+                            <i class="fas fa-exclamation-triangle"></i> Resetar Falhas
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Job Statistics -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-briefcase"></i> 
+                        Estatísticas por Vaga
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if job_stats %}
+                        <div class="row g-3">
+                            {% for stat in job_stats %}
+                            <div class="col-lg-6 col-md-12">
+                                <div class="card border">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h6 class="card-title mb-0">{{ stat.job.title }}</h6>
+                                            <span class="badge bg-primary">{{ stat.job.company }}</span>
+                                        </div>
+                                        
+                                        <div class="row text-center">
+                                            <div class="col-3">
+                                                <div class="text-muted small">Total</div>
+                                                <div class="h5 mb-0">{{ stat.total }}</div>
+                                            </div>
+                                            <div class="col-3">
+                                                <div class="text-muted small">Pendentes</div>
+                                                <div class="h5 mb-0 text-warning">{{ stat.pending }}</div>
+                                            </div>
+                                            <div class="col-3">
+                                                <div class="text-muted small">Processando</div>
+                                                <div class="h5 mb-0 text-info">{{ stat.processing }}</div>
+                                            </div>
+                                            <div class="col-3">
+                                                <div class="text-muted small">Concluídos</div>
+                                                <div class="h5 mb-0 text-success">{{ stat.completed }}</div>
+                                            </div>
+                                        </div>
+                                        
+                                        {% if stat.total > 0 %}
+                                        <div class="mt-2">
+                                            <div class="progress" style="height: 8px;">
+                                                <div class="progress-bar bg-success" 
+                                                     style="width: {{ (stat.completed / stat.total * 100) }}%">
+                                                </div>
+                                            </div>
+                                            <small class="text-muted">
+                                                {{ "%.1f"|format((stat.completed / stat.total * 100)) }}% concluído
+                                            </small>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        <div class="mt-3">
+                                            <a href="{{ url_for('processing_monitor', job_id=stat.job.id) }}" 
+                                               class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-eye"></i> Ver Detalhes
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Nenhuma vaga encontrada para monitoramento.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Failed Candidates -->
+    {% if failed_candidates > 0 %}
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        Candidatos com Falha na Análise ({{ failed_candidates }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">
+                        Estes candidatos falharam durante o processamento da IA. 
+                        Você pode tentar reprocessá-los ou verificar os arquivos.
+                    </p>
+                    <button class="btn btn-outline-danger" onclick="showFailedCandidates()">
+                        <i class="fas fa-list"></i> Ver Candidatos com Falha
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal para candidatos com falha -->
+<div class="modal fade" id="failedCandidatesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Candidatos com Falha na Análise</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="failedCandidatesList">
+                    <!-- Lista será carregada via JavaScript -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" onclick="reprocessAllFailed()">
+                    <i class="fas fa-redo"></i> Reprocessar Todos
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar botão de processamento geral
+    const startAllButton = document.getElementById('start-all-processing');
+    if (startAllButton) {
+        startAllButton.addEventListener('click', function() {
+            if (confirm('Deseja iniciar o processamento de todos os currículos pendentes?')) {
+                startAllProcessing();
+            }
+        });
+    }
+});
+
+function startAllProcessing() {
+    const button = document.getElementById('start-all-processing');
+    const originalText = button.innerHTML;
+    
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Iniciando...';
+    
+    // Simular início do processamento
+    setTimeout(() => {
+        button.innerHTML = '<i class="fas fa-check"></i> Processamento Iniciado';
+        button.classList.remove('btn-primary');
+        button.classList.add('btn-success');
+        
+        // Recarregar página após 2 segundos
+        setTimeout(() => {
+            location.reload();
+        }, 2000);
+    }, 2000);
+}
+
+function resetFailedCandidates() {
+    if (confirm('Deseja resetar todos os candidatos com falha para tentar novamente?')) {
+        // Aqui você pode implementar a lógica para resetar candidatos falhados
+        alert('Funcionalidade de reset será implementada em breve.');
+    }
+}
+
+function showFailedCandidates() {
+    // Aqui você pode implementar a lógica para mostrar candidatos falhados
+    alert('Lista de candidatos falhados será implementada em breve.');
+}
+
+function reprocessAllFailed() {
+    if (confirm('Deseja reprocessar todos os candidatos com falha?')) {
+        // Aqui você pode implementar a lógica para reprocessar
+        alert('Reprocessamento será implementado em breve.');
+    }
+}
+</script>
+
+<style>
+.fade-in {
+    animation: fadeIn 0.6s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.stat-icon {
+    font-size: 2rem;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.progress {
+    background-color: #e9ecef;
+}
+
+.progress-bar {
+    background: linear-gradient(45deg, #B93A3E, #8B2E31);
+}
+</style>
+{% endblock %}

@@ -28,9 +28,7 @@
                 <span class="brand-text">Viana e Moura</span>
             </a>
             
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+
             
             <div class="collapse navbar-collapse" id="navbarNav">
                 {% if current_user.is_authenticated %}
@@ -48,6 +46,11 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('candidates_list') }}">
                             <i class="fas fa-users me-1"></i>Candidatos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('ai_monitor') }}">
+                            <i class="fas fa-robot me-1"></i>Monitor IA
                         </a>
                     </li>
                 </ul>

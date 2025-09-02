@@ -51,36 +51,78 @@ body {
     line-height: 1.6;
 }
 
-/* ===== NAVBAR ===== */
+/* ===== NAVBAR COMPACTA ===== */
 .navbar {
     background: var(--bg-primary);
     box-shadow: var(--shadow-sm);
     border-bottom: 1px solid var(--border-color);
+    padding: 0.5rem 1rem !important;
+    min-height: 60px !important;
 }
 
 .navbar-brand {
-    font-weight: 700;
-    font-size: 1.5rem;
+    font-weight: 600 !important;
+    font-size: 1.1rem !important;
     color: var(--primary-color);
+    margin-right: 2rem !important;
+    display: flex !important;
+    align-items: center !important;
 }
 
 .brand-text {
-    font-weight: 700;
-    font-size: 1.5rem;
+    font-weight: 600 !important;
+    font-size: 1.1rem !important;
     color: var(--primary-color);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.3px !important;
+    margin-left: 0.5rem !important;
 }
 
+/* Logo compacto */
+.brand-logo {
+    height: 32px !important;
+    width: auto !important;
+    object-fit: contain !important;
+}
+
+/* Container do logo */
+.navbar-brand .d-flex {
+    align-items: center !important;
+    gap: 0.5rem !important;
+}
+
+/* Links da navbar compactos */
 .navbar-nav .nav-link {
     color: var(--text-primary);
     font-weight: 500;
     transition: color 0.3s ease;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.9rem !important;
 }
 
 .navbar-nav .nav-link:hover,
 .navbar-nav .nav-link.active {
     color: var(--primary-color);
+}
+
+/* Espaçamento dos itens */
+.navbar-nav .nav-item {
+    margin: 0 0.25rem !important;
+}
+
+/* Container principal */
+.navbar .container {
+    padding: 0 !important;
+}
+
+/* Botões de tema e idioma compactos */
+.theme-toggle, #languageDropdown {
+    padding: 0.375rem 0.75rem !important;
+    font-size: 0.8rem !important;
+    height: 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 /* ===== BOTÕES ===== */
@@ -788,6 +830,24 @@ main, .main-content, .content {
         padding: 0.75rem 1.5rem;
         font-size: 1rem;
     }
+    
+    /* Navbar responsiva */
+    .navbar {
+        padding: 0.25rem 0.5rem !important;
+        min-height: 50px !important;
+    }
+    
+    .brand-logo {
+        height: 28px !important;
+    }
+    
+    .brand-text {
+        font-size: 0.9rem !important;
+    }
+    
+    .navbar-brand {
+        margin-right: 1rem !important;
+    }
 }
 
 @media (max-width: 576px) {
@@ -802,4 +862,130 @@ main, .main-content, .content {
     .stat-number {
         font-size: 1.75rem;
     }
+    
+    /* Navbar muito pequena */
+    .navbar {
+        padding: 0.25rem !important;
+        min-height: 45px !important;
+    }
+    
+    .brand-logo {
+        height: 24px !important;
+    }
+    
+    .brand-text {
+        font-size: 0.8rem !important;
+        margin-left: 0.25rem !important;
+    }
+    
+    .navbar-nav .nav-link {
+        padding: 0.375rem 0.5rem !important;
+        font-size: 0.8rem !important;
+    }
+}
+
+/* ===== CORREÇÕES DE TÍTULOS E LAYOUT ===== */
+/* Corrigir títulos cortados */
+h1, h2, h3, h4, h5, h6 {
+    margin-top: 0 !important;
+    margin-bottom: 1rem !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+}
+
+/* Corrigir títulos principais das páginas */
+.page-title, .main-title, .dashboard-title {
+    font-size: 2.5rem !important;
+    font-weight: 700 !important;
+    color: var(--primary-color) !important;
+    margin-bottom: 2rem !important;
+    padding-top: 1rem !important;
+    line-height: 1.2 !important;
+    word-break: break-word !important;
+}
+
+/* Corrigir container principal para evitar cortes */
+.main-container, .content-wrapper {
+    padding-top: 80px !important;
+    min-height: calc(100vh - 80px) !important;
+}
+
+/* Corrigir espaçamento após navbar fixa */
+body {
+    padding-top: 60px !important;
+}
+
+/* Corrigir botões que não aparecem */
+.btn-process, .btn-start-processing, .btn-iniciar-processamento {
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    background: var(--primary-color) !important;
+    color: white !important;
+    padding: 0.75rem 1.5rem !important;
+    border-radius: var(--border-radius) !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    border: none !important;
+    cursor: pointer !important;
+    transition: var(--transition) !important;
+}
+
+.btn-process:hover, .btn-start-processing:hover, .btn-iniciar-processamento:hover {
+    background: #a03236 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: var(--shadow-lg) !important;
+    color: white !important;
+}
+
+/* Garantir que todos os botões apareçam */
+button, .btn {
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Garantir que botões específicos apareçam */
+#start-processing, #start-all-processing, #reset-stuck, #reset-failed {
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
+    z-index: 10 !important;
+}
+
+/* Corrigir cartões que não aparecem */
+.ai-monitor-cards, .monitor-ia-cards, .ai-cards {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Corrigir títulos das abas */
+.tab-title, .section-title, .monitor-title {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    font-size: 2rem !important;
+    font-weight: 700 !important;
+    color: var(--primary-color) !important;
+    margin-bottom: 1.5rem !important;
+    padding-top: 0.5rem !important;
+}
+
+/* Corrigir espaçamento geral */
+.container-fluid, .container {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+}
+
+/* Corrigir margens e paddings */
+.row {
+    margin-left: -0.5rem !important;
+    margin-right: -0.5rem !important;
+}
+
+.col, .col-md-4, .col-md-6, .col-md-8, .col-md-12 {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
 }

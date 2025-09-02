@@ -2,27 +2,17 @@ import os
 import logging
 from flask import Flask
 from dotenv import load_dotenv
+from flask_login import LoginManager
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Carrega as variáveis de ambiente do arquivo .env
 load_dotenv()
 
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
-from sqlalchemy.orm import DeclarativeBase
-from werkzeug.middleware.proxy_fix import ProxyFix
-from sqlalchemy import MetaData, text
-
 # Configuração de logging
 logging.basicConfig(level=logging.DEBUG)
 
-class Base(DeclarativeBase):
-    pass
-
-DB_SCHEMA = os.environ.get("DB_SCHEMA", "appcurriculos")
-
-# Configura o metadata com o schema correto
-metadata = MetaData(schema=DB_SCHEMA)
-db = SQLAlchemy(model_class=Base, metadata=metadata)
+# Importar configurações do banco
+from database import db, init_db
 login_manager = LoginManager()
 
 # Cria a aplicação Flask
@@ -41,46 +31,12 @@ def after_request(response):
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
     return response
 
-# Configuração do banco de dados
-def get_database_url():
-    """Get Supabase database URL"""
-    database_url = os.environ.get("DATABASE_URL")
-    
-    if not database_url:
-        raise ValueError("DATABASE_URL não encontrada no arquivo .env")
-    
-    # Fix postgres:// to postgresql://
-    if database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql://", 1)
-    
-    # Test PostgreSQL connection
-    try:
-        import psycopg2
-        
-        # Use the URL directly instead of parsing
-        conn = psycopg2.connect(database_url)
-        conn.close()
-        logging.info("✅ Conexão com Supabase bem-sucedida!")
-        return database_url
-    except Exception as e:
-        logging.error(f"❌ Erro na conexão com Supabase: {e}")
-        raise Exception(f"Não foi possível conectar ao Supabase: {e}")
-
-# Configura a URL do banco de dados
-database_url = get_database_url()
-
-app.config["SQLALCHEMY_DATABASE_URI"] = database_url
-app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_recycle": 300,
-    "pool_pre_ping": True,
-}
-
 # Configurações de upload
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Tamanho máximo de arquivo: 16MB
 app.config['UPLOAD_FOLDER'] = 'uploads'
 
-# Inicializa o SQLAlchemy com a aplicação
-db.init_app(app)
+# Inicializa o banco de dados
+init_db(app)
 
 # Inicializa o Login Manager
 login_manager.init_app(app)
@@ -173,27 +129,11 @@ def load_user(user_id):
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 with app.app_context():
-    # Garante que o schema exista antes de criar as tabelas
-    try:
-        if DB_SCHEMA and DB_SCHEMA != "public":
-            with db.engine.connect() as conn:
-                conn.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{DB_SCHEMA}"'))
-                conn.commit()
-            logging.info(f"✅ Schema '{DB_SCHEMA}' verificado/criado com sucesso")
-        else:
-            logging.info(f"ℹ️ Usando schema padrão: {DB_SCHEMA}")
-    except Exception as e:
-        logging.error(f"❌ Erro ao garantir schema '{DB_SCHEMA}': {e}")
-        logging.info("⚠️ Tentando continuar sem criar schema personalizado...")
-    
     # Certifique-se de importar os models aqui, senão as tabelas não serão criadas
     import models.models  # noqa: F401
     import controllers.routes  # noqa: F401
     
     try:
-        db.create_all()
-        logging.info("Tabelas do banco de dados criadas com sucesso")
-        
         # Cria usuário admin se ele ainda não existir
         from models.models import User
         admin_user = User.query.filter_by(email='viniciusniceas@vianaemoura.com.br').first()

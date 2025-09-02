@@ -165,6 +165,18 @@ def dashboard():
         }
         top_candidates_data.append(candidate_dict)
     
+    # Convert recent_jobs to serializable dictionaries
+    recent_jobs_data = []
+    for job in recent_jobs:
+        job_dict = {
+            'id': job.id,
+            'title': job.title,
+            'status': job.status,
+            'created_at': job.created_at,
+            'candidates': [c.id for c in job.candidates]  # Just IDs for length calculation
+        }
+        recent_jobs_data.append(job_dict)
+    
     # Convert ALL candidates with scores to serializable dictionaries for filtering
     all_candidates_data = []
     for candidate in candidates_with_scores:
@@ -184,15 +196,102 @@ def dashboard():
         }
         all_candidates_data.append(candidate_dict)
     
-    return render_template('dashboard.html',
+    return render_template('dashboard.html', 
                          total_jobs=total_jobs,
                          total_candidates=total_candidates,
                          analyzed_candidates=analyzed_candidates,
-                         recent_jobs=recent_jobs,
-                         top_candidates=top_candidates_data,
-                         all_candidates=all_candidates_data,
+                         recent_jobs=recent_jobs_data,
                          score_ranges=score_ranges,
-                         candidate_status=candidate_status)
+                         candidate_status=candidate_status,
+                         top_candidates=top_candidates_data,
+                         all_candidates_data=all_candidates_data)
+
+@app.route('/ai-monitor')
+@login_required
+def ai_monitor():
+    """Monitor geral de IA para todas as vagas"""
+    if current_user.is_admin():
+        # Admin vê todos os dados
+        total_candidates = Candidate.query.count()
+        pending_candidates = Candidate.query.filter_by(analysis_status='pending').count()
+        processing_candidates = Candidate.query.filter_by(analysis_status='processing').count()
+        completed_candidates = Candidate.query.filter_by(analysis_status='completed').count()
+        failed_candidates = Candidate.query.filter_by(analysis_status='failed').count()
+        
+        # Estatísticas por vaga
+        jobs = Job.query.all()
+        job_stats = []
+        for job in jobs:
+            job_candidates = Candidate.query.filter_by(job_id=job.id).all()
+            job_completed = len([c for c in job_candidates if c.analysis_status == 'completed'])
+            job_total = len(job_candidates)
+            
+            job_stats.append({
+                'job': {
+                    'id': job.id,
+                    'title': job.title,
+                    'company': getattr(job, 'company', 'N/A'),
+                    'status': job.status,
+                    'created_at': job.created_at.isoformat() if job.created_at else None
+                },
+                'total': job_total,
+                'completed': job_completed,
+                'pending': len([c for c in job_candidates if c.analysis_status == 'pending']),
+                'processing': len([c for c in job_candidates if c.analysis_status == 'processing']),
+                'failed': len([c for c in job_candidates if c.analysis_status == 'failed'])
+            })
+    else:
+        # Usuários regulares veem apenas suas vagas
+        user_jobs = Job.query.filter_by(created_by=current_user.id).all()
+        user_job_ids = [job.id for job in user_jobs]
+        
+        total_candidates = Candidate.query.filter(Candidate.job_id.in_(user_job_ids)).count()
+        pending_candidates = Candidate.query.filter(
+            Candidate.job_id.in_(user_job_ids),
+            Candidate.analysis_status == 'pending'
+        ).count()
+        processing_candidates = Candidate.query.filter(
+            Candidate.job_id.in_(user_job_ids),
+            Candidate.analysis_status == 'processing'
+        ).count()
+        completed_candidates = Candidate.query.filter(
+            Candidate.job_id.in_(user_job_ids),
+            Candidate.analysis_status == 'completed'
+        ).count()
+        failed_candidates = Candidate.query.filter(
+            Candidate.job_id.in_(user_job_ids),
+            Candidate.analysis_status == 'failed'
+        ).count()
+        
+        # Estatísticas por vaga do usuário
+        job_stats = []
+        for job in user_jobs:
+            job_candidates = Candidate.query.filter_by(job_id=job.id).all()
+            job_completed = len([c for c in job_candidates if c.analysis_status == 'completed'])
+            job_total = len(job_candidates)
+            
+            job_stats.append({
+                'job': {
+                    'id': job.id,
+                    'title': job.title,
+                    'company': getattr(job, 'company', 'N/A'),
+                    'status': job.status,
+                    'created_at': job.created_at.isoformat() if job.created_at else None
+                },
+                'total': job_total,
+                'completed': job_completed,
+                'pending': len([c for c in job_candidates if c.analysis_status == 'pending']),
+                'processing': len([c for c in job_candidates if c.analysis_status == 'processing']),
+                'failed': len([c for c in job_candidates if c.analysis_status == 'failed'])
+            })
+    
+    return render_template('ai_monitor.html',
+                         total_candidates=total_candidates,
+                         pending_candidates=pending_candidates,
+                         processing_candidates=processing_candidates,
+                         completed_candidates=completed_candidates,
+                         failed_candidates=failed_candidates,
+                         job_stats=job_stats)
 
 # Job management routes
 @app.route('/jobs')

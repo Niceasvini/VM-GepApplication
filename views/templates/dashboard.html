@@ -8,7 +8,7 @@
     <div class="dashboard-header">
         <div class="row">
             <div class="col-12">
-                <h1 class="dashboard-title">Dashboard de Recrutamento</h1>
+                <h1 class="page-title">Dashboard de Recrutamento</h1>
                 <p class="dashboard-subtitle">Visão geral do processo de recrutamento inteligente com IA</p>
                 
                 <!-- App Description -->
@@ -106,9 +106,6 @@
                     </h5>
                     <div class="d-flex align-items-center gap-2">
                         <div class="badge bg-primary">{{ total_candidates }} candidatos</div>
-                        <button id="clearScoreFilter" class="btn btn-sm btn-outline-secondary" onclick="clearFilters()" style="display: none;">
-                            <i class="fas fa-times me-1"></i>Limpar Filtro
-                        </button>
                     </div>
                 </div>
                 <canvas id="scoreChart" width="400" height="200"></canvas>
@@ -123,9 +120,6 @@
                     </h5>
                     <div class="d-flex align-items-center gap-2">
                         <div class="badge bg-success">{{ analyzed_candidates }} analisados</div>
-                        <button id="clearStatusFilter" class="btn btn-sm btn-outline-secondary" onclick="clearFilters()" style="display: none;">
-                            <i class="fas fa-times me-1"></i>Limpar Filtro
-                        </button>
                     </div>
                 </div>
                 <canvas id="statusChart" width="400" height="200"></canvas>
@@ -273,8 +267,26 @@
 <script>
 // Global variables for chart data
 let topCandidates = {{ top_candidates|tojson }};
-let allCandidates = {{ all_candidates|tojson }};
+let allCandidates = {{ all_candidates_data|tojson }};
 let currentFilter = null;
+
+// Ensure no filters are active by default
+document.addEventListener('DOMContentLoaded', function() {
+    // Clear any existing filters
+    if (currentFilter) {
+        clearFilters();
+    }
+    
+    console.log('Dashboard loaded, no filters active');
+});
+
+// Also clear filters when page becomes visible (user returns from another tab)
+document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && currentFilter) {
+        console.log('Page became visible, clearing filters');
+        clearFilters();
+    }
+});
 
 // Debug: Log candidates data
 console.log('Top candidates loaded:', topCandidates);
@@ -392,7 +404,6 @@ function filterByScoreRange(range) {
     currentFilter = { type: 'score', value: range };
     updateTopCandidates();
     updateScoreChart();
-    showClearButton('clearScoreFilter');
 }
 
 function filterByStatus(status) {
@@ -400,30 +411,24 @@ function filterByStatus(status) {
     currentFilter = { type: 'status', value: status };
     updateTopCandidates();
     updateStatusChart();
-    showClearButton('clearStatusFilter');
 }
 
 function clearFilters() {
+    console.log('Clearing all filters');
     currentFilter = null;
     updateTopCandidates();
     resetCharts();
-    hideClearButtons();
     
     // Restore original title
     const title = document.getElementById('topCandidatesTitle');
     if (title) {
         title.innerHTML = `<i class="fas fa-star me-2"></i>Top Candidatos`;
     }
+    
+    console.log('Filters cleared automatically');
 }
 
-function showClearButton(buttonId) {
-    document.getElementById(buttonId).style.display = 'inline-block';
-}
-
-function hideClearButtons() {
-    document.getElementById('clearScoreFilter').style.display = 'none';
-    document.getElementById('clearStatusFilter').style.display = 'none';
-}
+// Clear buttons removed - filters are cleared automatically
 
 function resetCharts() {
     // Reset score chart to original data
@@ -630,33 +635,37 @@ statusChart.options.onClick = (event, elements) => {
 scoreChart.update();
 statusChart.update();
 
-// Add click outside functionality to clear filters
+// Add global click functionality to clear filters when clicking anywhere
 document.addEventListener('click', function(event) {
-    // Check if click is outside of charts
+    // Don't clear if clicking on chart elements or navigation
     const scoreChartCanvas = document.getElementById('scoreChart');
     const statusChartCanvas = document.getElementById('statusChart');
-    const clearButtons = document.querySelectorAll('#clearScoreFilter, #clearStatusFilter');
+    const navbar = document.querySelector('.navbar');
+    const sidebar = document.querySelector('.sidebar');
     
-    const isClickOnChart = scoreChartCanvas.contains(event.target) || 
-                          statusChartCanvas.contains(event.target);
-    const isClickOnClearButton = Array.from(clearButtons).some(button => 
-        button.contains(event.target)
-    );
+    const isClickOnChart = scoreChartCanvas && scoreChartCanvas.contains(event.target) || 
+                          statusChartCanvas && statusChartCanvas.contains(event.target);
+    const isClickOnNavbar = navbar && navbar.contains(event.target);
+    const isClickOnSidebar = sidebar && sidebar.contains(event.target);
     
-    // If click is outside charts and not on clear button, and there's an active filter
-    if (!isClickOnChart && !isClickOnClearButton && currentFilter) {
-        console.log('Click outside charts detected, clearing filters');
+    // If click is outside charts, not on navbar/sidebar, and there's an active filter
+    if (!isClickOnChart && !isClickOnNavbar && !isClickOnSidebar && currentFilter) {
+        console.log('Click outside charts detected, clearing filters automatically');
         clearFilters();
     }
 });
 
 // Prevent event bubbling on chart clicks to avoid immediate clearing
-scoreChartCanvas.addEventListener('click', function(event) {
-    event.stopPropagation();
-});
+if (scoreChartCanvas) {
+    scoreChartCanvas.addEventListener('click', function(event) {
+        event.stopPropagation();
+    });
+}
 
-statusChartCanvas.addEventListener('click', function(event) {
-    event.stopPropagation();
-});
+if (statusChartCanvas) {
+    statusChartCanvas.addEventListener('click', function(event) {
+        event.stopPropagation();
+    });
+}
 </script>
 {% endblock %}
