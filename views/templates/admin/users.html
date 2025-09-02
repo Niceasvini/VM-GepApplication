@@ -1,0 +1,452 @@
+{% extends "base.html" %}
+
+{% block title %}Gestão de Usuários - Viana e Moura{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="page-title">
+                <i class="fas fa-user-cog me-2"></i>Gestão de Usuários
+            </h1>
+            <p class="text-muted">Gerencie usuários, permissões e monitore atividades do sistema</p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card fade-in">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-number">{{ total_users }}</div>
+                <div class="stat-label">Total de Usuários</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card fade-in">
+                <div class="stat-icon">
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <div class="stat-number">{{ active_users }}</div>
+                <div class="stat-label">Usuários Ativos</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card fade-in">
+                <div class="stat-icon">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <div class="stat-number">{{ admin_users }}</div>
+                <div class="stat-label">Administradores</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card fade-in">
+                <div class="stat-icon">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+                <div class="stat-number">{{ recruiter_users }}</div>
+                <div class="stat-label">Recrutadores</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-list me-2"></i>Lista de Usuários
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Usuário</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Último Login</th>
+                            <th>Criado em</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm me-3">
+                                        <i class="fas fa-user-circle fa-2x text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <strong>{{ user.username }}</strong>
+                                        {% if user.id == current_user.id %}
+                                            <span class="badge bg-info ms-2">Você</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'warning' if user.role == 'admin' else 'secondary' }}">
+                                    {{ user.role|title }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if user.is_active else 'danger' }}">
+                                    {{ 'Ativo' if user.is_active else 'Inativo' }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if user.last_login %}
+                                    {{ user.last_login.strftime('%d/%m/%Y %H:%M') }}
+                                {% else %}
+                                    <span class="text-muted">Nunca</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.created_at.strftime('%d/%m/%Y') }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('admin_user_detail', user_id=user.id) }}" 
+                                       class="btn btn-sm btn-outline-primary" title="Ver Detalhes">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    
+                                    {% if user.id != current_user.id %}
+                                    <button type="button" 
+                                            class="btn btn-sm btn-{{ 'outline-danger' if user.is_active else 'outline-success' }}"
+                                            onclick="toggleUserStatus({{ user.id }}, '{{ user.username }}', {{ user.is_active|lower }})"
+                                            title="{{ 'Desativar' if user.is_active else 'Ativar' }} Usuário">
+                                        <i class="fas fa-{{ 'ban' if user.is_active else 'check' }}"></i>
+                                    </button>
+                                    
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-warning"
+                                            onclick="showPermissionsModal({{ user.id }}, '{{ user.username }}')"
+                                            title="Gerenciar Permissões">
+                                        <i class="fas fa-key"></i>
+                                    </button>
+                                    
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-info"
+                                            onclick="resetUserPassword({{ user.id }}, '{{ user.username }}')"
+                                            title="Resetar Senha">
+                                        <i class="fas fa-keyboard"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Permissões -->
+<div class="modal fade" id="permissionsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Gerenciar Permissões - <span id="permissionUserName"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="permissionsForm">
+                    <input type="hidden" id="permissionUserId">
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Permissões de Vagas</h6>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="can_create_jobs">
+                                <label class="form-check-label" for="can_create_jobs">
+                                    Criar Vagas
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="can_edit_jobs">
+                                <label class="form-check-label" for="can_edit_jobs">
+                                    Editar Vagas
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="can_delete_jobs">
+                                <label class="form-check-label" for="can_delete_jobs">
+                                    Excluir Vagas
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Permissões de Candidatos</h6>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="can_upload_candidates">
+                                <label class="form-check-label" for="can_upload_candidates">
+                                    Upload de Currículos
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="can_process_ai">
+                                <label class="form-check-label" for="can_process_ai">
+                                    Processamento de IA
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="can_edit_candidates">
+                                <label class="form-check-label" for="can_edit_candidates">
+                                    Editar Candidatos
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Permissões Gerais</h6>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="can_view_statistics">
+                                <label class="form-check-label" for="can_view_statistics">
+                                    Ver Estatísticas
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="can_create_users">
+                                <label class="form-check-label" for="can_create_users">
+                                    Criar Usuários
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="savePermissions()">
+                    <i class="fas fa-save me-1"></i>Salvar Permissões
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Reset de Senha -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Resetar Senha</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja resetar a senha do usuário <strong id="resetPasswordUserName"></strong>?</p>
+                <p class="text-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Uma nova senha será gerada e exibida. Guarde-a com segurança!
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" onclick="confirmResetPassword()">
+                    <i class="fas fa-key me-1"></i>Resetar Senha
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Nova Senha -->
+<div class="modal fade" id="newPasswordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-check-circle me-2"></i>Senha Resetada
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>A nova senha para o usuário <strong id="newPasswordUserName"></strong> é:</p>
+                <div class="alert alert-info">
+                    <code id="newPasswordText" class="fs-5"></code>
+                </div>
+                <p class="text-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Guarde esta senha! Ela não será exibida novamente.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentUserId = null;
+
+function toggleUserStatus(userId, username, isActive) {
+    const action = isActive ? 'desativar' : 'ativar';
+    if (confirm(`Tem certeza que deseja ${action} o usuário "${username}"?`)) {
+        fetch(`/api/admin/users/${userId}/toggle-status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', data.message);
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showAlert('danger', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            showAlert('danger', 'Erro ao alterar status do usuário');
+        });
+    }
+}
+
+function showPermissionsModal(userId, username) {
+    currentUserId = userId;
+    document.getElementById('permissionUserName').textContent = username;
+    document.getElementById('permissionUserId').value = userId;
+    
+    // Carregar permissões atuais do usuário
+    // Aqui você pode implementar uma chamada API para buscar as permissões atuais
+    
+    const modal = new bootstrap.Modal(document.getElementById('permissionsModal'));
+    modal.show();
+}
+
+function savePermissions() {
+    const userId = currentUserId;
+    const permissions = {
+        can_create_jobs: document.getElementById('can_create_jobs').checked,
+        can_edit_jobs: document.getElementById('can_edit_jobs').checked,
+        can_delete_jobs: document.getElementById('can_delete_jobs').checked,
+        can_upload_candidates: document.getElementById('can_upload_candidates').checked,
+        can_process_ai: document.getElementById('can_process_ai').checked,
+        can_edit_candidates: document.getElementById('can_edit_candidates').checked,
+        can_view_statistics: document.getElementById('can_view_statistics').checked,
+        can_create_users: document.getElementById('can_create_users').checked
+    };
+    
+    fetch(`/api/admin/users/${userId}/update-permissions`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(permissions)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', data.message);
+            bootstrap.Modal.getInstance(document.getElementById('permissionsModal')).hide();
+        } else {
+            showAlert('danger', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        showAlert('danger', 'Erro ao atualizar permissões');
+    });
+}
+
+function resetUserPassword(userId, username) {
+    currentUserId = userId;
+    document.getElementById('resetPasswordUserName').textContent = username;
+    
+    const modal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
+    modal.show();
+}
+
+function confirmResetPassword() {
+    const userId = currentUserId;
+    
+    fetch(`/api/admin/users/${userId}/reset-password`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Fechar modal de confirmação
+            bootstrap.Modal.getInstance(document.getElementById('resetPasswordModal')).hide();
+            
+            // Mostrar nova senha
+            document.getElementById('newPasswordUserName').textContent = data.new_password;
+            document.getElementById('newPasswordText').textContent = data.new_password;
+            
+            const modal = new bootstrap.Modal(document.getElementById('newPasswordModal'));
+            modal.show();
+        } else {
+            showAlert('danger', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        showAlert('danger', 'Erro ao resetar senha');
+    });
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const container = document.querySelector('.container');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script>
+
+<style>
+.fade-in {
+    animation: fadeIn 0.6s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.stat-icon {
+    font-size: 2rem;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.avatar-sm {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+</style>
+{% endblock %}

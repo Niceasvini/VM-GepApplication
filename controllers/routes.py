@@ -3,7 +3,7 @@ from flask import render_template, request, redirect, url_for, flash, jsonify, c
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
 from app import app, db
-from models.models import User, Job, Candidate, CandidateComment
+from models.models import User, Job, Candidate, CandidateComment, UserActivity
 from services.ai_service import analyze_resume
 from services.file_processor import process_uploaded_file
 from sqlalchemy.exc import SQLAlchemyError
@@ -1050,3 +1050,237 @@ from datetime import datetime
 def processing_monitor(job_id):
     job = Job.query.get_or_404(job_id)
     return render_template('jobs/processing_monitor.html', job=job)
+
+# ===== GESTÃO DE USUÁRIOS (APENAS ADMIN) =====
+
+@app.route('/admin/users')
+@login_required
+def admin_users():
+    """Página de gestão de usuários - apenas para admins"""
+    if not current_user.is_admin():
+        flash('Acesso negado. Apenas administradores podem acessar esta página.', 'error')
+        return redirect(url_for('dashboard'))
+    
+    # Buscar todos os usuários
+    users = User.query.all()
+    
+    # Estatísticas dos usuários
+    total_users = len(users)
+    active_users = len([u for u in users if u.is_active])
+    admin_users = len([u for u in users if u.role == 'admin'])
+    recruiter_users = len([u for u in users if u.role == 'recruiter'])
+    
+    return render_template('admin/users.html',
+                         users=users,
+                         total_users=total_users,
+                         active_users=active_users,
+                         admin_users=admin_users,
+                         recruiter_users=recruiter_users)
+
+@app.route('/admin/users/<int:user_id>')
+@login_required
+def admin_user_detail(user_id):
+    """Detalhes de um usuário específico"""
+    if not current_user.is_admin():
+        flash('Acesso negado.', 'error')
+        return redirect(url_for('dashboard'))
+    
+    user = User.query.get_or_404(user_id)
+    
+    # Buscar atividades recentes do usuário
+    recent_activities = UserActivity.query.filter_by(user_id=user.id)\
+                                        .order_by(UserActivity.created_at.desc())\
+                                        .limit(20).all()
+    
+    # Estatísticas do usuário
+    jobs_created = Job.query.filter_by(created_by=user.id).count()
+    candidates_uploaded = Candidate.query.join(Job).filter(Job.created_by == user.id).count()
+    
+    return render_template('admin/user_detail.html',
+                         user=user,
+                         recent_activities=recent_activities,
+                         jobs_created=jobs_created,
+                         candidates_uploaded=candidates_uploaded)
+
+@app.route('/api/admin/users/<int:user_id>/toggle-status', methods=['POST'])
+@login_required
+def api_toggle_user_status(user_id):
+    """Ativar/desativar usuário"""
+    if not current_user.is_admin():
+        return jsonify({'success': False, 'message': 'Acesso negado'}), 403
+    
+    user = User.query.get_or_404(user_id)
+    
+    # Não permitir desativar a si mesmo
+    if user.id == current_user.id:
+        return jsonify({'success': False, 'message': 'Não é possível desativar sua própria conta'}), 400
+    
+    user.is_active = not user.is_active
+    db.session.commit()
+    
+    # Registrar atividade
+    activity = UserActivity(
+        user_id=current_user.id,
+        action='toggle_user_status',
+        details=f'Usuário {user.username} {"ativado" if user.is_active else "desativado"}'
+    )
+    db.session.add(activity)
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': f'Usuário {"ativado" if user.is_active else "desativado"} com sucesso',
+        'is_active': user.is_active
+    })
+
+@app.route('/api/admin/users/<int:user_id>/update-permissions', methods=['POST'])
+@login_required
+def api_update_user_permissions(user_id):
+    """Atualizar permissões de um usuário"""
+    if not current_user.is_admin():
+        return jsonify({'success': False, 'message': 'Acesso negado'}), 403
+    
+    user = User.query.get_or_404(user_id)
+    
+    # Não permitir alterar permissões de si mesmo
+    if user.id == current_user.id:
+        return jsonify({'success': False, 'message': 'Não é possível alterar suas próprias permissões'}), 400
+    
+    data = request.get_json()
+    
+    # Atualizar permissões
+    permissions = [
+        'can_create_jobs', 'can_edit_jobs', 'can_delete_jobs',
+        'can_upload_candidates', 'can_process_ai', 'can_edit_candidates',
+        'can_view_statistics', 'can_create_users'
+    ]
+    
+    for permission in permissions:
+        if permission in data:
+            setattr(user, permission, data[permission])
+    
+    db.session.commit()
+    
+    # Registrar atividade
+    activity = UserActivity(
+        user_id=current_user.id,
+        action='update_user_permissions',
+        details=f'Permissões atualizadas para usuário {user.username}'
+    )
+    db.session.add(activity)
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': 'Permissões atualizadas com sucesso'
+    })
+
+@app.route('/api/admin/users/<int:user_id>/change-role', methods=['POST'])
+@login_required
+def api_change_user_role(user_id):
+    """Alterar role de um usuário"""
+    if not current_user.is_admin():
+        return jsonify({'success': False, 'message': 'Acesso negado'}), 403
+    
+    user = User.query.get_or_404(user_id)
+    
+    # Não permitir alterar role de si mesmo
+    if user.id == current_user.id:
+        return jsonify({'success': False, 'message': 'Não é possível alterar seu próprio role'}), 400
+    
+    data = request.get_json()
+    new_role = data.get('role')
+    
+    if new_role not in ['admin', 'recruiter']:
+        return jsonify({'success': False, 'message': 'Role inválido'}), 400
+    
+    old_role = user.role
+    user.role = new_role
+    
+    # Ajustar permissões baseado no role
+    if new_role == 'admin':
+        user.can_create_users = True
+        user.can_view_statistics = True
+    else:
+        user.can_create_users = False
+    
+    db.session.commit()
+    
+    # Registrar atividade
+    activity = UserActivity(
+        user_id=current_user.id,
+        action='change_user_role',
+        details=f'Role alterado de {old_role} para {new_role} para usuário {user.username}'
+    )
+    db.session.add(activity)
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': f'Role alterado para {new_role} com sucesso',
+        'new_role': new_role
+    })
+
+@app.route('/api/admin/users/<int:user_id>/reset-password', methods=['POST'])
+@login_required
+def api_reset_user_password(user_id):
+    """Resetar senha de um usuário"""
+    if not current_user.is_admin():
+        return jsonify({'success': False, 'message': 'Acesso negado'}), 403
+    
+    user = User.query.get_or_404(user_id)
+    
+    # Gerar nova senha aleatória
+    import secrets
+    import string
+    alphabet = string.ascii_letters + string.digits
+    new_password = ''.join(secrets.choice(alphabet) for i in range(12))
+    
+    user.set_password(new_password)
+    db.session.commit()
+    
+    # Registrar atividade
+    activity = UserActivity(
+        user_id=current_user.id,
+        action='reset_user_password',
+        details=f'Senha resetada para usuário {user.username}'
+    )
+    db.session.add(activity)
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': 'Senha resetada com sucesso',
+        'new_password': new_password
+    })
+
+@app.route('/api/admin/users/activity-log')
+@login_required
+def api_user_activity_log():
+    """Log de atividades de todos os usuários"""
+    if not current_user.is_admin():
+        return jsonify({'success': False, 'message': 'Acesso negado'}), 403
+    
+    # Buscar atividades recentes
+    activities = UserActivity.query.join(User)\
+                                  .order_by(UserActivity.created_at.desc())\
+                                  .limit(100).all()
+    
+    activities_data = []
+    for activity in activities:
+        activities_data.append({
+            'id': activity.id,
+            'username': activity.user.username,
+            'action': activity.action,
+            'details': activity.details,
+            'ip_address': activity.ip_address,
+            'user_agent': activity.user_agent,
+            'created_at': activity.created_at.isoformat() if activity.created_at else None
+        })
+    
+    return jsonify({
+        'success': True,
+        'activities': activities_data
+    })
+
+# ===== FIM GESTÃO DE USUÁRIOS =====

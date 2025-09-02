@@ -92,6 +92,76 @@
         padding: 2px 4px;
         border-radius: 3px;
     }
+    
+    /* Garantir que os botões sejam clicáveis */
+    .candidate-card .btn {
+        position: relative !important;
+        z-index: 100 !important;
+        pointer-events: auto !important;
+        cursor: pointer !important;
+    }
+    
+    .candidate-card .card-body {
+        position: relative;
+        z-index: 5;
+    }
+    
+    /* Garantir que o conteúdo do job não bloqueie os cliques */
+    .job-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .job-content.collapsed {
+        pointer-events: none;
+    }
+    
+    .job-content:not(.collapsed) {
+        pointer-events: auto;
+    }
+    
+    /* Forçar clicabilidade dos botões */
+    .candidate-card a.btn,
+    .candidate-card button.btn {
+        position: relative !important;
+        z-index: 999 !important;
+        pointer-events: auto !important;
+        cursor: pointer !important;
+        user-select: none;
+        display: inline-block !important;
+        text-decoration: none !important;
+    }
+    
+    /* Garantir que os links sejam clicáveis */
+    .candidate-card a[href] {
+        pointer-events: auto !important;
+        cursor: pointer !important;
+        display: inline-block !important;
+        text-decoration: none !important;
+    }
+    
+    /* CSS de emergência para garantir clicabilidade */
+    .candidate-card .btn-outline-primary {
+        position: relative !important;
+        z-index: 9999 !important;
+        pointer-events: auto !important;
+        cursor: pointer !important;
+        background-color: #007bff !important;
+        border-color: #007bff !important;
+        color: white !important;
+        padding: 0.375rem 0.75rem !important;
+        font-size: 0.875rem !important;
+        line-height: 1.5 !important;
+        border-radius: 0.2rem !important;
+        text-decoration: none !important;
+        display: inline-block !important;
+    }
+    
+    .candidate-card .btn-outline-primary:hover {
+        background-color: #0056b3 !important;
+        border-color: #0056b3 !important;
+        color: white !important;
+    }
 </style>
 {% endblock %}
 
@@ -242,9 +312,9 @@
                                             <i class="fas fa-calendar me-1"></i>{{ candidate.uploaded_at.strftime('%d/%m/%Y') }}
                                         </small>
                                         <div class="d-flex gap-1">
-                                            <a href="{{ url_for('candidate_detail', candidate_id=candidate.id) }}" class="btn btn-sm btn-outline-primary">
+                                            <button type="button" class="btn btn-sm btn-outline-primary ver-detalhes-btn" data-candidate-id="{{ candidate.id }}" onclick="verDetalhesCandidato({{ candidate.id }})">
                                                 <i class="fas fa-eye me-1"></i>Ver Detalhes
-                                            </a>
+                                            </button>
                                             <a href="{{ url_for('download_candidate_file', candidate_id=candidate.id) }}" class="btn btn-sm btn-outline-success" title="Baixar currículo">
                                                 <i class="fas fa-download"></i>
                                             </a>
@@ -276,6 +346,57 @@
 
 {% block scripts %}
 <script>
+// Debug: Verificar se os cliques estão funcionando
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM carregado, configurando eventos de debug...');
+    
+    // Adicionar eventos de debug para os botões
+    const detailButtons = document.querySelectorAll('a[href*="candidate_detail"]');
+    detailButtons.forEach(button => {
+        console.log('Configurando botão:', button.href);
+        
+        // Remover eventos existentes
+        button.removeEventListener('click', handleDetailClick);
+        
+        // Adicionar novo evento
+        button.addEventListener('click', handleDetailClick);
+        
+        // Verificar se o botão está clicável
+        button.style.cursor = 'pointer';
+        button.style.pointerEvents = 'auto';
+        button.style.position = 'relative';
+        button.style.zIndex = '9999';
+        
+        // Adicionar classe para debug
+        button.classList.add('debug-button');
+    });
+    
+    console.log(`Encontrados ${detailButtons.length} botões Ver Detalhes`);
+    
+    // Adicionar evento global para capturar cliques
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('a[href*="candidate_detail"]')) {
+            console.log('Clique detectado via evento global:', e.target.closest('a[href*="candidate_detail"]').href);
+        }
+    });
+});
+
+function handleDetailClick(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const href = this.href;
+    console.log('Botão Ver Detalhes clicado via handler:', href);
+    
+    // Teste: mostrar alert primeiro
+    alert('Clique detectado! Redirecionando para: ' + href);
+    
+    // Depois redirecionar
+    setTimeout(() => {
+        window.location.href = href;
+    }, 100);
+}
+
 function toggleJobGroup(jobId) {
     const jobGroup = document.querySelector(`[data-job-id="${jobId}"]`);
     const header = jobGroup.querySelector('.job-header');
@@ -288,12 +409,16 @@ function toggleJobGroup(jobId) {
         header.classList.remove('collapsed');
         chevron.classList.remove('fa-chevron-right');
         chevron.classList.add('fa-chevron-down');
+        // Garantir que os cliques funcionem após expandir
+        content.style.pointerEvents = 'auto';
     } else {
         content.classList.add('collapsed');
         content.style.display = 'none';
         header.classList.add('collapsed');
         chevron.classList.remove('fa-chevron-down');
         chevron.classList.add('fa-chevron-right');
+        // Desabilitar cliques quando colapsado
+        content.style.pointerEvents = 'none';
     }
 }
 

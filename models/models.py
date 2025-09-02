@@ -12,10 +12,23 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256))
     role = db.Column(db.String(20), default='recruiter')  # 'recruiter' or 'admin'
+    is_active = db.Column(db.Boolean, default=True)  # Usuário ativo/inativo
+    last_login = db.Column(db.DateTime)  # Último login
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Permissões granulares
+    can_create_jobs = db.Column(db.Boolean, default=True)
+    can_edit_jobs = db.Column(db.Boolean, default=True)
+    can_delete_jobs = db.Column(db.Boolean, default=True)
+    can_upload_candidates = db.Column(db.Boolean, default=True)
+    can_process_ai = db.Column(db.Boolean, default=True)
+    can_edit_candidates = db.Column(db.Boolean, default=True)
+    can_view_statistics = db.Column(db.Boolean, default=True)
+    can_create_users = db.Column(db.Boolean, default=False)  # Apenas admins
     
     # Relationships
     created_jobs = db.relationship('Job', backref='creator', lazy=True)
+    activities = db.relationship('UserActivity', backref='user_ref', lazy=True)
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -25,6 +38,32 @@ class User(UserMixin, db.Model):
     
     def is_admin(self):
         return self.role == 'admin'
+    
+    def has_permission(self, permission):
+        """Verifica se o usuário tem uma permissão específica"""
+        if self.role == 'admin':
+            return True
+        return getattr(self, permission, False)
+    
+    def can_access_feature(self, feature):
+        """Verifica se o usuário pode acessar uma funcionalidade"""
+        permission_map = {
+            'create_jobs': 'can_create_jobs',
+            'edit_jobs': 'can_edit_jobs',
+            'delete_jobs': 'can_delete_jobs',
+            'upload_candidates': 'can_upload_candidates',
+            'process_ai': 'can_process_ai',
+            'edit_candidates': 'can_edit_candidates',
+            'view_statistics': 'can_view_statistics',
+            'create_users': 'can_create_users'
+        }
+        return self.has_permission(permission_map.get(feature, False))
+    
+    def update_last_login(self):
+        """Atualiza o timestamp do último login"""
+        from datetime import datetime
+        self.last_login = datetime.utcnow()
+        db.session.commit()
 
 class Job(db.Model):
     __tablename__ = 'job'
@@ -104,3 +143,22 @@ class CandidateComment(db.Model):
     # Relationships
     candidate = db.relationship('Candidate', backref='comments')
     user = db.relationship('User', backref='comments')
+
+
+class UserActivity(db.Model):
+    __tablename__ = 'user_activity'
+    __table_args__ = {'schema': 'appcurriculos'}
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('appcurriculos.user.id'), nullable=False)
+    action = db.Column(db.String(100), nullable=False)  # 'login', 'create_job', 'upload_candidate', etc.
+    details = db.Column(db.Text)  # Detalhes adicionais da ação
+    ip_address = db.Column(db.String(45))  # Endereço IP do usuário
+    user_agent = db.Column(db.String(500))  # User agent do navegador
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref='activity_logs')
+    
+    def __repr__(self):
+        return f'<UserActivity {self.user.username}: {self.action}>'
