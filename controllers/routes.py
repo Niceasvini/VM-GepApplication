@@ -10,6 +10,28 @@ from sqlalchemy.exc import SQLAlchemyError
 # Import will be done locally to avoid circular imports
 import logging
 
+def log_user_activity(user_id, action, details, ip_address=None, user_agent=None):
+    """Função helper para registrar atividades do usuário"""
+    try:
+        if ip_address is None:
+            ip_address = request.remote_addr if request else 'N/A'
+        if user_agent is None:
+            user_agent = request.headers.get('User-Agent', 'N/A') if request else 'N/A'
+        
+        activity = UserActivity(
+            user_id=user_id,
+            action=action,
+            details=details,
+            ip_address=ip_address,
+            user_agent=user_agent
+        )
+        db.session.add(activity)
+        db.session.commit()
+        return True
+    except Exception as e:
+        logging.error(f"Erro ao registrar atividade: {e}")
+        return False
+
 # Authentication routes
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -23,6 +45,13 @@ def login():
             user = User.query.filter_by(email=username).first()
         
         if user and user.check_password(password):
+            # Registrar último login
+            from datetime import datetime
+            user.last_login = datetime.now()
+            
+            # Registrar atividade de login
+            log_user_activity(user.id, 'login', 'Login realizado com sucesso')
+            
             login_user(user)
             next_page = request.args.get('next')
             return redirect(next_page) if next_page else redirect(url_for('dashboard'))
@@ -54,6 +83,9 @@ def register():
         db.session.add(user)
         db.session.commit()
         
+        # Registrar atividade de criação de usuário
+        log_user_activity(user.id, 'register', 'Usuário registrado no sistema')
+        
         flash('Usuário criado com sucesso!', 'success')
         return redirect(url_for('login'))
     
@@ -62,6 +94,9 @@ def register():
 @app.route('/logout')
 @login_required
 def logout():
+    # Registrar atividade de logout
+    log_user_activity(current_user.id, 'logout', 'Logout realizado')
+    
     logout_user()
     return redirect(url_for('login'))
 
@@ -322,6 +357,9 @@ def create_job():
         db.session.add(job)
         db.session.commit()
         
+        # Registrar atividade de criação de vaga
+        log_user_activity(current_user.id, 'create_job', f'Vaga criada: {title}')
+        
         flash('Vaga criada com sucesso! Agora você pode fazer upload de currículos para análise.', 'success')
         return redirect(url_for('job_detail', job_id=job.id))
     
@@ -370,6 +408,10 @@ def edit_job(job_id):
         job.requirements = request.form['requirements']
         
         db.session.commit()
+        
+        # Registrar atividade de edição de vaga
+        log_user_activity(current_user.id, 'edit_job', f'Vaga editada: {job.title}')
+        
         flash('Vaga atualizada com sucesso!', 'success')
         return redirect(url_for('job_detail', job_id=job.id))
     
@@ -385,8 +427,12 @@ def delete_job(job_id):
         flash('Acesso negado. Você só pode excluir suas próprias vagas.', 'error')
         return redirect(url_for('jobs_list'))
     
+    job_title = job.title  # Guardar título antes de deletar
     db.session.delete(job)
     db.session.commit()
+    
+    # Registrar atividade de exclusão de vaga
+    log_user_activity(current_user.id, 'delete_job', f'Vaga excluída: {job_title}')
     
     flash('Vaga excluída com sucesso!', 'success')
     return redirect(url_for('jobs_list'))
@@ -462,6 +508,10 @@ def upload_resume(job_id):
         logging.info(f"Starting parallel analysis for {len(candidate_ids)} candidates")
         from processors.background_processor import start_background_analysis
         start_background_analysis(candidate_ids)
+        
+        # Registrar atividade de upload de currículos
+        log_user_activity(current_user.id, 'upload_resumes', f'{len(candidate_ids)} currículos enviados para vaga: {job.title}')
+        
         flash(f'{len(candidate_ids)} currículos enviados! A IA vai analisar TODOS os candidatos em paralelo (pode demorar alguns minutos).', 'success')
     else:
         flash('Nenhum arquivo válido foi enviado.', 'warning')
@@ -1093,14 +1143,33 @@ def admin_user_detail(user_id):
                                         .limit(20).all()
     
     # Estatísticas do usuário
-    jobs_created = Job.query.filter_by(created_by=user.id).count()
-    candidates_uploaded = Candidate.query.join(Job).filter(Job.created_by == user.id).count()
+    try:
+        jobs_created = Job.query.filter_by(created_by=user.id).count()
+        candidates_uploaded = Candidate.query.join(Job).filter(Job.created_by == user.id).count()
+        
+        # Contar candidatos analisados
+        analyzed_candidates = Candidate.query.join(Job).filter(
+            Job.created_by == user.id,
+            Candidate.analysis_status == 'completed'
+        ).count()
+    except Exception as e:
+        # Em caso de erro, usar valores padrão
+        jobs_created = 0
+        candidates_uploaded = 0
+        analyzed_candidates = 0
+        logging.error(f"Erro ao calcular estatísticas do usuário {user.id}: {e}")
+    
+    # Criar dicionário de estatísticas
+    user_stats = {
+        'total_jobs': jobs_created,
+        'total_candidates': candidates_uploaded,
+        'analyzed_candidates': analyzed_candidates,
+        'recent_activities': recent_activities or []
+    }
     
     return render_template('admin/user_detail.html',
                          user=user,
-                         recent_activities=recent_activities,
-                         jobs_created=jobs_created,
-                         candidates_uploaded=candidates_uploaded)
+                         user_stats=user_stats)
 
 @app.route('/api/admin/users/<int:user_id>/toggle-status', methods=['POST'])
 @login_required
