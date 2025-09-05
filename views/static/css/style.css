@@ -8,12 +8,12 @@
     --white: #FFFFFF;
     
     /* TEMA CLARO - ORIGINAL, BRANCO, LIMPO, PROFISSIONAL */
-    --bg-primary: #FFFFFF;
-    --bg-secondary: #f8f9fa;
+    --bg-primary: #f3f4f6;
+    --bg-secondary: #fdfcfc;
     --text-primary: #2a2a2a;
     --text-secondary: #6b7280;
     --border-color: #e5e7eb;
-    --card-bg: #FFFFFF;
+    --card-bg: #ffffff;
     --shadow-color: rgba(0, 0, 0, 0.1);
     
     /* Sombras */
@@ -53,7 +53,7 @@ body {
 
 /* ===== NAVBAR COMPACTA ===== */
 .navbar {
-    background: var(--bg-primary);
+    background: #ffffff;
     box-shadow: var(--shadow-sm);
     border-bottom: 1px solid var(--border-color);
     padding: 0.5rem 1rem !important;
