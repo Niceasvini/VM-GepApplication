@@ -1179,6 +1179,80 @@ button, .btn {
     margin-right: -0.5rem !important;
 }
 
+/* Solução específica para o botão Ver Detalhes na lista de candidatos */
+.candidate-card .ver-detalhes-btn {
+    position: relative !important;
+    z-index: 9999 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
+    display: inline-block !important;
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    color: #fff !important;
+}
+
+.candidate-card .ver-detalhes-btn:hover {
+    background-color: #0b5ed7 !important;
+    border-color: #0a58ca !important;
+    color: #fff !important;
+    text-decoration: none !important;
+}
+
+/* Garantir que o container dos botões não interfira */
+.candidate-card .d-flex.gap-1 {
+    position: relative !important;
+    z-index: 100 !important;
+}
+
+.candidate-card .d-flex.gap-1 .btn {
+    position: relative !important;
+    z-index: 101 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* CSS de emergência para sobrescrever animações do main.js */
+.candidate-card a[href*="candidate_detail"],
+.candidate-card .btn-info {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: inline-block !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    z-index: 10001 !important;
+    position: relative !important;
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    color: #fff !important;
+    text-decoration: none !important;
+    min-width: 100px !important;
+    height: auto !important;
+    padding: 0.375rem 0.75rem !important;
+    font-size: 0.875rem !important;
+    line-height: 1.5 !important;
+    border-radius: 0.2rem !important;
+    border: 1px solid transparent !important;
+    transform: none !important;
+    transition: none !important;
+}
+
+.candidate-card .btn-info {
+    background-color: #17a2b8 !important;
+    border-color: #17a2b8 !important;
+}
+
+/* Garantir que os botões nunca sejam afetados por animações */
+.candidate-card a[href*="candidate_detail"]:hover,
+.candidate-card .btn-info:hover {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: inline-block !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    transform: none !important;
+}
+
 .col, .col-md-4, .col-md-6, .col-md-8, .col-md-12 {
     padding-left: 0.5rem !important;
     padding-right: 0.5rem !important;

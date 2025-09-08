@@ -93,100 +93,23 @@
         border-radius: 3px;
     }
     
-    /* Garantir que os botões sejam clicáveis */
-    .candidate-card .btn {
-        position: relative !important;
-        z-index: 100 !important;
-        pointer-events: auto !important;
-        cursor: pointer !important;
-    }
-    
-    .candidate-card .card-body {
-        position: relative;
-        z-index: 5;
-    }
-    
-    /* Garantir que o conteúdo do job não bloqueie os cliques */
-    .job-content {
-        position: relative;
-        z-index: 1;
-    }
-    
-    .job-content.collapsed {
-        pointer-events: none;
-    }
-    
-    .job-content:not(.collapsed) {
-        pointer-events: auto;
-    }
-    
-    /* Forçar clicabilidade dos botões */
-    .candidate-card a.btn,
-    .candidate-card button.btn {
-        position: relative !important;
-        z-index: 999 !important;
-        pointer-events: auto !important;
-        cursor: pointer !important;
-        user-select: none;
+    /* CSS simples para garantir que os botões funcionem */
+    .candidate-card button[onclick*="candidate_detail"] {
+        opacity: 1 !important;
+        visibility: visible !important;
         display: inline-block !important;
-        text-decoration: none !important;
-    }
-    
-    /* Garantir que os links sejam clicáveis */
-    .candidate-card a[href] {
         pointer-events: auto !important;
         cursor: pointer !important;
-        display: inline-block !important;
-        text-decoration: none !important;
-    }
-    
-    /* CSS de emergência para garantir clicabilidade */
-    .candidate-card .btn-outline-primary,
-    .candidate-card .ver-detalhes-btn {
-        position: relative !important;
-        z-index: 9999 !important;
-        pointer-events: auto !important;
-        cursor: pointer !important;
-        background-color: #007bff !important;
-        border-color: #007bff !important;
+        background: #0d6efd !important;
         color: white !important;
-        padding: 0.375rem 0.75rem !important;
-        font-size: 0.875rem !important;
-        line-height: 1.5 !important;
-        border-radius: 0.2rem !important;
-        text-decoration: none !important;
-        display: inline-block !important;
-        min-width: 120px !important;
-        height: auto !important;
-    }
-    
-    .candidate-card .btn-outline-primary:hover,
-    .candidate-card .ver-detalhes-btn:hover {
-        background-color: #0056b3 !important;
-        border-color: #0056b3 !important;
-        color: white !important;
-    }
-    
-    /* CSS simples para o link Ver Detalhes */
-    .ver-detalhes-btn {
-        background-color: #007bff !important;
-        border-color: #007bff !important;
-        color: white !important;
-        text-decoration: none !important;
-        cursor: pointer !important;
-        display: inline-block !important;
-        padding: 5px 10px !important;
+        border: none !important;
+        padding: 6px 12px !important;
         border-radius: 4px !important;
-        font-size: 0.875rem !important;
-        line-height: 1.5 !important;
-        border: 1px solid #007bff !important;
+        font-size: 14px !important;
     }
     
-    .ver-detalhes-btn:hover {
-        background-color: #0056b3 !important;
-        border-color: #0056b3 !important;
-        color: white !important;
-        text-decoration: none !important;
+    .candidate-card button[onclick*="candidate_detail"]:hover {
+        background: #0b5ed7 !important;
     }
 </style>
 {% endblock %}
@@ -255,9 +178,7 @@
         {% for job_id, job_data in job_groups.items() %}
             {% set job = job_data.job %}
             {% set job_candidates = job_data.candidates %}
-            <!-- Debug: Job {{ job.id }} - {{ job.title }} - {{ job_candidates|length }} candidates -->
             <div class="job-group" data-job-id="{{ job.id }}">
-
                 <div class="job-header p-3 mb-3" onclick="toggleJobGroup({{ job.id }})">
                     <div class="d-flex justify-content-between align-items-center">
                         <div class="d-flex align-items-center gap-3">
@@ -281,8 +202,12 @@
                              data-status="{{ candidate.status }}" 
                              data-score="{{ candidate.ai_score or 0 }}"
                              data-name="{{ candidate.name|lower }}">
-                            <div class="card candidate-card-item border-0 shadow-sm h-100">
-                                <div class="card-body">
+                            
+                            <!-- Card simplificado e direto -->
+                            <div class="card border-0 shadow-sm h-100" style="position: relative; z-index: 1;">
+                                <div class="card-body" style="position: relative; z-index: 2;">
+                                    
+                                    <!-- Header com checkbox e nome -->
                                     <div class="d-flex justify-content-between align-items-start mb-3">
                                         <div class="d-flex align-items-center gap-2">
                                             <div class="form-check">
@@ -300,6 +225,7 @@
                                         {% endif %}
                                     </div>
                                     
+                                    <!-- Informações de contato -->
                                     <div class="mb-3">
                                         {% if candidate.email %}
                                         <p class="text-muted mb-1">
@@ -313,6 +239,7 @@
                                         {% endif %}
                                     </div>
                                     
+                                    <!-- Status badges -->
                                     <div class="mb-3">
                                         <span class="badge bg-{{ 'primary' if candidate.status == 'pending' else 'success' if candidate.status == 'interested' else 'danger' if candidate.status == 'rejected' else 'info' }} me-2">
                                             {% if candidate.status == 'pending' %}Pendente
@@ -329,22 +256,37 @@
                                         </span>
                                     </div>
                                     
+                                    <!-- Resumo da IA -->
                                     {% if candidate.ai_summary %}
                                     <p class="card-text text-muted small">{{ candidate.ai_summary[:100] }}...</p>
                                     {% endif %}
                                     
+                                    <!-- Footer com data e botões -->
                                     <div class="d-flex justify-content-between align-items-center mt-3">
                                         <small class="text-muted">
                                             <i class="fas fa-calendar me-1"></i>{{ candidate.uploaded_at | brazil_date }}
                                         </small>
-                                        <div class="d-flex gap-1">
-                                            <a href="/candidates/{{ candidate.id }}" class="btn btn-sm btn-outline-primary ver-detalhes-btn" style="text-decoration: none; display: inline-block; padding: 5px 10px; background-color: #007bff; color: white; border: 1px solid #007bff; border-radius: 4px; cursor: pointer;">
-                                                <i class="fas fa-eye me-1"></i>Ver Detalhes
-                                            </a>
-                                            <a href="{{ url_for('download_candidate_file', candidate_id=candidate.id) }}" class="btn btn-sm btn-outline-success" title="Baixar currículo">
+                                        
+                                        <!-- Botões de ação - solução ultra simples -->
+                                        <div style="display: flex; gap: 5px; align-items: center;">
+                                            <!-- Botão que SEMPRE funciona -->
+                                            <button type="button" 
+                                                    onclick="window.location.href='{{ url_for('candidate_detail', candidate_id=candidate.id) }}';"
+                                                    style="background: #0d6efd; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; opacity: 1; visibility: visible; display: inline-block; pointer-events: auto; z-index: 9999; position: relative;"
+                                                    onmouseover="this.style.background='#0b5ed7'"
+                                                    onmouseout="this.style.background='#0d6efd'"
+                                                    title="Ver detalhes do candidato">
+                                                👁️ Ver Detalhes
+                                            </button>
+                                            
+                                            <a href="{{ url_for('download_candidate_file', candidate_id=candidate.id) }}" 
+                                               class="btn btn-outline-success btn-sm" 
+                                               title="Baixar currículo">
                                                 <i class="fas fa-download"></i>
                                             </a>
-                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDeleteCandidate({{ candidate.id }}, '{{ candidate.name }}')">
+                                            <button type="button" 
+                                                    class="btn btn-outline-danger btn-sm" 
+                                                    onclick="confirmDeleteCandidate({{ candidate.id }}, '{{ candidate.name }}')">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </div>
@@ -362,7 +304,7 @@
             <i class="fas fa-users fa-4x text-muted mb-4"></i>
             <h3 class="text-muted">Nenhum candidato encontrado</h3>
             <p class="text-muted mb-4">Faça upload de currículos nas vagas para começar</p>
-                                        <a href="{{ url_for('jobs_list') }}" class="btn btn-primary">
+            <a href="{{ url_for('jobs_list') }}" class="btn btn-primary">
                 <i class="fas fa-briefcase me-2"></i>Ver Vagas
             </a>
         </div>
@@ -372,56 +314,28 @@
 
 {% block scripts %}
 <script>
-// Verificação simples dos links
+// JavaScript simples para a página de candidatos
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Página carregada, verificando links...');
+    console.log('Página de candidatos carregada');
     
-    // Verificar se os links existem
-    const detailLinks = document.querySelectorAll('.ver-detalhes-btn');
-    console.log(`Encontrados ${detailLinks.length} links Ver Detalhes`);
+    // Desabilitar animações problemáticas do main.js para cards de candidatos
+    const candidateCards = document.querySelectorAll('.candidate-card .card');
+    candidateCards.forEach(card => {
+        card.style.opacity = '1';
+        card.style.transform = 'none';
+        card.style.transition = 'none';
+    });
     
-    // Adicionar evento de clique simples
-    detailLinks.forEach((link, index) => {
-        console.log(`Link ${index + 1}:`, link.href);
-        
-        // Adicionar evento de clique
-        link.addEventListener('click', function(e) {
-            console.log('Link clicado:', this.href);
-            // O link deve funcionar naturalmente
-        });
+    // Garantir que os botões funcionem
+    const detailButtons = document.querySelectorAll('button[onclick*="candidate_detail"]');
+    detailButtons.forEach(button => {
+        button.style.opacity = '1';
+        button.style.visibility = 'visible';
+        button.style.display = 'inline-block';
+        button.style.pointerEvents = 'auto';
+        button.style.cursor = 'pointer';
     });
 });
-
-function handleDetailClick(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const href = this.href;
-    console.log('Botão Ver Detalhes clicado via handler:', href);
-    
-    // Teste: mostrar alert primeiro
-    alert('Clique detectado! Redirecionando para: ' + href);
-    
-    // Depois redirecionar
-    setTimeout(() => {
-        window.location.href = href;
-    }, 100);
-}
-
-// Nova função para ver detalhes do candidato
-function verDetalhesCandidato(candidateId) {
-    console.log('Função verDetalhesCandidato chamada com ID:', candidateId);
-    
-    // Mostrar alert de teste
-    alert('Clique detectado! Candidato ID: ' + candidateId);
-    
-    // Construir a URL
-    const url = `/candidates/${candidateId}`;
-    console.log('Redirecionando para:', url);
-    
-    // Redirecionar
-    window.location.href = url;
-}
 
 function toggleJobGroup(jobId) {
     const jobGroup = document.querySelector(`[data-job-id="${jobId}"]`);
@@ -435,7 +349,6 @@ function toggleJobGroup(jobId) {
         header.classList.remove('collapsed');
         chevron.classList.remove('fa-chevron-right');
         chevron.classList.add('fa-chevron-down');
-        // Garantir que os cliques funcionem após expandir
         content.style.pointerEvents = 'auto';
     } else {
         content.classList.add('collapsed');
@@ -443,7 +356,6 @@ function toggleJobGroup(jobId) {
         header.classList.add('collapsed');
         chevron.classList.remove('fa-chevron-down');
         chevron.classList.add('fa-chevron-right');
-        // Desabilitar cliques quando colapsado
         content.style.pointerEvents = 'none';
     }
 }
@@ -481,36 +393,23 @@ function collapseAllJobs() {
 function searchCandidates() {
     const searchTerm = document.getElementById('nameSearch').value.toLowerCase();
     const cards = document.querySelectorAll('.candidate-card');
-    let hasVisibleCandidates = false;
     
     cards.forEach(card => {
         const candidateName = card.getAttribute('data-name');
         const nameElement = card.querySelector('.candidate-name');
         const displayName = nameElement ? nameElement.textContent : candidateName;
         
-        // Simple and effective search in the entire name
         const searchTermLower = searchTerm.toLowerCase();
         const candidateNameLower = candidateName.toLowerCase();
         const displayNameLower = displayName.toLowerCase();
         
-        // Check if search term is found anywhere in the name
         const matchesSearch = searchTerm === '' || 
                             candidateNameLower.includes(searchTermLower) ||
                             displayNameLower.includes(searchTermLower);
         
-        // Debug: Log search details
-        if (searchTerm !== '') {
-            console.log(`Searching for "${searchTermLower}" in:`);
-            console.log(`  - candidateName: "${candidateNameLower}"`);
-            console.log(`  - displayName: "${displayNameLower}"`);
-            console.log(`  - matches: ${matchesSearch}`);
-        }
-        
         if (matchesSearch) {
             card.style.display = '';
-            hasVisibleCandidates = true;
             
-            // Highlight search term in the displayed name
             if (searchTerm !== '' && nameElement) {
                 const originalText = nameElement.textContent;
                 const highlightedText = originalText.replace(
@@ -524,7 +423,6 @@ function searchCandidates() {
         }
     });
     
-    // Show/hide job groups and expand if candidates found
     const jobGroups = document.querySelectorAll('.job-group');
     jobGroups.forEach(group => {
         const visibleCandidates = group.querySelectorAll('.candidate-card[style=""]');
@@ -537,7 +435,6 @@ function searchCandidates() {
         } else {
             group.style.display = '';
             
-            // If searching and candidates found, expand the job group
             if (searchTerm !== '' && visibleCandidates.length > 0) {
                 content.classList.remove('collapsed');
                 content.style.display = '';
@@ -548,70 +445,7 @@ function searchCandidates() {
         }
     });
     
-    // If no search term, collapse all job groups
     if (searchTerm === '') {
-        jobGroups.forEach(group => {
-            const content = group.querySelector('.job-content');
-            const header = group.querySelector('.job-header');
-            const chevron = group.querySelector('.fa-chevron-down, .fa-chevron-right');
-            
-            content.classList.add('collapsed');
-            content.style.display = 'none';
-            header.classList.add('collapsed');
-            chevron.classList.remove('fa-chevron-down');
-            chevron.classList.add('fa-chevron-right');
-        });
-    }
-}
-
-function filterCandidates() {
-    const statusFilter = document.getElementById('statusFilter').value;
-    const minScoreFilter = parseFloat(document.getElementById('minScoreFilter').value) || 0;
-    const cards = document.querySelectorAll('.candidate-card');
-    
-    cards.forEach(card => {
-        const status = card.getAttribute('data-status');
-        const score = parseFloat(card.getAttribute('data-score')) || 0;
-        
-        let showCard = true;
-        
-        if (statusFilter && status !== statusFilter) {
-            showCard = false;
-        }
-        
-        if (minScoreFilter > 0 && score < minScoreFilter) {
-            showCard = false;
-        }
-        
-        card.style.display = showCard ? '' : 'none';
-    });
-    
-    // Show/hide job groups and expand if candidates found
-    const jobGroups = document.querySelectorAll('.job-group');
-    jobGroups.forEach(group => {
-        const visibleCandidates = group.querySelectorAll('.candidate-card[style=""]');
-        const content = group.querySelector('.job-content');
-        const header = group.querySelector('.job-header');
-        const chevron = group.querySelector('.fa-chevron-down, .fa-chevron-right');
-        
-        if (visibleCandidates.length === 0) {
-            group.style.display = 'none';
-        } else {
-            group.style.display = '';
-            
-            // If filtering and candidates found, expand the job group
-            if ((statusFilter || minScoreFilter > 0) && visibleCandidates.length > 0) {
-                content.classList.remove('collapsed');
-                content.style.display = '';
-                header.classList.remove('collapsed');
-                chevron.classList.remove('fa-chevron-right');
-                chevron.classList.add('fa-chevron-down');
-            }
-        }
-    });
-    
-    // If no filters, collapse all job groups
-    if (!statusFilter && minScoreFilter === 0) {
         jobGroups.forEach(group => {
             const content = group.querySelector('.job-content');
             const header = group.querySelector('.job-header');
@@ -699,12 +533,10 @@ function confirmDeleteCandidate(candidateId, candidateName) {
     const message = `Tem certeza que deseja excluir o candidato "${candidateName}"?`;
     
     showCustomConfirm(message, [candidateName], () => {
-        // Create form to submit DELETE request
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = `/candidates/${candidateId}/delete`;
         
-        // Add CSRF token if available
         const csrfToken = document.querySelector('meta[name="csrf-token"]');
         if (csrfToken) {
             const csrfInput = document.createElement('input');
