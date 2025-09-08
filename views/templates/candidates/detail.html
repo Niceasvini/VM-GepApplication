@@ -367,9 +367,9 @@
                     
                     <div class="mb-3">
                         <small class="text-muted">
-                            <i class="fas fa-calendar me-1"></i>Upload: {{ candidate.uploaded_at.strftime('%d/%m/%Y às %H:%M') }}
+                            <i class="fas fa-calendar me-1"></i>Upload: {{ candidate.uploaded_at | brazil_time }}
                             {% if candidate.analyzed_at %}
-                                | Analisado: {{ candidate.analyzed_at.strftime('%d/%m/%Y às %H:%M') }}
+                                | Analisado: {{ candidate.analyzed_at | brazil_time }}
                             {% endif %}
                         </small>
                     </div>
@@ -688,7 +688,7 @@
                     </div>
                     <div class="info-item mb-3">
                         <label class="form-label fw-bold text-muted">Upload:</label>
-                        <div class="text-muted">{{ candidate.uploaded_at.strftime('%d/%m/%Y') }}</div>
+                        <div class="text-muted">{{ candidate.uploaded_at | brazil_date }}</div>
                     </div>
                 </div>
             </div>
@@ -718,7 +718,7 @@
                             <div class="comment-item mb-3 pb-3 border-bottom">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <strong class="text-primary">{{ comment.user.username }}</strong>
-                                    <small class="text-muted">{{ comment.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                                    <small class="text-muted">{{ comment.created_at | brazil_time }}</small>
                                 </div>
                                 <p class="mb-0 text-muted">{{ comment.content }}</p>
                             </div>

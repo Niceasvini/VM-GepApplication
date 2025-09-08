@@ -389,7 +389,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } catch (error) {
                 console.error('AI monitoring error:', error);
             }
-        }, 3000);
+        }, 5000); // Increased interval to reduce server load
     }
     
     // Complete processing and show results
@@ -424,7 +424,7 @@ document.addEventListener('DOMContentLoaded', function() {
             showCustomConfirm(message, [], () => {
                 location.reload();
             });
-        }, 3000);
+        }, 5000); // Increased interval to reduce server load
     }
     
     // Utility functions

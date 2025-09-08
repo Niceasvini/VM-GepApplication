@@ -107,12 +107,12 @@
                             </td>
                             <td>
                                 {% if user.last_login %}
-                                    {{ user.last_login.strftime('%d/%m/%Y %H:%M') }}
+                                    {{ user.last_login | brazil_time }}
                                 {% else %}
                                     <span class="text-muted">Nunca</span>
                                 {% endif %}
                             </td>
-                            <td>{{ user.created_at.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ user.created_at | brazil_date }}</td>
                             <td>
                                 <div class="btn-group" role="group">
                                     <a href="{{ url_for('admin_user_detail', user_id=user.id) }}" 

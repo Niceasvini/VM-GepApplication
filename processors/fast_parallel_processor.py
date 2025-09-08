@@ -8,6 +8,7 @@ import threading
 import time
 import logging
 from datetime import datetime
+import pytz
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from queue import Queue
 
@@ -27,13 +28,15 @@ class FastParallelProcessor:
     """
     High-performance parallel processor for AI analysis
     """
-    def __init__(self, max_workers=10, batch_size=5):
+    def __init__(self, max_workers=3, batch_size=2):
+        # Reduzido para evitar sobrecarga do servidor
         self.max_workers = max_workers
         self.batch_size = batch_size
         self.processing_status = {}
         self.lock = threading.Lock()
         self.processing_queue = Queue()
         self.results_queue = Queue()
+        self.active_workers = 0
     
     def process_candidate_fast(self, candidate_id):
         """
@@ -57,6 +60,9 @@ class FastParallelProcessor:
                 
                 # Extract text first (fast operation)
                 resume_text = extract_text_from_file(candidate.file_path, candidate.file_type)
+                
+                # Add small delay to reduce server load
+                time.sleep(0.5)
                 
                 # Analyze with AI (optimized)
                 result = analyze_resume(candidate.file_path, candidate.file_type, candidate.job)
@@ -83,7 +89,9 @@ class FastParallelProcessor:
                         candidate.ai_analysis = analysis
                         candidate.extracted_skills = result.get('skills', '[]')
                         candidate.analysis_status = 'completed'
-                        candidate.analyzed_at = datetime.utcnow()
+                        # Usar timezone do Brasil
+                    brazil_tz = pytz.timezone('America/Sao_Paulo')
+                    candidate.analyzed_at = datetime.now(brazil_tz)
                         
                         db.session.commit()
                         
@@ -152,7 +160,7 @@ class FastParallelProcessor:
         failed_count = 0
         start_time = time.time()
         
-        # Process candidates in parallel with optimized thread pool
+        # Process candidates in parallel with reduced workers to avoid server overload
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             # Submit all tasks at once
             future_to_candidate = {
@@ -205,8 +213,8 @@ class FastParallelProcessor:
             
             return status_counts
 
-# Global processor instance
-fast_processor = FastParallelProcessor(max_workers=8)
+# Global processor instance - reduced workers to prevent server overload
+fast_processor = FastParallelProcessor(max_workers=3)
 
 def start_fast_parallel_analysis(candidate_ids):
     """

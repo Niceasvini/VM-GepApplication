@@ -1,7 +1,13 @@
 from datetime import datetime
+import pytz
 from database import db
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+
+def get_brazil_time():
+    """Retorna o datetime atual no timezone do Brasil"""
+    brazil_tz = pytz.timezone('America/Sao_Paulo')
+    return datetime.now(brazil_tz)
 
 class User(UserMixin, db.Model):
     __tablename__ = 'user'
@@ -14,7 +20,7 @@ class User(UserMixin, db.Model):
     role = db.Column(db.String(20), default='recruiter')  # 'recruiter' or 'admin'
     is_active = db.Column(db.Boolean, default=True)  # Usuário ativo/inativo
     last_login = db.Column(db.DateTime)  # Último login
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_brazil_time)
     
     # Permissões granulares
     can_create_jobs = db.Column(db.Boolean, default=True)
@@ -62,7 +68,7 @@ class User(UserMixin, db.Model):
     def update_last_login(self):
         """Atualiza o timestamp do último login"""
         from datetime import datetime
-        self.last_login = datetime.utcnow()
+        self.last_login = get_brazil_time()
         db.session.commit()
 
 class Job(db.Model):
@@ -74,8 +80,8 @@ class Job(db.Model):
     description = db.Column(db.Text, nullable=False)
     requirements = db.Column(db.Text, nullable=False)
     status = db.Column(db.String(20), default='active')  # 'active', 'closed', 'draft'
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_brazil_time)
+    updated_at = db.Column(db.DateTime, default=get_brazil_time, onupdate=get_brazil_time)
     
     # Foreign Keys
     created_by = db.Column(db.Integer, db.ForeignKey('appcurriculos.user.id'), nullable=False)
@@ -109,7 +115,7 @@ class Candidate(db.Model):
     analysis_status = db.Column(db.String(20), default='pending')  # 'pending', 'processing', 'completed', 'failed'
     
     # Timestamps
-    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+    uploaded_at = db.Column(db.DateTime, default=get_brazil_time)
     analyzed_at = db.Column(db.DateTime)
     
     # Foreign Keys
@@ -134,7 +140,7 @@ class CandidateComment(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_brazil_time)
     
     # Foreign Keys
     candidate_id = db.Column(db.Integer, db.ForeignKey('appcurriculos.candidate.id'), nullable=False)
@@ -155,7 +161,7 @@ class UserActivity(db.Model):
     details = db.Column(db.Text)  # Detalhes adicionais da ação
     ip_address = db.Column(db.String(45))  # Endereço IP do usuário
     user_agent = db.Column(db.String(500))  # User agent do navegador
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_brazil_time)
     
     # Relationships
     user = db.relationship('User', backref='activity_logs')

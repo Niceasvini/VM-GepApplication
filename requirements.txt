@@ -42,3 +42,6 @@ asyncio-throttle==1.0.2
 
 # Additional utilities
 requests==2.31.0
+
+# Timezone support
+pytz==2023.3

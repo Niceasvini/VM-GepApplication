@@ -335,7 +335,7 @@
                                     
                                     <div class="d-flex justify-content-between align-items-center mt-3">
                                         <small class="text-muted">
-                                            <i class="fas fa-calendar me-1"></i>{{ candidate.uploaded_at.strftime('%d/%m/%Y') }}
+                                            <i class="fas fa-calendar me-1"></i>{{ candidate.uploaded_at | brazil_date }}
                                         </small>
                                         <div class="d-flex gap-1">
                                             <a href="/candidates/{{ candidate.id }}" class="btn btn-sm btn-outline-primary ver-detalhes-btn" style="text-decoration: none; display: inline-block; padding: 5px 10px; background-color: #007bff; color: white; border: 1px solid #007bff; border-radius: 4px; cursor: pointer;">

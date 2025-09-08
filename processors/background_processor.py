@@ -6,6 +6,7 @@ import os
 import time
 import threading
 from datetime import datetime
+import pytz
 from openai import OpenAI
 
 # Set environment
@@ -103,12 +104,16 @@ def process_candidate_background(candidate_id):
             candidate.ai_summary = ""  # Will be extracted from analysis_result
             candidate.ai_analysis = analysis_result
             candidate.analysis_status = 'completed'
-            candidate.analyzed_at = datetime.utcnow()
+            # Usar timezone do Brasil
+            brazil_tz = pytz.timezone('America/Sao_Paulo')
+            candidate.analyzed_at = datetime.now(brazil_tz)
             
             db.session.commit()
             processing_status[candidate_id] = 'completed'
             
-            print(f"✓ Processed: {candidate.name} - Score: {score}")
+            # Log apenas em caso de sucesso (reduzir poluição)
+            if score >= 7:  # Log apenas scores altos
+                print(f"✓ {candidate.name} - Score: {score}")
             return True
             
     except Exception as e:
@@ -137,21 +142,28 @@ def start_background_analysis(candidate_ids):
     Start background analysis for multiple candidates
     """
     def worker():
-        print(f"🚀 INICIANDO PROCESSAMENTO EM LOTE: {len(candidate_ids)} candidatos")
+        print(f"🚀 INICIANDO PROCESSAMENTO: {len(candidate_ids)} candidatos")
+        success_count = 0
+        failed_count = 0
+        
         for i, candidate_id in enumerate(candidate_ids, 1):
-            print(f"📋 [{i}/{len(candidate_ids)}] Processando candidato {candidate_id}")
+            # Log apenas a cada 5 candidatos para reduzir poluição
+            if i % 5 == 0 or i == 1:
+                print(f"📋 [{i}/{len(candidate_ids)}] Processando candidatos...")
+            
             try:
                 success = process_candidate_background(candidate_id)
                 if success:
-                    print(f"✅ Candidato {candidate_id} processado com sucesso")
+                    success_count += 1
                 else:
-                    print(f"❌ Erro ao processar candidato {candidate_id}")
+                    failed_count += 1
             except Exception as e:
-                print(f"💥 Erro inesperado com candidato {candidate_id}: {e}")
+                failed_count += 1
+                print(f"❌ Erro com candidato {candidate_id}: {e}")
             
-            time.sleep(1)  # Small delay between candidates
+            time.sleep(2)  # Increased delay to reduce server load
         
-        print(f"🎉 PROCESSAMENTO EM LOTE CONCLUÍDO: {len(candidate_ids)} candidatos")
+        print(f"🎉 PROCESSAMENTO CONCLUÍDO: {success_count} sucessos, {failed_count} falhas")
     
     thread = threading.Thread(target=worker, daemon=True)
     thread.start()

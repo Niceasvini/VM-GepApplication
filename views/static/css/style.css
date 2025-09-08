@@ -24,6 +24,11 @@
     /* Transições */
     --transition: all 0.3s ease;
     --border-radius: 8px;
+    
+    /* Status de monitoramento */
+    --status-active-color: #28a745;
+    --status-paused-color: #ffc107;
+    --status-text-color: #6c757d;
 }
 
 /* ===== TEMA ESCURO ===== */
@@ -35,6 +40,11 @@
     --border-color: #404040;
     --card-bg: #2d2d2d;
     --shadow-color: rgba(0, 0, 0, 0.3);
+    
+    /* Status de monitoramento - tema escuro */
+    --status-active-color: #4ade80;
+    --status-paused-color: #fbbf24;
+    --status-text-color: #d1d5db;
 }
 
 /* ===== RESET E BASE ===== */
@@ -53,11 +63,69 @@ body {
 
 /* ===== NAVBAR COMPACTA ===== */
 .navbar {
-    background: #ffffff;
+    background: var(--card-bg);
     box-shadow: var(--shadow-sm);
     border-bottom: 1px solid var(--border-color);
     padding: 0.5rem 1rem !important;
     min-height: 60px !important;
+    transition: var(--transition);
+}
+
+/* Tema claro específico para navbar */
+[data-theme="light"] .navbar {
+    background: #ffffff !important;
+    border-bottom-color: #e5e7eb !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .navbar-brand {
+    color: var(--primary-color) !important;
+}
+
+[data-theme="light"] .navbar-nav .nav-link {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="light"] .navbar-nav .nav-link:hover,
+[data-theme="light"] .navbar-nav .nav-link.active {
+    color: var(--primary-color) !important;
+}
+
+[data-theme="light"] .navbar .dropdown-menu {
+    background: #ffffff !important;
+    border-color: #e5e7eb !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-theme="light"] .navbar .dropdown-item {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="light"] .navbar .dropdown-item:hover {
+    background: #f8f9fa !important;
+    color: var(--primary-color) !important;
+}
+
+[data-theme="light"] .navbar .btn-outline-secondary {
+    border-color: #6c757d !important;
+    color: #6c757d !important;
+    background: transparent !important;
+}
+
+[data-theme="light"] .navbar .btn-outline-secondary:hover {
+    background: #6c757d !important;
+    color: white !important;
+}
+
+/* ===== FOOTER - TEMA CLARO ===== */
+[data-theme="light"] footer {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border-top-color: var(--border-color) !important;
+}
+
+[data-theme="light"] footer .text-muted {
+    color: var(--text-secondary) !important;
 }
 
 .navbar-brand {
@@ -712,6 +780,66 @@ main, .main-content, .content {
 }
 
 /* ===== TEMA ESCURO ESPECÍFICO ===== */
+[data-theme="dark"] .navbar {
+    background: var(--card-bg) !important;
+    border-bottom-color: var(--border-color) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .navbar-brand {
+    color: var(--primary-color) !important;
+}
+
+[data-theme="dark"] .navbar-nav .nav-link {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .navbar-nav .nav-link:hover,
+[data-theme="dark"] .navbar-nav .nav-link.active {
+    color: var(--primary-color) !important;
+}
+
+[data-theme="dark"] .navbar .dropdown-menu {
+    background: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .navbar .dropdown-item {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .navbar .dropdown-item:hover {
+    background: var(--bg-secondary) !important;
+    color: var(--primary-color) !important;
+}
+
+[data-theme="dark"] .navbar .dropdown-divider {
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .navbar .btn-outline-secondary {
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+    background: transparent !important;
+}
+
+[data-theme="dark"] .navbar .btn-outline-secondary:hover {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--primary-color) !important;
+}
+
+[data-theme="dark"] .navbar .badge {
+    background: var(--primary-color) !important;
+    color: white !important;
+}
+
+[data-theme="dark"] .navbar .badge.bg-warning {
+    background: #ffc107 !important;
+    color: #212529 !important;
+}
+
 [data-theme="dark"] .btn-outline-primary {
     border-color: var(--primary-color);
     color: var(--primary-color);
@@ -748,6 +876,17 @@ main, .main-content, .content {
 
 [data-theme="dark"] .nav-link:hover {
     color: var(--primary-color);
+}
+
+/* ===== FOOTER - TEMA ESCURO ===== */
+[data-theme="dark"] footer {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border-top-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] footer .text-muted {
+    color: var(--text-secondary) !important;
 }
 
 [data-theme="dark"] .navbar-nav .nav-link.active {
@@ -810,10 +949,65 @@ main, .main-content, .content {
 }
 
 /* ===== FOOTER ===== */
+footer {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border-top: 1px solid var(--border-color);
+    transition: var(--transition);
+}
+
+footer .text-muted {
+    color: var(--text-secondary) !important;
+}
+
 .company-name-footer {
     color: var(--primary-color);
     font-weight: 700;
     font-size: 1.2rem;
+}
+
+/* ===== STATUS DE MONITORAMENTO ===== */
+.monitoring-status {
+    color: var(--status-text-color) !important;
+    transition: var(--transition);
+}
+
+.monitoring-status .status-icon {
+    color: var(--status-active-color);
+    transition: var(--transition);
+}
+
+.monitoring-status.paused .status-icon {
+    color: var(--status-paused-color);
+}
+
+/* ===== CARDS DE VAGAS ===== */
+.job-description-formatted,
+.requirement-section {
+    background: var(--card-bg) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+.job-description-formatted h6,
+.requirement-section h6 {
+    color: var(--primary-color) !important;
+    border-bottom-color: var(--border-color) !important;
+}
+
+.job-description-formatted li,
+.job-description-formatted p,
+.job-requirements-content li,
+.job-requirements-content p {
+    color: var(--text-primary) !important;
+}
+
+.requirement-label {
+    color: var(--text-secondary) !important;
+}
+
+.requirement-value {
+    color: var(--text-primary) !important;
 }
 
 /* ===== RESPONSIVIDADE ===== */

@@ -5,11 +5,13 @@
 {% block head %}
 <style>
 .job-description-formatted {
-    background: #f8f9fa;
+    background: var(--card-bg);
     border-radius: 8px;
     padding: 20px;
     margin: 15px 0;
     border-left: 4px solid var(--primary-color);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
 }
 
 /* Bulk actions styling */
@@ -32,9 +34,9 @@
 }
 
 #bulkActionsBar {
-    background: #f8f9fa;
-    border-top: 1px solid #dee2e6;
-    border-bottom: 1px solid #dee2e6;
+    background: var(--card-bg);
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .table th:first-child,
@@ -44,14 +46,14 @@
 }
 
 .candidate-row:hover {
-    background-color: #f8f9fa;
+    background-color: var(--bg-secondary);
 }
 
 .job-description-formatted h6 {
     color: var(--primary-color);
     font-weight: 600;
     margin-bottom: 10px;
-    border-bottom: 1px solid #dee2e6;
+    border-bottom: 1px solid var(--border-color);
     padding-bottom: 5px;
 }
 
@@ -62,7 +64,7 @@
 
 .job-description-formatted li {
     margin-bottom: 5px;
-    color: #495057;
+    color: var(--text-primary);
 }
 
 .job-requirements-grid {
@@ -73,10 +75,10 @@
 }
 
 .requirement-section {
-    background: white;
+    background: var(--card-bg);
     border-radius: 8px;
     padding: 15px;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--border-color);
 }
 
 .requirement-section h6 {
@@ -90,16 +92,16 @@
     justify-content: space-between;
     margin-bottom: 8px;
     padding: 5px 0;
-    border-bottom: 1px solid #f1f3f4;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .requirement-label {
     font-weight: 500;
-    color: #6c757d;
+    color: var(--text-secondary);
 }
 
 .requirement-value {
-    color: #495057;
+    color: var(--text-primary);
     text-align: right;
 }
 
@@ -139,13 +141,13 @@
 
 .job-requirements-content li {
     margin-bottom: 8px;
-    color: #495057;
+    color: var(--text-primary);
     line-height: 1.5;
 }
 
 .job-requirements-content p {
     margin-bottom: 10px;
-    color: #495057;
+    color: var(--text-primary);
 }
 
 .job-requirements-content strong {
@@ -168,7 +170,7 @@
                             {{ 'Ativa' if job.status == 'active' else 'Fechada' }}
                         </span>
                         <small class="text-muted">
-                            <i class="fas fa-calendar me-1"></i>Criada em {{ job.created_at.strftime('%d/%m/%Y') }}
+                            <i class="fas fa-calendar me-1"></i>Criada em {{ job.created_at | brazil_date }}
                         </small>
                     </div>
                 </div>
@@ -281,19 +283,31 @@
                             <a href="{{ url_for('bulk_upload_page', job_id=job.id) }}" class="btn btn-warning btn-lg w-100">
                                 <i class="fas fa-rocket me-2"></i>Upload em Lote
                                 <br><small>Múltiplos currículos</small>
+                                <br><span class="badge bg-success mt-1">Recomendado</span>
                             </a>
                         </div>
                         <div class="col-md-4 mb-3">
                             <button type="button" class="btn btn-success btn-lg w-100" data-bs-toggle="modal" data-bs-target="#uploadModal">
                                 <i class="fas fa-upload me-2"></i>Upload Individual
-                                <br><small>Um currículo por vez</small>
+                                <br><small>Um ou poucos currículos</small>
+                                <br><span class="badge bg-info mt-1">Rápido</span>
                             </button>
                         </div>
                     </div>
                     
                     <div class="mt-4">
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <strong>Processamento Assíncrono:</strong> Após o upload, você pode navegar livremente pela plataforma. 
+                            A análise da IA acontece em paralelo e você será notificado quando concluída.
+                        </div>
                         <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i>
+                            <i class="fas fa-lightbulb me-2"></i>
+                            <strong>Dica:</strong> Use "Upload em Lote" para muitos currículos ou "Upload Individual" para poucos arquivos.
+                            Ambos funcionam de forma assíncrona - não trave a página!
+                        </div>
+                        <div class="alert alert-secondary">
+                            <i class="fas fa-file-alt me-2"></i>
                             <strong>Formatos aceitos:</strong> PDF, DOCX, TXT (máximo 16MB por arquivo)
                         </div>
                     </div>
@@ -418,7 +432,7 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <small class="text-muted">{{ candidate.uploaded_at.strftime('%d/%m/%Y') }}</small>
+                                    <small class="text-muted">{{ candidate.uploaded_at | brazil_date }}</small>
                                 </td>
                                 <td>
                                     <div class="d-flex gap-1">
@@ -457,7 +471,7 @@
                 <h5 class="modal-title">Carregar Currículos</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="POST" action="{{ url_for('upload_resume', job_id=job.id) }}" enctype="multipart/form-data">
+            <form id="uploadForm" enctype="multipart/form-data">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="resumes" class="form-label">Selecione os currículos</label>
@@ -471,10 +485,26 @@
                         <i class="fas fa-info-circle me-2"></i>
                         Os currículos serão automaticamente analisados pela IA após o upload.
                     </div>
+                    
+                    <!-- Progress Section (hidden by default) -->
+                    <div id="uploadProgress" class="mt-3" style="display: none;">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small class="text-muted">Enviando arquivos...</small>
+                            <small class="text-muted" id="uploadProgressText">0%</small>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar" role="progressbar" style="width: 0%;" 
+                                 aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="uploadProgressBar">
+                            </div>
+                        </div>
+                        <div class="text-center mt-2">
+                            <small class="text-muted" id="uploadStatus">Preparando upload...</small>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                                <button type="submit" class="btn btn-primary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="cancelBtn">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="uploadBtn">
                         <i class="fas fa-upload me-2"></i>Carregar
                     </button>
                 </div>
@@ -482,6 +512,112 @@
         </div>
     </div>
 </div>
+
+<script>
+// Async Upload Form Handler
+document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData();
+    const files = document.getElementById('resumes').files;
+    
+    if (files.length === 0) {
+        alert('Por favor, selecione pelo menos um arquivo.');
+        return;
+    }
+    
+    // Show progress
+    document.getElementById('uploadProgress').style.display = 'block';
+    document.getElementById('uploadBtn').disabled = true;
+    document.getElementById('cancelBtn').disabled = true;
+    
+    // Add files to FormData
+    for (let i = 0; i < files.length; i++) {
+        formData.append('files', files[i]);
+    }
+    
+    try {
+        // Update progress
+        updateUploadProgress(20, 'Enviando arquivos...');
+        
+        // Send request to bulk upload endpoint (async)
+        const response = await fetch('/jobs/{{ job.id }}/bulk-upload', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Erro ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            updateUploadProgress(100, 'Upload concluído!');
+            
+            // Show success message
+            setTimeout(() => {
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('uploadModal'));
+                modal.hide();
+                
+                // Show success notification
+                showNotification(`${result.processed_count} currículos enviados! A IA está analisando em paralelo.`, 'success', 5000);
+                
+                // Reload page to show new candidates
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            }, 1000);
+        } else {
+            throw new Error(result.message || 'Erro no upload');
+        }
+        
+    } catch (error) {
+        console.error('Upload error:', error);
+        updateUploadProgress(0, 'Erro no upload');
+        showNotification('Erro no upload: ' + error.message, 'error', 5000);
+        
+        // Re-enable buttons
+        document.getElementById('uploadBtn').disabled = false;
+        document.getElementById('cancelBtn').disabled = false;
+    }
+});
+
+function updateUploadProgress(percent, status) {
+    document.getElementById('uploadProgressBar').style.width = percent + '%';
+    document.getElementById('uploadProgressText').textContent = percent + '%';
+    document.getElementById('uploadStatus').textContent = status;
+}
+
+function showNotification(message, type, duration = 3000) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove after duration
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, duration);
+}
+
+// Reset form when modal is closed
+document.getElementById('uploadModal').addEventListener('hidden.bs.modal', function() {
+    document.getElementById('uploadForm').reset();
+    document.getElementById('uploadProgress').style.display = 'none';
+    document.getElementById('uploadBtn').disabled = false;
+    document.getElementById('cancelBtn').disabled = false;
+});
+</script>
 {% endblock %}
 
 {% block scripts %}

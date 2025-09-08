@@ -59,13 +59,13 @@
                             </div>
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Criado em:</label>
-                                <p class="mb-0">{{ user.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+                                <p class="mb-0">{{ user.created_at | brazil_time }}</p>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Último Login:</label>
                                 <p class="mb-0">
                                     {% if user.last_login %}
-                                        {{ user.last_login.strftime('%d/%m/%Y %H:%M') }}
+                                        {{ user.last_login | brazil_time }}
                                     {% else %}
                                         <span class="text-muted">Nunca</span>
                                     {% endif %}
@@ -192,7 +192,7 @@
                                     <small class="text-muted">{{ activity.ip_address or 'N/A' }}</small>
                                 </td>
                                 <td>
-                                    <small>{{ activity.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                                    <small>{{ activity.created_at | brazil_time }}</small>
                                 </td>
                             </tr>
                             {% endfor %}

@@ -46,12 +46,11 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
     
     <!-- Statistics Cards -->
-    <div class="row g-4 mb-5">
+    <div class="row g-4 mb-5 mt-2">
         <div class="col-lg-3 col-md-6">
             <div class="stat-card fade-in">
                 <div class="stat-icon">
@@ -149,7 +148,7 @@
                                             </a>
                                         </h6>
                                         <small class="text-muted">
-                                            <i class="fas fa-calendar me-1"></i>{{ job.created_at.strftime('%d/%m/%Y') }}
+                                            <i class="fas fa-calendar me-1"></i>{{ job.created_at | brazil_date }}
                                         </small>
                                     </div>
                                     <span class="badge bg-primary">{{ job.candidates|length }}</span>

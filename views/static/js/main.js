@@ -573,6 +573,9 @@ function initializeThemeToggle() {
         document.documentElement.setAttribute('data-theme', savedTheme);
         updateThemeIcon(savedTheme);
         
+        // Força atualização do navbar
+        updateNavbarTheme(savedTheme);
+        
         // Adiciona evento de clique
         themeToggle.addEventListener('click', function(e) {
             e.preventDefault();
@@ -589,6 +592,9 @@ function initializeThemeToggle() {
             document.documentElement.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
             updateThemeIcon(newTheme);
+            
+            // Força atualização do navbar
+            updateNavbarTheme(newTheme);
             
             // Mostra notificação
             const themeName = newTheme === 'light' ? 'Claro' : 'Escuro';
@@ -611,6 +617,26 @@ function updateThemeIcon(theme) {
             themeIcon.className = 'fas fa-moon';
             themeIcon.title = 'Mudar para tema escuro';
         }
+    }
+}
+
+function updateNavbarTheme(theme) {
+    const navbar = document.querySelector('.navbar');
+    if (navbar) {
+        // Remove classes de tema anteriores
+        navbar.classList.remove('navbar-light', 'navbar-dark');
+        
+        // Adiciona classe apropriada
+        if (theme === 'dark') {
+            navbar.classList.add('navbar-dark');
+        } else {
+            navbar.classList.add('navbar-light');
+        }
+        
+        // Força re-renderização
+        navbar.style.transition = 'all 0.3s ease';
+        
+        console.log('🎨 Navbar atualizado para tema:', theme);
     }
 }
 
@@ -1349,5 +1375,6 @@ window.VianaeMoura = {
     formatScore,
     validateForm,
     changeLanguage,
-    updateThemeIcon
+    updateThemeIcon,
+    updateNavbarTheme
 };

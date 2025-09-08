@@ -395,10 +395,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     clearInterval(monitoringInterval);
                     setTimeout(() => {
                         completeProcessing(candidateIds.length, 0, 0);
-                    }, 3000);
+                    }, 5000); // Increased interval to reduce server load
                 }
             }
-        }, 3000);
+        }, 5000); // Increased interval to reduce server load
     }
     
     // Complete processing and show results
@@ -433,7 +433,7 @@ document.addEventListener('DOMContentLoaded', function() {
             showCustomConfirm(message, [], () => {
                 location.reload();
             });
-        }, 3000);
+        }, 5000); // Increased interval to reduce server load
     }
     
     // Utility functions

@@ -79,6 +79,12 @@
                         <button id="start-processing" class="btn btn-primary btn-lg me-2">
                             <i class="fas fa-play"></i> Iniciar Processamento
                         </button>
+                        <button id="test-processor" class="btn btn-info btn-sm me-2" onclick="testProcessor()">
+                            <i class="fas fa-vial"></i> Testar Processador
+                        </button>
+                        <button id="refresh-status" class="btn btn-secondary btn-sm me-2" onclick="forceRefresh()">
+                            <i class="fas fa-sync-alt"></i> Atualizar Agora
+                        </button>
                         <button id="reset-stuck" class="btn btn-warning btn-sm" onclick="resetStuckCandidates()">
                             <i class="fas fa-exclamation-triangle"></i> Resetar Presos
                         </button>
@@ -97,11 +103,15 @@
                 <div class="card-body">
                     <div class="text-center">
                         <div class="mb-3">
-                            <i class="fas fa-spinner fa-spin fa-2x text-info"></i>
+                            <i class="fas fa-spinner fa-spin fa-2x" style="color: var(--status-active-color);"></i>
                         </div>
-                        <h6 class="text-muted">Monitoramento Ativo</h6>
-                        <small class="text-muted" id="last-update">
+                        <h6 class="text-muted" style="color: var(--text-secondary);">Monitoramento Ativo</h6>
+                        <small class="text-muted" id="last-update" style="color: var(--text-secondary);">
                             Última atualização: --:--
+                        </small>
+                        <br>
+                        <small class="monitoring-status" id="monitoring-status">
+                            <i class="fas fa-circle status-icon"></i> Monitoramento ativo (3s)
                         </small>
                     </div>
                 </div>
@@ -312,9 +322,23 @@ function updateProcessingStatus() {
             // Update candidates table
             updateCandidatesTable(data.candidates);
             
-            // Update last update time
-            document.getElementById('last-update').textContent = 
-                'Última atualização: ' + new Date().toLocaleTimeString();
+            // Update last update time with visual indicator
+            const lastUpdateElement = document.getElementById('last-update');
+            const currentTime = new Date().toLocaleTimeString('pt-BR', {timeZone: 'America/Sao_Paulo'});
+            lastUpdateElement.textContent = 'Última atualização: ' + currentTime;
+            
+            // Add visual indicator for updates
+            lastUpdateElement.style.color = '#28a745';
+            lastUpdateElement.style.fontWeight = 'bold';
+            
+            // Reset color after 2 seconds
+            setTimeout(() => {
+                lastUpdateElement.style.color = '';
+                lastUpdateElement.style.fontWeight = '';
+            }, 2000);
+            
+            // Update monitoring status
+            updateMonitoringStatus();
         })
         .catch(error => {
             console.error('Erro ao atualizar status:', error);
@@ -413,7 +437,7 @@ function updateCandidatesTable(candidates) {
             </td>
             <td>${statusBadge}</td>
             <td><span class="${scoreClass}">${score}</span></td>
-            <td>${candidate.analyzed_at ? new Date(candidate.analyzed_at).toLocaleString() : '-'}</td>
+            <td>${candidate.analyzed_at ? new Date(candidate.analyzed_at).toLocaleString('pt-BR', {timeZone: 'America/Sao_Paulo'}) : '-'}</td>
             <td>
                 <div class="btn-group btn-group-sm">
                     <a href="/candidates/${candidate.id}" class="btn btn-outline-primary btn-sm" title="Ver detalhes">
@@ -469,7 +493,7 @@ function showCompletedNotification(candidate) {
                 <p class="mb-1"><strong>${candidate.name}</strong> foi analisado com sucesso.</p>
                 <small class="text-muted">
                     Score: ${candidate.ai_score ? candidate.ai_score.toFixed(1) : 'N/A'} | 
-                    ${new Date().toLocaleTimeString()}
+                    ${new Date().toLocaleTimeString('pt-BR', {timeZone: 'America/Sao_Paulo'})}
                 </small>
             </div>
         </div>
@@ -547,6 +571,73 @@ function deleteCandidate(candidateId, candidateName) {
     });
 }
 
+function updateMonitoringStatus() {
+    const statusElement = document.getElementById('monitoring-status');
+    if (statusElement) {
+        const interval = updateInterval ? '3s' : 'Pausado';
+        const status = updateInterval ? 'ativo' : 'pausado';
+        const icon = updateInterval ? 'fa-circle' : 'fa-pause-circle';
+        
+        // Remove classes anteriores
+        statusElement.classList.remove('paused');
+        
+        // Adiciona classe paused se não estiver ativo
+        if (!updateInterval) {
+            statusElement.classList.add('paused');
+        }
+        
+        statusElement.innerHTML = `<i class="fas ${icon} status-icon"></i> Monitoramento ${status} (${interval})`;
+    }
+}
+
+function forceRefresh() {
+    console.log('🔄 Forçando atualização do status...');
+    
+    const button = document.getElementById('refresh-status');
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Atualizando...';
+    button.disabled = true;
+    
+    // Force immediate update
+    updateProcessingStatus();
+    
+    // Restore button after 1 second
+    setTimeout(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+        console.log('✅ Atualização forçada concluída');
+    }, 1000);
+}
+
+function testProcessor() {
+    console.log('🧪 Testando processador...');
+    
+    const button = document.getElementById('test-processor');
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testando...';
+    button.disabled = true;
+    
+    fetch('/api/test-processor')
+        .then(response => response.json())
+        .then(data => {
+            console.log('📊 Resultado do teste:', data);
+            
+            if (data.success) {
+                alert('✅ Processador está funcionando corretamente!');
+            } else {
+                alert('❌ Erro no processador: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('❌ Erro no teste:', error);
+            alert('❌ Erro ao testar processador: ' + error.message);
+        })
+        .finally(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+}
+
 function resetStuckCandidates() {
     const button = document.getElementById('reset-stuck');
     button.disabled = true;
@@ -621,8 +712,22 @@ function startProcessing() {
                 `;
                 document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.row'));
                 
-                // Start monitoring
-                updateInterval = setInterval(updateProcessingStatus, 2000);
+                // Start intensive monitoring after processing (every 1 second for 60 seconds)
+                if (updateInterval) {
+                    clearInterval(updateInterval);
+                }
+                updateInterval = setInterval(updateProcessingStatus, 1000);
+                updateMonitoringStatus();
+                
+                // After 60 seconds, return to normal monitoring (every 5 seconds)
+                setTimeout(() => {
+                    if (updateInterval) {
+                        clearInterval(updateInterval);
+                        updateInterval = setInterval(updateProcessingStatus, 5000);
+                        updateMonitoringStatus();
+                        console.log('🔄 Retornando ao monitoramento normal (5s)');
+                    }
+                }, 60000);
             } else {
                 // Show error message without modal
                 const alertDiv = document.createElement('div');
@@ -654,15 +759,21 @@ function startProcessing() {
 }
 
 function reprocessCandidate(candidateId) {
+    console.log('🔄 Reprocessamento iniciado para candidato:', candidateId);
+    
     // Get candidate name for feedback
     const candidateRow = document.querySelector(`tr[data-candidate-id="${candidateId}"]`);
     const candidateName = candidateRow ? candidateRow.querySelector('td:first-child').textContent.trim() : 'Candidato';
+    console.log('📝 Nome do candidato:', candidateName);
     
     // Show processing feedback
     const button = event.target;
     const originalText = button.innerHTML;
+    console.log('🔘 Botão clicado:', button);
     button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     button.disabled = true;
+    
+    console.log('🌐 Enviando requisição para:', `/api/candidates/${candidateId}/reprocess`);
     
     fetch(`/api/candidates/${candidateId}/reprocess`, {
         method: 'POST',
@@ -670,8 +781,12 @@ function reprocessCandidate(candidateId) {
             'Content-Type': 'application/json',
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('📡 Resposta recebida:', response.status, response.statusText);
+        return response.json();
+    })
     .then(data => {
+        console.log('📊 Dados recebidos:', data);
         if (data.success) {
             // Show success message
             const alertDiv = document.createElement('div');
@@ -685,6 +800,23 @@ function reprocessCandidate(candidateId) {
             
             // Update immediately
             updateProcessingStatus();
+            
+            // Start intensive monitoring after reprocessing (every 1 second for 30 seconds)
+            if (updateInterval) {
+                clearInterval(updateInterval);
+            }
+            updateInterval = setInterval(updateProcessingStatus, 1000);
+            updateMonitoringStatus();
+            
+            // After 30 seconds, return to normal monitoring (every 5 seconds)
+            setTimeout(() => {
+                if (updateInterval) {
+                    clearInterval(updateInterval);
+                    updateInterval = setInterval(updateProcessingStatus, 5000);
+                    updateMonitoringStatus();
+                    console.log('🔄 Retornando ao monitoramento normal (5s)');
+                }
+            }, 30000);
         } else {
             // Show error message
             const alertDiv = document.createElement('div');
@@ -702,7 +834,8 @@ function reprocessCandidate(candidateId) {
         }
     })
     .catch(error => {
-        console.error('Error:', error);
+        console.error('❌ Erro na requisição:', error);
+        console.error('❌ Detalhes do erro:', error.message);
         // Show error message
         const alertDiv = document.createElement('div');
         alertDiv.className = 'alert alert-danger alert-dismissible fade show';
@@ -727,8 +860,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Update immediately
     updateProcessingStatus();
     
-    // Start monitoring every 2 seconds for real-time updates
-    updateInterval = setInterval(updateProcessingStatus, 2000);
+    // Start monitoring every 3 seconds for real-time updates
+    updateInterval = setInterval(updateProcessingStatus, 3000);
+    updateMonitoringStatus();
     
     // Setup start processing button
     document.getElementById('start-processing').addEventListener('click', startProcessing);

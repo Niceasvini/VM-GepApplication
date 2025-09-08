@@ -9,6 +9,21 @@ from services.file_processor import process_uploaded_file
 from sqlalchemy.exc import SQLAlchemyError
 # Import will be done locally to avoid circular imports
 import logging
+import pytz
+
+def convert_to_brazil_timezone(dt):
+    """Convert datetime to Brazil timezone"""
+    if not dt:
+        return None
+    
+    brazil_tz = pytz.timezone('America/Sao_Paulo')
+    if dt.tzinfo is None:
+        # If naive datetime, assume it's UTC
+        utc_dt = pytz.UTC.localize(dt)
+    else:
+        # If timezone-aware, convert to UTC first
+        utc_dt = dt.astimezone(pytz.UTC)
+    return utc_dt.astimezone(brazil_tz).isoformat()
 
 def log_user_activity(user_id, action, details, ip_address=None, user_agent=None):
     """Função helper para registrar atividades do usuário"""
@@ -47,7 +62,9 @@ def login():
         if user and user.check_password(password):
             # Registrar último login
             from datetime import datetime
-            user.last_login = datetime.now()
+            import pytz
+            brazil_tz = pytz.timezone('America/Sao_Paulo')
+            user.last_login = datetime.now(brazil_tz)
             
             # Registrar atividade de login
             log_user_activity(user.id, 'login', 'Login realizado com sucesso')
@@ -184,6 +201,9 @@ def dashboard():
     # Convert top_candidates to serializable dictionaries
     top_candidates_data = []
     for candidate in top_candidates:
+        # Convert uploaded_at to Brazil timezone
+        uploaded_at_brazil = convert_to_brazil_timezone(candidate.uploaded_at)
+        
         candidate_dict = {
             'id': candidate.id,
             'name': candidate.name,
@@ -192,7 +212,7 @@ def dashboard():
             'ai_score': candidate.ai_score,
             'status': candidate.status,
             'analysis_status': candidate.analysis_status,
-            'uploaded_at': candidate.uploaded_at.isoformat() if candidate.uploaded_at else None,
+            'uploaded_at': uploaded_at_brazil,
             'job': {
                 'id': candidate.job.id,
                 'title': candidate.job.title
@@ -215,6 +235,9 @@ def dashboard():
     # Convert ALL candidates with scores to serializable dictionaries for filtering
     all_candidates_data = []
     for candidate in candidates_with_scores:
+        # Convert uploaded_at to Brazil timezone
+        uploaded_at_brazil = convert_to_brazil_timezone(candidate.uploaded_at)
+        
         candidate_dict = {
             'id': candidate.id,
             'name': candidate.name,
@@ -223,7 +246,7 @@ def dashboard():
             'ai_score': candidate.ai_score,
             'status': candidate.status,
             'analysis_status': candidate.analysis_status,
-            'uploaded_at': candidate.uploaded_at.isoformat() if candidate.uploaded_at else None,
+            'uploaded_at': uploaded_at_brazil,
             'job': {
                 'id': candidate.job.id,
                 'title': candidate.job.title
@@ -596,10 +619,10 @@ def bulk_upload_process(job_id):
         # Commit all at once
         db.session.commit()
         
-        # Start fast parallel processing
+        # Start optimized processing to maintain server responsiveness
         if candidate_ids:
-            from processors.fast_parallel_processor import start_fast_parallel_analysis
-            start_fast_parallel_analysis(candidate_ids)
+            from processors.optimized_processor import start_optimized_analysis
+            start_optimized_analysis(candidate_ids)
         
         result = {
             'processed_count': processed_count,
@@ -898,12 +921,15 @@ def api_job_processing_status(job_id):
         candidate_details = []
         
         for candidate in candidates:
+            # Convert analyzed_at to Brazil timezone before sending to frontend
+            analyzed_at_brazil = convert_to_brazil_timezone(candidate.analyzed_at)
+            
             candidate_details.append({
                 'id': candidate.id,
                 'name': candidate.name,
                 'analysis_status': candidate.analysis_status,
                 'ai_score': candidate.ai_score,
-                'analyzed_at': candidate.analyzed_at.isoformat() if candidate.analyzed_at else None
+                'analyzed_at': analyzed_at_brazil
             })
         
         active_total = status_counts['total'] - status_counts['deleted']
@@ -925,13 +951,16 @@ def api_job_processing_status(job_id):
 def api_reprocess_candidate(candidate_id):
     """Reprocess a failed or outdated candidate"""
     try:
+        print(f"🔄 REPROCESSAMENTO SOLICITADO para candidato {candidate_id}")
         logging.info(f"Reprocessamento solicitado para candidato {candidate_id}")
         
         candidate = Candidate.query.get_or_404(candidate_id)
+        print(f"✅ Candidato encontrado: {candidate.name} (Status: {candidate.analysis_status})")
         logging.info(f"Candidato encontrado: {candidate.name}")
         
         # Check if user has access to this candidate
         if not current_user.is_admin() and candidate.job.created_by != current_user.id:
+            print(f"❌ Acesso negado para candidato {candidate_id}")
             logging.warning(f"Acesso negado para candidato {candidate_id}")
             return jsonify({'error': 'Acesso negado'}), 403
         
@@ -960,10 +989,12 @@ def api_reprocess_candidate(candidate_id):
         
         logging.info(f"Status resetado para 'pending'")
         
-        # Start fast parallel processing
-        from processors.fast_parallel_processor import start_fast_parallel_analysis
-        start_fast_parallel_analysis([candidate_id])
+        # Start optimized processing
+        print(f"🚀 Iniciando processamento otimizado para candidato {candidate_id}")
+        from processors.optimized_processor import start_optimized_analysis
+        start_optimized_analysis([candidate_id])
         
+        print(f"✅ Processamento iniciado com sucesso para candidato {candidate_id}")
         logging.info(f"Processamento iniciado para candidato {candidate_id}")
         
         message = f'Candidato {candidate.name} foi colocado na fila para reprocessamento'
@@ -1005,8 +1036,8 @@ def api_process_pending():
         
         candidate_ids = [c.id for c in candidates_to_process]
         
-        from processors.fast_parallel_processor import start_fast_parallel_analysis
-        start_fast_parallel_analysis(candidate_ids)
+        from processors.optimized_processor import start_optimized_analysis
+        start_optimized_analysis(candidate_ids)
         
         return jsonify({
             'success': True, 
@@ -1045,8 +1076,8 @@ def api_reprocess_all_candidates(job_id):
         
         candidate_ids = [c.id for c in candidates_to_process]
         
-        from processors.fast_parallel_processor import start_fast_parallel_analysis
-        start_fast_parallel_analysis(candidate_ids)
+        from processors.optimized_processor import start_optimized_analysis
+        start_optimized_analysis(candidate_ids)
         
         return jsonify({
             'success': True, 
@@ -1056,6 +1087,35 @@ def api_reprocess_all_candidates(job_id):
     except Exception as e:
         logging.error(f"Error reprocessing all candidates for job {job_id}: {e}")
         return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/test-processor')
+@login_required
+def api_test_processor():
+    """Test if the optimized processor is working"""
+    try:
+        print("🧪 TESTE DO PROCESSADOR INICIADO")
+        
+        # Test if we can import the processor
+        from processors.optimized_processor import optimized_processor
+        print("✅ Processador otimizado importado com sucesso")
+        
+        # Test if we can create a thread
+        from processors.optimized_processor import start_optimized_analysis
+        print("✅ Função start_optimized_analysis importada com sucesso")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Processador otimizado está funcionando corretamente',
+            'processor_status': 'OK'
+        })
+        
+    except Exception as e:
+        print(f"❌ ERRO NO TESTE DO PROCESSADOR: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'message': 'Erro no processador otimizado'
+        }), 500
 
 @app.route('/api/jobs/<int:job_id>/reset-stuck')
 @login_required

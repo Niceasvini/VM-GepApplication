@@ -4,6 +4,8 @@ from flask import Flask
 from dotenv import load_dotenv
 from flask_login import LoginManager
 from werkzeug.middleware.proxy_fix import ProxyFix
+import pytz
+from datetime import datetime
 
 # Carrega as variáveis de ambiente do arquivo .env
 load_dotenv()
@@ -20,6 +22,11 @@ app = Flask(__name__,
             template_folder='views/templates',
             static_folder='views/static')
 app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key-change-in-production")
+
+# Configuração de timezone para o Brasil
+app.config['TIMEZONE'] = 'America/Sao_Paulo'
+BRAZIL_TZ = pytz.timezone('America/Sao_Paulo')
+
 # Necessário para o url_for gerar URLs com https quando atrás de proxy reverso
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
@@ -119,6 +126,60 @@ def format_requirements(text):
         result.append('</ul>')
     
     return ''.join(result)
+
+# Filtro para formatar datas no horário do Brasil
+@app.template_filter('brazil_time')
+def brazil_time(dt):
+    """Converte datetime UTC para horário do Brasil"""
+    if dt is None:
+        return ''
+    
+    # Se já é timezone-aware, converte para UTC primeiro
+    if dt.tzinfo is not None:
+        utc_dt = dt.astimezone(pytz.UTC)
+    else:
+        # Assume que é UTC se não tem timezone
+        utc_dt = pytz.UTC.localize(dt)
+    
+    # Converte para horário do Brasil
+    brazil_dt = utc_dt.astimezone(BRAZIL_TZ)
+    return brazil_dt.strftime('%d/%m/%Y %H:%M:%S')
+
+# Filtro para formatar apenas a data no horário do Brasil
+@app.template_filter('brazil_date')
+def brazil_date(dt):
+    """Converte datetime UTC para data no horário do Brasil"""
+    if dt is None:
+        return ''
+    
+    # Se já é timezone-aware, converte para UTC primeiro
+    if dt.tzinfo is not None:
+        utc_dt = dt.astimezone(pytz.UTC)
+    else:
+        # Assume que é UTC se não tem timezone
+        utc_dt = pytz.UTC.localize(dt)
+    
+    # Converte para horário do Brasil
+    brazil_dt = utc_dt.astimezone(BRAZIL_TZ)
+    return brazil_dt.strftime('%d/%m/%Y')
+
+# Filtro para formatar apenas a hora no horário do Brasil
+@app.template_filter('brazil_time_only')
+def brazil_time_only(dt):
+    """Converte datetime UTC para hora no horário do Brasil"""
+    if dt is None:
+        return ''
+    
+    # Se já é timezone-aware, converte para UTC primeiro
+    if dt.tzinfo is not None:
+        utc_dt = dt.astimezone(pytz.UTC)
+    else:
+        # Assume que é UTC se não tem timezone
+        utc_dt = pytz.UTC.localize(dt)
+    
+    # Converte para horário do Brasil
+    brazil_dt = utc_dt.astimezone(BRAZIL_TZ)
+    return brazil_dt.strftime('%H:%M:%S')
 
 @login_manager.user_loader
 def load_user(user_id):
