@@ -1730,3 +1730,62 @@ def api_blocked_ips_stats():
     })
 
 # ===== FIM GESTÃO DE SEGURANÇA =====
+
+# ===== GESTÃO DE USUÁRIOS =====
+
+@app.route('/api/admin/users/<int:user_id>/change-own-password', methods=['POST'])
+@login_required
+def api_change_own_password(user_id):
+    """Alterar senha própria do usuário"""
+    if not current_user.is_admin():
+        return jsonify({'success': False, 'message': 'Acesso negado'}), 403
+    
+    # Verificar se o usuário está tentando alterar a própria senha
+    if current_user.id != user_id:
+        return jsonify({'success': False, 'message': 'Você só pode alterar sua própria senha'}), 403
+    
+    data = request.get_json()
+    current_password = data.get('current_password')
+    new_password = data.get('new_password')
+    
+    if not current_password or not new_password:
+        return jsonify({'success': False, 'message': 'Senha atual e nova senha são obrigatórias'}), 400
+    
+    # Verificar senha atual
+    if not current_user.check_password(current_password):
+        return jsonify({'success': False, 'message': 'Senha atual incorreta'}), 400
+    
+    # Validar nova senha
+    if len(new_password) < 6:
+        return jsonify({'success': False, 'message': 'A nova senha deve ter pelo menos 6 caracteres'}), 400
+    
+    if current_password == new_password:
+        return jsonify({'success': False, 'message': 'A nova senha deve ser diferente da senha atual'}), 400
+    
+    try:
+        # Alterar senha
+        current_user.set_password(new_password)
+        db.session.commit()
+        
+        # Registrar atividade
+        activity = UserActivity(
+            user_id=current_user.id,
+            action='change_own_password',
+            details='Senha alterada com sucesso'
+        )
+        db.session.add(activity)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Senha alterada com sucesso!'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': 'Erro ao alterar senha'
+        }), 500
+
+# ===== FIM GESTÃO DE USUÁRIOS =====
