@@ -77,6 +77,13 @@ def login():
             user = User.query.filter_by(email=username).first()
         
         if user and user.check_password(password):
+            # Verificar se o usuário está ativo
+            if not user.is_active:
+                # Registrar tentativa de login de usuário inativo
+                security_service.record_login_attempt(client_ip, username, False)
+                flash('Seu usuário está inativo. Entre em contato com o administrador para reativar sua conta.', 'error')
+                return render_template('auth/login.html', captcha_image=security_service.generate_captcha())
+            
             # Login bem-sucedido
             from datetime import datetime
             import pytz
