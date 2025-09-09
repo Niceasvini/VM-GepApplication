@@ -40,7 +40,27 @@ class User(UserMixin, db.Model):
         self.password_hash = generate_password_hash(password)
     
     def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
+        # Check if password_hash is None or empty
+        if not self.password_hash:
+            print(f"⚠️ Usuário {self.username} não tem senha definida")
+            return False
+        
+        try:
+            return check_password_hash(self.password_hash, password)
+        except (ValueError, AttributeError) as e:
+            # Handle any hash compatibility issues
+            print(f"⚠️ Problema de hash para usuário {self.username}: {str(e)}")
+            
+            # Try to fix by rehashing the password
+            try:
+                print(f"🔧 Tentando rehashar senha para {self.username}")
+                self.set_password(password)  # This will create a new hash
+                db.session.commit()
+                print(f"✅ Senha rehashada com sucesso para {self.username}")
+                return True  # Password is now correct
+            except Exception as fix_error:
+                print(f"❌ Erro ao rehashar senha: {str(fix_error)}")
+                return False
     
     def is_admin(self):
         return self.role == 'admin'

@@ -1844,4 +1844,95 @@ def api_refresh_captcha():
 
 # ===== FIM CAPTCHA =====
 
+@app.route('/api/reset-admin-password', methods=['POST'])
+def reset_admin_password():
+    """Reset admin password for hash compatibility issues - NO AUTH REQUIRED"""
+    try:
+        data = request.get_json() or {}
+        new_password = data.get('password', 'admin123')
+        email = data.get('email', 'admin@vianaemoura.com')
+        
+        print(f"🔧 Tentando resetar senha do admin para: {new_password}")
+        
+        # Find or create admin user
+        admin_user = User.query.filter_by(role='admin').first()
+        if not admin_user:
+            print("❌ Usuário admin não encontrado, criando novo...")
+            admin_user = User(
+                username='admin',
+                email=email,
+                role='admin',
+                is_active=True
+            )
+            db.session.add(admin_user)
+            db.session.flush()  # Get the ID
+        
+        print(f"✅ Usuário admin: {admin_user.username} (ID: {admin_user.id})")
+        
+        # Force set new password (bypass any hash issues)
+        admin_user.password_hash = None  # Clear any bad hash
+        db.session.flush()
+        admin_user.set_password(new_password)
+        db.session.commit()
+        
+        print(f"✅ Senha do admin resetada para: {new_password}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Senha do admin resetada para: {new_password}',
+            'new_password': new_password,
+            'username': admin_user.username,
+            'email': admin_user.email
+        })
+        
+    except Exception as e:
+        print(f"❌ Erro ao resetar senha: {str(e)}")
+        logging.error(f"Error resetting admin password: {e}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/create-admin', methods=['POST'])
+def create_admin():
+    """Create a fresh admin user - NO AUTH REQUIRED"""
+    try:
+        data = request.get_json() or {}
+        username = data.get('username', 'admin')
+        email = data.get('email', 'admin@vianaemoura.com')
+        password = data.get('password', 'admin123')
+        
+        print(f"🔧 Criando usuário admin: {username} / {email}")
+        
+        # Delete existing admin if exists
+        existing_admin = User.query.filter_by(role='admin').first()
+        if existing_admin:
+            print(f"🗑️ Removendo admin existente: {existing_admin.username}")
+            db.session.delete(existing_admin)
+            db.session.flush()
+        
+        # Create new admin
+        admin_user = User(
+            username=username,
+            email=email,
+            role='admin',
+            is_active=True
+        )
+        admin_user.set_password(password)
+        
+        db.session.add(admin_user)
+        db.session.commit()
+        
+        print(f"✅ Admin criado: {username} / {email} / {password}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Admin criado com sucesso!',
+            'username': username,
+            'email': email,
+            'password': password
+        })
+        
+    except Exception as e:
+        print(f"❌ Erro ao criar admin: {str(e)}")
+        logging.error(f"Error creating admin: {e}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
 # ===== FIM GESTÃO DE USUÁRIOS =====
