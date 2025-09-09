@@ -49,6 +49,41 @@
         </div>
     </div>
     
+    <!-- Job Filter Section -->
+    <div class="row mb-4 mt-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-filter me-2 text-primary"></i>Filtrar por Vaga
+                            </h6>
+                            <small class="text-muted">Selecione uma vaga para visualizar dados específicos</small>
+                        </div>
+                        <div class="col-md-6">
+                            <form method="GET" action="{{ url_for('dashboard') }}" id="jobFilterForm">
+                                <div class="input-group">
+                                    <select class="form-select" name="job_id" id="jobSelect" onchange="this.form.submit()">
+                                        <option value="">Todas as vagas</option>
+                                        {% for job in all_jobs %}
+                                        <option value="{{ job.id }}" {% if selected_job_id == job.id %}selected{% endif %}>
+                                            {{ job.title }} ({{ job.created_at.strftime('%d/%m/%Y') }})
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="clearFilter()">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Statistics Cards -->
     <div class="row g-4 mb-5 mt-2">
         <div class="col-lg-3 col-md-6">
@@ -57,7 +92,13 @@
                     <i class="fas fa-briefcase"></i>
                 </div>
                 <div class="stat-number">{{ total_jobs }}</div>
-                <div class="stat-label">Vagas Ativas</div>
+                <div class="stat-label">
+                    {% if selected_job_id %}
+                        Vaga Selecionada
+                    {% else %}
+                        Vagas Ativas
+                    {% endif %}
+                </div>
             </div>
         </div>
         
@@ -67,7 +108,13 @@
                     <i class="fas fa-users"></i>
                 </div>
                 <div class="stat-number">{{ total_candidates }}</div>
-                <div class="stat-label">Total Candidatos</div>
+                <div class="stat-label">
+                    {% if selected_job_id %}
+                        Candidatos da Vaga
+                    {% else %}
+                        Total Candidatos
+                    {% endif %}
+                </div>
             </div>
         </div>
         
@@ -77,7 +124,13 @@
                     <i class="fas fa-chart-line"></i>
                 </div>
                 <div class="stat-number">{{ analyzed_candidates }}</div>
-                <div class="stat-label">Análises Concluídas</div>
+                <div class="stat-label">
+                    {% if selected_job_id %}
+                        Análises da Vaga
+                    {% else %}
+                        Análises Concluídas
+                    {% endif %}
+                </div>
             </div>
         </div>
         
@@ -89,7 +142,13 @@
                 <div class="stat-number">
                     {{ "%.0f"|format((analyzed_candidates / total_candidates * 100) if total_candidates > 0 else 0) }}%
                 </div>
-                <div class="stat-label">Taxa de Análise</div>
+                <div class="stat-label">
+                    {% if selected_job_id %}
+                        Taxa da Vaga
+                    {% else %}
+                        Taxa de Análise
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
@@ -102,6 +161,9 @@
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h5 class="mb-0">
                         <i class="fas fa-chart-bar me-2 text-primary"></i>Distribuição de Pontuações
+                        {% if selected_job_id %}
+                            <span class="badge bg-warning ms-2">Filtrado</span>
+                        {% endif %}
                     </h5>
                     <div class="d-flex align-items-center gap-2">
                         <div class="badge bg-primary">{{ total_candidates }} candidatos</div>
@@ -116,6 +178,9 @@
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h5 class="mb-0">
                         <i class="fas fa-chart-pie me-2 text-primary"></i>Status dos Candidatos
+                        {% if selected_job_id %}
+                            <span class="badge bg-warning ms-2">Filtrado</span>
+                        {% endif %}
                     </h5>
                     <div class="d-flex align-items-center gap-2">
                         <div class="badge bg-success">{{ analyzed_candidates }} analisados</div>
@@ -666,5 +731,35 @@ if (statusChartCanvas) {
         event.stopPropagation();
     });
 }
+
+// Job filter functions
+function clearFilter() {
+    document.getElementById('jobSelect').value = '';
+    document.getElementById('jobFilterForm').submit();
+}
+
+// Show filter indicator when a job is selected
+document.addEventListener('DOMContentLoaded', function() {
+    const jobSelect = document.getElementById('jobSelect');
+    const selectedJobId = '{{ selected_job_id }}';
+    
+    if (selectedJobId && selectedJobId !== 'None') {
+        // Add visual indicator that filter is active
+        const filterCard = document.querySelector('.card-body');
+        if (filterCard) {
+            filterCard.style.borderLeft = '4px solid #B93A3E';
+            filterCard.style.backgroundColor = '#f8f9fa';
+        }
+        
+        // Update page title to show filtered view
+        const pageTitle = document.querySelector('.page-title');
+        if (pageTitle) {
+            const selectedOption = jobSelect.options[jobSelect.selectedIndex];
+            if (selectedOption && selectedOption.text) {
+                pageTitle.innerHTML = `Dashboard - ${selectedOption.text.split(' (')[0]}`;
+            }
+        }
+    }
+});
 </script>
 {% endblock %}

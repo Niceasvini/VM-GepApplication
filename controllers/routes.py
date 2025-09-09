@@ -1,4 +1,5 @@
 import os
+import time
 from flask import render_template, request, redirect, url_for, flash, jsonify, current_app, send_file
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
@@ -6,6 +7,7 @@ from app import app, db
 from models.models import User, Job, Candidate, CandidateComment, UserActivity
 from services.ai_service import analyze_resume
 from services.file_processor import process_uploaded_file
+from services.job_suggestion_service import generate_job_suggestions, get_job_title_suggestions
 from sqlalchemy.exc import SQLAlchemyError
 # Import will be done locally to avoid circular imports
 import logging
@@ -128,38 +130,80 @@ def index():
 @app.route('/dashboard')
 @login_required
 def dashboard():
+    # Get filter parameter
+    selected_job_id = request.args.get('job_id', type=int)
+    
     # Get statistics for current user only (admin can see all)
     if current_user.is_admin():
         # Admin sees all data
+        all_jobs = Job.query.order_by(Job.created_at.desc()).all()
         total_jobs = Job.query.count()
-        total_candidates = Candidate.query.count()
-        analyzed_candidates = Candidate.query.filter_by(analysis_status='completed').count()
-        recent_jobs = Job.query.order_by(Job.created_at.desc()).limit(5).all()
-        candidates_with_scores = Candidate.query.filter(Candidate.ai_score.isnot(None)).all()
-        top_candidates = Candidate.query.filter(
-            Candidate.ai_score.isnot(None)
-        ).order_by(Candidate.ai_score.desc()).limit(10).all()
+        
+        if selected_job_id:
+            # Filter by selected job
+            total_candidates = Candidate.query.filter_by(job_id=selected_job_id).count()
+            analyzed_candidates = Candidate.query.filter(
+                Candidate.job_id == selected_job_id,
+                Candidate.analysis_status == 'completed'
+            ).count()
+            candidates_with_scores = Candidate.query.filter(
+                Candidate.job_id == selected_job_id,
+                Candidate.ai_score.isnot(None)
+            ).all()
+            top_candidates = Candidate.query.filter(
+                Candidate.job_id == selected_job_id,
+                Candidate.ai_score.isnot(None)
+            ).order_by(Candidate.ai_score.desc()).limit(10).all()
+        else:
+            # All data
+            total_candidates = Candidate.query.count()
+            analyzed_candidates = Candidate.query.filter_by(analysis_status='completed').count()
+            candidates_with_scores = Candidate.query.filter(Candidate.ai_score.isnot(None)).all()
+            top_candidates = Candidate.query.filter(
+                Candidate.ai_score.isnot(None)
+            ).order_by(Candidate.ai_score.desc()).limit(10).all()
+        
+        recent_jobs = all_jobs[:5]
     else:
         # Regular users see only their own data
-        user_jobs = Job.query.filter_by(created_by=current_user.id)
-        user_job_ids = [job.id for job in user_jobs]
+        user_jobs = Job.query.filter_by(created_by=current_user.id).order_by(Job.created_at.desc())
+        all_jobs = user_jobs.all()
+        user_job_ids = [job.id for job in all_jobs]
         
         total_jobs = user_jobs.count()
-        total_candidates = Candidate.query.filter(Candidate.job_id.in_(user_job_ids)).count()
-        analyzed_candidates = Candidate.query.filter(
-            Candidate.job_id.in_(user_job_ids),
-            Candidate.analysis_status == 'completed'
-        ).count()
         
-        recent_jobs = user_jobs.order_by(Job.created_at.desc()).limit(5).all()
-        candidates_with_scores = Candidate.query.filter(
-            Candidate.job_id.in_(user_job_ids),
-            Candidate.ai_score.isnot(None)
-        ).all()
-        top_candidates = Candidate.query.filter(
-            Candidate.job_id.in_(user_job_ids),
-            Candidate.ai_score.isnot(None)
-        ).order_by(Candidate.ai_score.desc()).limit(10).all()
+        if selected_job_id and selected_job_id in user_job_ids:
+            # Filter by selected job (only if user owns it)
+            total_candidates = Candidate.query.filter_by(job_id=selected_job_id).count()
+            analyzed_candidates = Candidate.query.filter(
+                Candidate.job_id == selected_job_id,
+                Candidate.analysis_status == 'completed'
+            ).count()
+            candidates_with_scores = Candidate.query.filter(
+                Candidate.job_id == selected_job_id,
+                Candidate.ai_score.isnot(None)
+            ).all()
+            top_candidates = Candidate.query.filter(
+                Candidate.job_id == selected_job_id,
+                Candidate.ai_score.isnot(None)
+            ).order_by(Candidate.ai_score.desc()).limit(10).all()
+        else:
+            # All user's data
+            total_candidates = Candidate.query.filter(Candidate.job_id.in_(user_job_ids)).count()
+            analyzed_candidates = Candidate.query.filter(
+                Candidate.job_id.in_(user_job_ids),
+                Candidate.analysis_status == 'completed'
+            ).count()
+            candidates_with_scores = Candidate.query.filter(
+                Candidate.job_id.in_(user_job_ids),
+                Candidate.ai_score.isnot(None)
+            ).all()
+            top_candidates = Candidate.query.filter(
+                Candidate.job_id.in_(user_job_ids),
+                Candidate.ai_score.isnot(None)
+            ).order_by(Candidate.ai_score.desc()).limit(10).all()
+        
+        recent_jobs = all_jobs[:5]
     
     # Get score distribution for chart
     score_ranges = {
@@ -262,7 +306,9 @@ def dashboard():
                          score_ranges=score_ranges,
                          candidate_status=candidate_status,
                          top_candidates=top_candidates_data,
-                         all_candidates_data=all_candidates_data)
+                         all_candidates_data=all_candidates_data,
+                         all_jobs=all_jobs,
+                         selected_job_id=selected_job_id)
 
 @app.route('/ai-monitor')
 @login_required
@@ -1413,3 +1459,90 @@ def api_user_activity_log():
     })
 
 # ===== FIM GESTÃO DE USUÁRIOS =====
+
+# ===== SUGESTÕES DE IA PARA VAGAS =====
+
+@app.route('/api/job-suggestions', methods=['POST'])
+@login_required
+def api_job_suggestions():
+    """API para gerar sugestões de descrição e requisitos baseado no título da vaga"""
+    try:
+        data = request.get_json()
+        job_title = data.get('job_title', '').strip()
+        
+        if not job_title:
+            return jsonify({
+                'success': False,
+                'error': 'Título da vaga é obrigatório'
+            }), 400
+        
+        if len(job_title) < 3:
+            return jsonify({
+                'success': False,
+                'error': 'Título deve ter pelo menos 3 caracteres'
+            }), 400
+        
+        # Generate suggestions using AI
+        suggestions = generate_job_suggestions(job_title)
+        
+        if suggestions['success']:
+            return jsonify({
+                'success': True,
+                'description': suggestions['description'],
+                'requirements': suggestions['requirements']
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': suggestions.get('error', 'Erro ao gerar sugestões')
+            }), 500
+            
+    except Exception as e:
+        logging.error(f"Erro na API de sugestões de vaga: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Erro interno do servidor'
+        }), 500
+
+@app.route('/api/job-title-suggestions', methods=['POST'])
+@login_required
+def api_job_title_suggestions():
+    """API para gerar sugestões de títulos de vaga baseado em texto parcial"""
+    try:
+        data = request.get_json()
+        partial_title = data.get('partial_title', '').strip()
+        
+        if not partial_title:
+            return jsonify({
+                'success': False,
+                'error': 'Texto parcial é obrigatório'
+            }), 400
+        
+        if len(partial_title) < 2:
+            return jsonify({
+                'success': False,
+                'error': 'Texto deve ter pelo menos 2 caracteres'
+            }), 400
+        
+        # Generate title suggestions using AI
+        suggestions = get_job_title_suggestions(partial_title)
+        
+        if suggestions['success']:
+            return jsonify({
+                'success': True,
+                'suggestions': suggestions['suggestions']
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': suggestions.get('error', 'Erro ao gerar sugestões de título')
+            }), 500
+            
+    except Exception as e:
+        logging.error(f"Erro na API de sugestões de título: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Erro interno do servidor'
+        }), 500
+
+# ===== FIM SUGESTÕES DE IA =====
