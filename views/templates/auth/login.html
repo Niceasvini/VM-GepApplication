@@ -15,13 +15,35 @@
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
     
     <style>
+        /* Reset para garantir fundo preto */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #000000 !important;
+            min-height: 100vh;
+        }
+        
+        /* Sobrescrever o padding-top do CSS global */
+        body {
+            padding-top: 0 !important;
+        }
+        
         .login-container {
             min-height: 100vh;
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            background: #000000;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
+            margin: 0;
+            position: relative;
+            top: 0;
         }
         
         .login-card {
@@ -210,7 +232,7 @@
                     <img src="{{ url_for('static', filename='images/VMC.svg') }}" alt="Viana e Moura Construções" class="company-logo-img">
                 </div>
                 <div class="company-name">
-                    <h1 class="main-text">viana e moura_foda</h1>
+                    <h1 class="main-text">viana e moura</h1>
                     <p class="sub-text">construções</p>
                 </div>
                 <p class="system-subtitle">
@@ -249,6 +271,27 @@
                         <i class="fas fa-lock icon"></i>
                         <input type="password" class="form-control" id="password" name="password" required 
                                placeholder="Digite sua senha">
+                    </div>
+                </div>
+                
+                <!-- CAPTCHA -->
+                <div class="form-group">
+                    <label for="captcha" class="form-label">
+                        <i class="fas fa-shield-alt me-2"></i>Verificação de Segurança
+                    </label>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <img src="{{ captcha_image }}" alt="CAPTCHA" class="img-fluid captcha-image" 
+                                 style="border: 2px solid #e9ecef; border-radius: 8px; max-height: 50px;">
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" id="captcha" name="captcha" required 
+                                   placeholder="Digite o código acima" maxlength="5" style="text-transform: uppercase;">
+                        </div>
+                    </div>
+                    <div class="form-text">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Digite os caracteres que aparecem na imagem acima
                     </div>
                 </div>
                 

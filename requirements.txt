@@ -45,3 +45,7 @@ requests==2.31.0
 
 # Timezone support
 pytz==2023.3
+
+# Security & CAPTCHA
+flask-limiter==3.5.0
+pillow==10.0.0

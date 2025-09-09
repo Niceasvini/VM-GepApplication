@@ -4,10 +4,11 @@ from flask import render_template, request, redirect, url_for, flash, jsonify, c
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
 from app import app, db
-from models.models import User, Job, Candidate, CandidateComment, UserActivity
+from models.models import User, Job, Candidate, CandidateComment, UserActivity, BlockedIP, LoginAttempt
 from services.ai_service import analyze_resume
 from services.file_processor import process_uploaded_file
 from services.job_suggestion_service import generate_job_suggestions, get_job_title_suggestions
+from services.security_service import security_service
 from sqlalchemy.exc import SQLAlchemyError
 # Import will be done locally to avoid circular imports
 import logging
@@ -55,6 +56,20 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        captcha_input = request.form.get('captcha', '').strip()
+        
+        # Obter IP do cliente
+        client_ip = security_service.get_client_ip()
+        
+        # Verificar se IP está bloqueado
+        if security_service.is_ip_blocked(client_ip):
+            flash('Seu IP foi bloqueado devido a múltiplas tentativas de login falhadas. Entre em contato com o administrador.', 'error')
+            return render_template('auth/login.html', captcha_image=security_service.generate_captcha())
+        
+        # Verificar CAPTCHA
+        if not security_service.verify_captcha(captcha_input):
+            flash('CAPTCHA incorreto. Tente novamente.', 'error')
+            return render_template('auth/login.html', captcha_image=security_service.generate_captcha())
         
         # Try to find user by username first, then by email
         user = User.query.filter_by(username=username).first()
@@ -62,11 +77,14 @@ def login():
             user = User.query.filter_by(email=username).first()
         
         if user and user.check_password(password):
-            # Registrar último login
+            # Login bem-sucedido
             from datetime import datetime
             import pytz
             brazil_tz = pytz.timezone('America/Sao_Paulo')
             user.last_login = datetime.now(brazil_tz)
+            
+            # Registrar tentativa de login bem-sucedida
+            security_service.record_login_attempt(client_ip, username, True)
             
             # Registrar atividade de login
             log_user_activity(user.id, 'login', 'Login realizado com sucesso')
@@ -75,12 +93,22 @@ def login():
             next_page = request.args.get('next')
             return redirect(next_page) if next_page else redirect(url_for('dashboard'))
         else:
+            # Login falhado
+            security_service.check_and_handle_failed_login(client_ip, username)
             flash('Usuário ou senha inválidos.', 'error')
     
-    return render_template('auth/login.html')
+    # Gerar CAPTCHA para exibição
+    captcha_image = security_service.generate_captcha()
+    return render_template('auth/login.html', captcha_image=captcha_image)
 
 @app.route('/register', methods=['GET', 'POST'])
+@login_required
 def register():
+    # Verificar se o usuário é administrador
+    if not current_user.is_admin():
+        flash('Acesso negado. Apenas administradores podem criar novos usuários.', 'error')
+        return redirect(url_for('dashboard'))
+    
     if request.method == 'POST':
         username = request.form['username']
         email = request.form['email']
@@ -1546,3 +1574,159 @@ def api_job_title_suggestions():
         }), 500
 
 # ===== FIM SUGESTÕES DE IA =====
+
+# ===== GESTÃO DE SEGURANÇA E IPs BLOQUEADOS =====
+
+@app.route('/admin/blocked-ips')
+@login_required
+def admin_blocked_ips():
+    """Página de gestão de IPs bloqueados - apenas para admins"""
+    if not current_user.is_admin():
+        flash('Acesso negado. Apenas administradores podem acessar esta página.', 'error')
+        return redirect(url_for('dashboard'))
+    
+    # Buscar IPs bloqueados
+    blocked_ips = security_service.get_all_blocked_ips()
+    
+    # Estatísticas
+    active_blocks = len([ip for ip in blocked_ips if ip.is_active])
+    total_blocks = len(blocked_ips)
+    
+    return render_template('admin/blocked_ips.html',
+                         blocked_ips=blocked_ips,
+                         active_blocks=active_blocks,
+                         total_blocks=total_blocks)
+
+@app.route('/api/admin/blocked-ips/<int:ip_id>/unblock', methods=['POST'])
+@login_required
+def api_unblock_ip(ip_id):
+    """Desbloquear um IP"""
+    if not current_user.is_admin():
+        return jsonify({'success': False, 'message': 'Acesso negado'}), 403
+    
+    blocked_ip = BlockedIP.query.get_or_404(ip_id)
+    
+    if security_service.unblock_ip(blocked_ip.ip_address, current_user.id):
+        # Registrar atividade
+        activity = UserActivity(
+            user_id=current_user.id,
+            action='unblock_ip',
+            details=f'IP {blocked_ip.ip_address} desbloqueado'
+        )
+        db.session.add(activity)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'IP {blocked_ip.ip_address} desbloqueado com sucesso'
+        })
+    else:
+        return jsonify({
+            'success': False,
+            'message': 'IP não estava bloqueado'
+        })
+
+@app.route('/api/admin/blocked-ips/<int:ip_id>/block', methods=['POST'])
+@login_required
+def api_block_ip(ip_id):
+    """Bloquear um IP novamente"""
+    if not current_user.is_admin():
+        return jsonify({'success': False, 'message': 'Acesso negado'}), 403
+    
+    blocked_ip = BlockedIP.query.get_or_404(ip_id)
+    
+    if not blocked_ip.is_active:
+        blocked_ip.is_active = True
+        blocked_ip.blocked_at = datetime.utcnow()
+        blocked_ip.blocked_by = current_user.id
+        blocked_ip.unblocked_at = None
+        blocked_ip.unblocked_by = None
+        db.session.commit()
+        
+        # Registrar atividade
+        activity = UserActivity(
+            user_id=current_user.id,
+            action='block_ip',
+            details=f'IP {blocked_ip.ip_address} bloqueado novamente'
+        )
+        db.session.add(activity)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'IP {blocked_ip.ip_address} bloqueado novamente'
+        })
+    else:
+        return jsonify({
+            'success': False,
+            'message': 'IP já está bloqueado'
+        })
+
+@app.route('/api/admin/blocked-ips/<int:ip_id>/delete', methods=['POST'])
+@login_required
+def api_delete_blocked_ip(ip_id):
+    """Excluir registro de IP bloqueado"""
+    if not current_user.is_admin():
+        return jsonify({'success': False, 'message': 'Acesso negado'}), 403
+    
+    blocked_ip = BlockedIP.query.get_or_404(ip_id)
+    ip_address = blocked_ip.ip_address
+    
+    db.session.delete(blocked_ip)
+    db.session.commit()
+    
+    # Registrar atividade
+    activity = UserActivity(
+        user_id=current_user.id,
+        action='delete_blocked_ip',
+        details=f'Registro de IP {ip_address} excluído'
+    )
+    db.session.add(activity)
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': f'Registro do IP {ip_address} excluído com sucesso'
+    })
+
+@app.route('/api/admin/blocked-ips/stats')
+@login_required
+def api_blocked_ips_stats():
+    """Estatísticas de IPs bloqueados"""
+    if not current_user.is_admin():
+        return jsonify({'success': False, 'message': 'Acesso negado'}), 403
+    
+    # Estatísticas gerais
+    total_blocks = BlockedIP.query.count()
+    active_blocks = BlockedIP.query.filter_by(is_active=True).count()
+    
+    # Bloqueios por período
+    from datetime import datetime, timedelta
+    today = datetime.utcnow().date()
+    week_ago = today - timedelta(days=7)
+    month_ago = today - timedelta(days=30)
+    
+    blocks_today = BlockedIP.query.filter(
+        db.func.date(BlockedIP.blocked_at) == today
+    ).count()
+    
+    blocks_week = BlockedIP.query.filter(
+        db.func.date(BlockedIP.blocked_at) >= week_ago
+    ).count()
+    
+    blocks_month = BlockedIP.query.filter(
+        db.func.date(BlockedIP.blocked_at) >= month_ago
+    ).count()
+    
+    return jsonify({
+        'success': True,
+        'stats': {
+            'total_blocks': total_blocks,
+            'active_blocks': active_blocks,
+            'blocks_today': blocks_today,
+            'blocks_week': blocks_week,
+            'blocks_month': blocks_month
+        }
+    })
+
+# ===== FIM GESTÃO DE SEGURANÇA =====

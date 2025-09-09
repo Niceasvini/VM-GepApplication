@@ -50,7 +50,7 @@
                     </li>
                     
                     <!-- Gestão de Usuários - Apenas para Admins -->
-                    {% if current_user.is_admin() %}
+                    {% if current_user.is_authenticated and current_user.is_admin() %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('admin_users') }}">
                             <i class="fas fa-user-cog me-1"></i>Gestão de Usuários
@@ -93,14 +93,17 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-user me-1"></i>{{ current_user.username }}
-                            {% if current_user.is_admin() %}
+                            {% if current_user.is_authenticated and current_user.is_admin() %}
                                 <span class="badge bg-warning text-dark ms-1">Admin</span>
                             {% endif %}
                         </a>
                         <ul class="dropdown-menu">
-                            {% if current_user.is_admin() %}
+                            {% if current_user.is_authenticated and current_user.is_admin() %}
                             <li><a class="dropdown-item" href="{{ url_for('register') }}">
                                 <i class="fas fa-user-plus me-2"></i>Criar Usuário
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin_blocked_ips') }}">
+                                <i class="fas fa-shield-alt me-2"></i>IPs Bloqueados
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
                             {% endif %}

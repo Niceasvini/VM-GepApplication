@@ -181,7 +181,7 @@
                     <a href="{{ url_for('processing_monitor', job_id=job.id) }}" class="btn btn-info">
                         <i class="fas fa-chart-line me-2"></i>Monitor IA
                     </a>
-                    {% if current_user.is_admin() %}
+                    {% if current_user.is_authenticated and current_user.is_admin() %}
                     <button type="button" class="btn btn-danger" onclick="confirmDeleteJob({{ job.id }}, '{{ job.title }}')">
                         <i class="fas fa-trash me-2"></i>Excluir Vaga
                     </button>

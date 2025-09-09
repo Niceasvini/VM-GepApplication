@@ -15,13 +15,35 @@
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
     
     <style>
+        /* Reset para garantir fundo preto */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #000000 !important;
+            min-height: 100vh;
+        }
+        
+        /* Sobrescrever o padding-top do CSS global */
+        body {
+            padding-top: 0 !important;
+        }
+        
         .register-container {
             min-height: 100vh;
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            background: #000000;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
+            margin: 0;
+            position: relative;
+            top: 0;
         }
         
         .register-card {
@@ -289,7 +311,7 @@
                     </label>
                     <select class="form-select" id="role" name="role">
                         <option value="recruiter">Recrutador</option>
-                        {% if current_user.is_admin() %}
+                        {% if current_user.is_authenticated and current_user.is_admin() %}
                         <option value="admin">Administrador</option>
                         {% endif %}
                     </select>

@@ -164,7 +164,44 @@ class UserActivity(db.Model):
     created_at = db.Column(db.DateTime, default=get_brazil_time)
     
     # Relationships
-    user = db.relationship('User', backref='activity_logs')
+    user = db.relationship('User', backref='activity_logs', overlaps="activities,user_ref")
     
     def __repr__(self):
         return f'<UserActivity {self.user.username}: {self.action}>'
+
+
+class BlockedIP(db.Model):
+    __tablename__ = 'blocked_ip'
+    __table_args__ = {'schema': 'appcurriculos'}
+    
+    id = db.Column(db.Integer, primary_key=True)
+    ip_address = db.Column(db.String(45), nullable=False, unique=True)
+    reason = db.Column(db.String(200), default='Múltiplas tentativas de login falhadas')
+    failed_attempts = db.Column(db.Integer, default=0)
+    blocked_at = db.Column(db.DateTime, default=get_brazil_time)
+    unblocked_at = db.Column(db.DateTime)
+    is_active = db.Column(db.Boolean, default=True)
+    blocked_by = db.Column(db.Integer, db.ForeignKey('appcurriculos.user.id'))
+    unblocked_by = db.Column(db.Integer, db.ForeignKey('appcurriculos.user.id'))
+    
+    # Relationships
+    blocker_user = db.relationship('User', foreign_keys=[blocked_by], backref='blocked_ips')
+    unblocker_user = db.relationship('User', foreign_keys=[unblocked_by], backref='unblocked_ips')
+    
+    def __repr__(self):
+        return f'<BlockedIP {self.ip_address}: {self.reason}>'
+
+
+class LoginAttempt(db.Model):
+    __tablename__ = 'login_attempt'
+    __table_args__ = {'schema': 'appcurriculos'}
+    
+    id = db.Column(db.Integer, primary_key=True)
+    ip_address = db.Column(db.String(45), nullable=False)
+    username = db.Column(db.String(64))
+    success = db.Column(db.Boolean, default=False)
+    user_agent = db.Column(db.String(500))
+    created_at = db.Column(db.DateTime, default=get_brazil_time)
+    
+    def __repr__(self):
+        return f'<LoginAttempt {self.ip_address}: {"Success" if self.success else "Failed"}>'
