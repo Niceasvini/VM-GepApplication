@@ -707,11 +707,15 @@ def bulk_upload_process(job_id):
                 print(f"🚀 INICIANDO ANÁLISE OTIMIZADA para {len(candidate_ids)} candidatos: {candidate_ids}")
                 
                 from processors.optimized_processor import start_optimized_analysis
+                print(f"📦 Importando start_optimized_analysis...")
+                
                 thread = start_optimized_analysis(candidate_ids)
+                print(f"🧵 Thread retornada: {thread}")
                 
                 if thread:
                     logging.info(f"Background thread started successfully for candidates: {candidate_ids}")
                     print(f"✅ Thread de background iniciada com sucesso para candidatos: {candidate_ids}")
+                    print(f"🔍 Thread ativa: {thread.is_alive() if thread else 'N/A'}")
                 else:
                     logging.error(f"Failed to start background thread for candidates: {candidate_ids}")
                     print(f"❌ FALHA ao iniciar thread de background para candidatos: {candidate_ids}")
@@ -719,6 +723,8 @@ def bulk_upload_process(job_id):
             except Exception as e:
                 logging.error(f"Error starting optimized analysis: {e}", exc_info=True)
                 print(f"❌ ERRO ao iniciar análise otimizada: {e}")
+                import traceback
+                print(f"📋 Stack trace: {traceback.format_exc()}")
                 # Don't fail the upload, just log the error
         
         result = {
@@ -1933,6 +1939,56 @@ def create_admin():
     except Exception as e:
         print(f"❌ Erro ao criar admin: {str(e)}")
         logging.error(f"Error creating admin: {e}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/test-analysis', methods=['POST'])
+def test_analysis():
+    """Test manual analysis of a candidate - NO AUTH REQUIRED"""
+    try:
+        data = request.get_json() or {}
+        candidate_id = data.get('candidate_id')
+        
+        if not candidate_id:
+            return jsonify({'error': 'candidate_id é obrigatório'}), 400
+        
+        print(f"🧪 TESTE MANUAL: Analisando candidato {candidate_id}")
+        logging.info(f"Manual test: Analyzing candidate {candidate_id}")
+        
+        # Get candidate
+        candidate = Candidate.query.get(candidate_id)
+        if not candidate:
+            return jsonify({'error': f'Candidato {candidate_id} não encontrado'}), 404
+        
+        print(f"✅ Candidato encontrado: {candidate.name}")
+        print(f"📁 Arquivo: {candidate.file_path}")
+        print(f"📋 Tipo: {candidate.file_type}")
+        
+        # Test file access
+        import os
+        if not os.path.exists(candidate.file_path):
+            return jsonify({'error': f'Arquivo não encontrado: {candidate.file_path}'}), 404
+        
+        print(f"✅ Arquivo existe: {candidate.file_path}")
+        
+        # Test AI analysis
+        from services.ai_service import analyze_resume
+        print(f"🔄 Iniciando análise IA...")
+        
+        result = analyze_resume(candidate.file_path, candidate.file_type, candidate.job)
+        print(f"✅ Análise concluída: {result}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Análise manual concluída',
+            'candidate_id': candidate_id,
+            'result': result
+        })
+        
+    except Exception as e:
+        print(f"❌ Erro no teste manual: {str(e)}")
+        logging.error(f"Error in manual test: {e}", exc_info=True)
+        import traceback
+        print(f"📋 Stack trace: {traceback.format_exc()}")
         return jsonify({'error': str(e)}), 500
 
 # ===== FIM GESTÃO DE USUÁRIOS =====

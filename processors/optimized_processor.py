@@ -269,28 +269,43 @@ def start_optimized_analysis(candidate_ids):
     def optimized_worker():
         try:
             print(f"🔄 Iniciando worker otimizado para candidatos: {candidate_ids}")
+            logger.info(f"Starting optimized worker for candidates: {candidate_ids}")
             
             # Ensure we have app context in the thread
+            print(f"🔧 Criando app context na thread...")
             with app.app_context():
+                print(f"✅ App context ativo na thread")
+                logger.info(f"App context active in thread")
+                
                 result = optimized_processor.process_candidates_optimized(candidate_ids)
                 print(f"✅ Worker otimizado concluído: {result}")
+                logger.info(f"Optimized worker completed: {result}")
                 
         except Exception as e:
             print(f"❌ Erro no worker otimizado: {str(e)}")
             logger.error(f"Error in optimized analysis: {str(e)}", exc_info=True)
+            import traceback
+            print(f"📋 Stack trace no worker: {traceback.format_exc()}")
     
     try:
         print(f"🚀 Criando thread para processamento de candidatos: {candidate_ids}")
+        logger.info(f"Creating thread for candidates: {candidate_ids}")
+        
         thread = threading.Thread(target=optimized_worker)
         thread.daemon = True
         thread.start()
         
         print(f"✅ Thread de processamento iniciada para candidatos: {candidate_ids}")
+        print(f"🔍 Thread ativa: {thread.is_alive()}")
+        logger.info(f"Thread started and alive: {thread.is_alive()}")
+        
         return thread
         
     except Exception as e:
         print(f"❌ ERRO ao criar thread: {str(e)}")
         logger.error(f"Error creating background thread: {str(e)}", exc_info=True)
+        import traceback
+        print(f"📋 Stack trace na criação: {traceback.format_exc()}")
         return None
 
 def get_optimized_processing_status(candidate_ids):
