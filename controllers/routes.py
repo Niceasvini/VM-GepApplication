@@ -702,8 +702,24 @@ def bulk_upload_process(job_id):
         
         # Start optimized processing to maintain server responsiveness
         if candidate_ids:
-            from processors.optimized_processor import start_optimized_analysis
-            start_optimized_analysis(candidate_ids)
+            try:
+                logging.info(f"Starting optimized analysis for {len(candidate_ids)} candidates: {candidate_ids}")
+                print(f"🚀 INICIANDO ANÁLISE OTIMIZADA para {len(candidate_ids)} candidatos: {candidate_ids}")
+                
+                from processors.optimized_processor import start_optimized_analysis
+                thread = start_optimized_analysis(candidate_ids)
+                
+                if thread:
+                    logging.info(f"Background thread started successfully for candidates: {candidate_ids}")
+                    print(f"✅ Thread de background iniciada com sucesso para candidatos: {candidate_ids}")
+                else:
+                    logging.error(f"Failed to start background thread for candidates: {candidate_ids}")
+                    print(f"❌ FALHA ao iniciar thread de background para candidatos: {candidate_ids}")
+                    
+            except Exception as e:
+                logging.error(f"Error starting optimized analysis: {e}", exc_info=True)
+                print(f"❌ ERRO ao iniciar análise otimizada: {e}")
+                # Don't fail the upload, just log the error
         
         result = {
             'processed_count': processed_count,
@@ -1184,10 +1200,24 @@ def api_test_processor():
         from processors.optimized_processor import start_optimized_analysis
         print("✅ Função start_optimized_analysis importada com sucesso")
         
+        # Test thread creation with dummy data
+        import threading
+        def dummy_worker():
+            print("🧪 Worker de teste executado")
+            return True
+        
+        test_thread = threading.Thread(target=dummy_worker)
+        test_thread.daemon = True
+        test_thread.start()
+        test_thread.join(timeout=2)
+        
+        print(f"✅ Thread de teste criada - Alive: {test_thread.is_alive()}")
+        
         return jsonify({
             'success': True,
             'message': 'Processador otimizado está funcionando corretamente',
-            'processor_status': 'OK'
+            'processor_status': 'OK',
+            'thread_test': not test_thread.is_alive()
         })
         
     except Exception as e:

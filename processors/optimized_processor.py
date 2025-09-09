@@ -165,7 +165,11 @@ class OptimizedProcessor:
         """
         Process candidates in optimized batches to maintain server responsiveness
         """
+        print(f"🔍 INICIANDO process_candidates_optimized com {len(candidate_ids) if candidate_ids else 0} candidatos")
+        logger.info(f"Starting process_candidates_optimized with {len(candidate_ids) if candidate_ids else 0} candidates")
+        
         if not candidate_ids:
+            print("❌ Nenhum candidato para processar")
             return {'success': 0, 'failed': 0, 'total': 0}
         
         if self.is_processing:
@@ -173,6 +177,7 @@ class OptimizedProcessor:
             return {'success': 0, 'failed': 0, 'total': 0, 'message': 'Processamento já em andamento'}
         
         self.is_processing = True
+        print(f"✅ Flag is_processing definida como True")
         
         try:
             print(f"🚀 INICIANDO PROCESSAMENTO OTIMIZADO: {len(candidate_ids)} candidatos")
@@ -264,19 +269,29 @@ def start_optimized_analysis(candidate_ids):
     def optimized_worker():
         try:
             print(f"🔄 Iniciando worker otimizado para candidatos: {candidate_ids}")
-            result = optimized_processor.process_candidates_optimized(candidate_ids)
-            print(f"✅ Worker otimizado concluído: {result}")
+            
+            # Ensure we have app context in the thread
+            with app.app_context():
+                result = optimized_processor.process_candidates_optimized(candidate_ids)
+                print(f"✅ Worker otimizado concluído: {result}")
+                
         except Exception as e:
             print(f"❌ Erro no worker otimizado: {str(e)}")
-            logger.error(f"Error in optimized analysis: {str(e)}")
+            logger.error(f"Error in optimized analysis: {str(e)}", exc_info=True)
     
-    print(f"🚀 Criando thread para processamento de candidatos: {candidate_ids}")
-    thread = threading.Thread(target=optimized_worker)
-    thread.daemon = True
-    thread.start()
-    
-    print(f"✅ Thread de processamento iniciada para candidatos: {candidate_ids}")
-    return thread
+    try:
+        print(f"🚀 Criando thread para processamento de candidatos: {candidate_ids}")
+        thread = threading.Thread(target=optimized_worker)
+        thread.daemon = True
+        thread.start()
+        
+        print(f"✅ Thread de processamento iniciada para candidatos: {candidate_ids}")
+        return thread
+        
+    except Exception as e:
+        print(f"❌ ERRO ao criar thread: {str(e)}")
+        logger.error(f"Error creating background thread: {str(e)}", exc_info=True)
+        return None
 
 def get_optimized_processing_status(candidate_ids):
     """

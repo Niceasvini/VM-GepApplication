@@ -34,7 +34,7 @@ class User(UserMixin, db.Model):
     
     # Relationships
     created_jobs = db.relationship('Job', backref='creator', lazy=True)
-    activities = db.relationship('UserActivity', backref='user_ref', lazy=True)
+    activities = db.relationship('UserActivity', backref='user_ref', lazy=True, overlaps="activity_logs")
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
