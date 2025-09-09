@@ -19,8 +19,8 @@ from models.models import Candidate
 from services.file_processor import extract_text_from_file
 from services.ai_service import analyze_resume
 
-# Configure logging - reduced level to minimize terminal output
-logging.basicConfig(level=logging.WARNING)
+# Configure logging - enable detailed logging for debugging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 class OptimizedProcessor:
@@ -58,8 +58,20 @@ class OptimizedProcessor:
                 # Add delay to reduce server load
                 time.sleep(1)
                 
+                # Log before AI analysis
+                logger.info(f"Starting AI analysis for candidate {candidate_id}: {candidate.name}")
+                print(f"🔄 Iniciando análise IA para {candidate.name} (ID: {candidate_id})")
+                
                 # Analyze with AI
                 result = analyze_resume(candidate.file_path, candidate.file_type, candidate.job)
+                
+                # Log AI analysis result
+                if result:
+                    logger.info(f"AI analysis completed for candidate {candidate_id}. Score: {result.get('score', 'N/A')}")
+                    print(f"✅ Análise IA concluída para {candidate.name}. Score: {result.get('score', 'N/A')}")
+                else:
+                    logger.warning(f"AI analysis returned None for candidate {candidate_id}")
+                    print(f"⚠️ Análise IA retornou None para {candidate.name}")
                 
                 if result and result.get('score') is not None:
                     score = result.get('score', 0)
@@ -122,20 +134,31 @@ class OptimizedProcessor:
                     return False
                     
         except Exception as e:
+            # Log detailed error information
+            logger.error(f"Error processing candidate {candidate_id}: {str(e)}", exc_info=True)
+            print(f"❌ ERRO DETALHADO no candidato {candidate_id}: {str(e)}")
+            
             try:
                 with app.app_context():
                     candidate = db.session.get(Candidate, candidate_id)
                     if candidate:
+                        # Store detailed error information
+                        error_details = f"ERRO TÉCNICO: {str(e)}"
                         candidate.analysis_status = 'failed'
                         candidate.ai_score = 0.0
-                        candidate.ai_summary = f'Erro na análise'
-                        candidate.ai_analysis = f'Falha na análise'
+                        candidate.ai_summary = f'FALHA: {error_details}'
+                        candidate.ai_analysis = f'ANÁLISE FALHOU: {error_details}'
                         db.session.commit()
+                        
+                        print(f"✅ Erro salvo no banco para candidato {candidate_id}")
+                    else:
+                        print(f"⚠️ Candidato {candidate_id} não encontrado no banco")
                         
                     with self.lock:
                         self.processing_status[candidate_id] = 'failed'
-            except:
-                pass
+            except Exception as db_error:
+                logger.error(f"Error saving failure to database for candidate {candidate_id}: {str(db_error)}")
+                print(f"❌ Erro ao salvar falha no banco: {str(db_error)}")
             return False
     
     def process_candidates_optimized(self, candidate_ids):

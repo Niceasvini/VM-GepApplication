@@ -309,12 +309,16 @@ def analyze_resume(file_path, file_type, job):
     Returns a dictionary with score, summary, analysis, and skills
     """
     try:
+        logging.info(f"Starting resume analysis for job {job.id}: {job.title}")
+        print(f"🔄 Iniciando análise de currículo para vaga: {job.title}")
+        
         # Extract text from the resume
         resume_text = extract_text_from_file(file_path, file_type)
         
         # Log the extracted text for debugging
         logging.info(f"Extracted text length: {len(resume_text)}")
         logging.info(f"First 500 characters: {resume_text[:500]}")
+        print(f"📄 Texto extraído: {len(resume_text)} caracteres")
         
         if not resume_text or len(resume_text.strip()) < 50:
             logging.error(f"Resume text is too short or empty: {len(resume_text)} characters")
@@ -370,17 +374,23 @@ def analyze_resume(file_path, file_type, job):
         
         # Step 1: Generate score quickly (most important)
         try:
+            logging.info(f"Generating score for job {job.id}: {job.title}")
             score = generate_score_only(resume_text, job)
+            logging.info(f"Score generated successfully: {score}")
         except Exception as score_error:
-            logging.error(f"Error generating score: {score_error}")
+            logging.error(f"Error generating score for job {job.id}: {score_error}", exc_info=True)
+            print(f"❌ ERRO ao gerar score para vaga {job.id}: {score_error}")
             score = 5.0  # Default score
         
         # Step 2: Generate summary and analysis (optimized)
         try:
+            logging.info(f"Generating detailed analysis for job {job.id}: {job.title}")
             full_analysis = generate_summary_and_analysis(resume_text, job)
+            logging.info(f"Detailed analysis generated successfully for job {job.id}")
         except Exception as analysis_error:
-            logging.error(f"Error generating analysis: {analysis_error}")
-            full_analysis = "Análise não disponível devido a erro técnico."
+            logging.error(f"Error generating analysis for job {job.id}: {analysis_error}", exc_info=True)
+            print(f"❌ ERRO ao gerar análise detalhada para vaga {job.id}: {analysis_error}")
+            full_analysis = f"ANÁLISE FALHOU: Erro técnico - {str(analysis_error)}"
         
         # Step 3: Process analysis and separate summary from detailed analysis
         executive_summary = ""
