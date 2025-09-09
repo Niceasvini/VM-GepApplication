@@ -1788,4 +1788,23 @@ def api_change_own_password(user_id):
             'message': 'Erro ao alterar senha'
         }), 500
 
+# ===== CAPTCHA =====
+
+@app.route('/api/refresh-captcha')
+def api_refresh_captcha():
+    """Atualiza o CAPTCHA"""
+    try:
+        captcha_image = security_service.generate_captcha()
+        return jsonify({
+            'success': True,
+            'captcha_image': captcha_image
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': 'Erro ao gerar CAPTCHA'
+        }), 500
+
+# ===== FIM CAPTCHA =====
+
 # ===== FIM GESTÃO DE USUÁRIOS =====

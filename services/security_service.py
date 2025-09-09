@@ -20,55 +20,54 @@ class SecurityService:
         self.block_duration_hours = 24
     
     def generate_captcha(self):
-        """Gera um CAPTCHA simples"""
-        # Criar imagem
-        width, height = 150, 50
-        image = Image.new('RGB', (width, height), color='white')
+        """Gera um CAPTCHA simples e legível"""
+        # Criar imagem maior para melhor legibilidade
+        width, height = 200, 80
+        image = Image.new('RGB', (width, height), color='#f8f9fa')
         draw = ImageDraw.Draw(image)
         
-        # Gerar texto aleatório
-        captcha_text = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
+        # Gerar texto aleatório (apenas números para facilitar)
+        captcha_text = ''.join(random.choices(string.digits, k=4))
         
         # Salvar na sessão
-        session['captcha_text'] = captcha_text.lower()
+        session['captcha_text'] = captcha_text
         
         try:
-            # Tentar usar uma fonte do sistema
-            font = ImageFont.truetype("arial.ttf", 24)
+            # Tentar usar uma fonte do sistema maior
+            font = ImageFont.truetype("arial.ttf", 32)
         except:
-            # Fallback para fonte padrão
-            font = ImageFont.load_default()
+            try:
+                # Tentar outras fontes comuns
+                font = ImageFont.truetype("calibri.ttf", 32)
+            except:
+                # Fallback para fonte padrão maior
+                font = ImageFont.load_default()
         
-        # Desenhar texto com distorções
-        for i, char in enumerate(captcha_text):
-            x = 20 + i * 25 + random.randint(-5, 5)
-            y = 10 + random.randint(-5, 5)
-            angle = random.randint(-15, 15)
-            
-            # Criar uma imagem temporária para o caractere
-            char_img = Image.new('RGBA', (30, 30), (255, 255, 255, 0))
-            char_draw = ImageDraw.Draw(char_img)
-            char_draw.text((5, 5), char, fill='black', font=font)
-            
-            # Rotacionar
-            char_img = char_img.rotate(angle, expand=1)
-            
-            # Colar na imagem principal
-            image.paste(char_img, (x, y), char_img)
+        # Desenhar fundo com cor suave
+        draw.rectangle([0, 0, width, height], fill='#f8f9fa')
         
-        # Adicionar linhas de ruído
-        for _ in range(5):
-            x1 = random.randint(0, width)
-            y1 = random.randint(0, height)
-            x2 = random.randint(0, width)
-            y2 = random.randint(0, height)
-            draw.line([(x1, y1), (x2, y2)], fill='gray', width=1)
+        # Desenhar texto centralizado e legível
+        text_bbox = draw.textbbox((0, 0), captcha_text, font=font)
+        text_width = text_bbox[2] - text_bbox[0]
+        text_height = text_bbox[3] - text_bbox[1]
         
-        # Adicionar pontos de ruído
-        for _ in range(50):
-            x = random.randint(0, width)
-            y = random.randint(0, height)
-            draw.point((x, y), fill='gray')
+        x = (width - text_width) // 2
+        y = (height - text_height) // 2 - 5
+        
+        # Desenhar texto com sombra para melhor legibilidade
+        draw.text((x + 2, y + 2), captcha_text, fill='#6c757d', font=font)
+        draw.text((x, y), captcha_text, fill='#212529', font=font)
+        
+        # Adicionar borda sutil
+        draw.rectangle([0, 0, width-1, height-1], outline='#dee2e6', width=2)
+        
+        # Adicionar apenas algumas linhas sutis de ruído
+        for _ in range(3):
+            x1 = random.randint(10, width-10)
+            y1 = random.randint(10, height-10)
+            x2 = random.randint(10, width-10)
+            y2 = random.randint(10, height-10)
+            draw.line([(x1, y1), (x2, y2)], fill='#e9ecef', width=1)
         
         # Converter para base64
         buffer = io.BytesIO()

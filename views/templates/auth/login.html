@@ -279,19 +279,30 @@
                     <label for="captcha" class="form-label">
                         <i class="fas fa-shield-alt me-2"></i>Verificação de Segurança
                     </label>
-                    <div class="row">
+                    <div class="row align-items-center">
                         <div class="col-md-6">
-                            <img src="{{ captcha_image }}" alt="CAPTCHA" class="img-fluid captcha-image" 
-                                 style="border: 2px solid #e9ecef; border-radius: 8px; max-height: 50px;">
+                            <div class="captcha-container text-center">
+                                <img src="{{ captcha_image }}" alt="CAPTCHA" class="img-fluid captcha-image" 
+                                     style="border: 2px solid #e9ecef; border-radius: 8px; max-width: 200px; height: auto;">
+                                <div class="mt-2">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="refreshCaptcha()">
+                                        <i class="fas fa-sync-alt me-1"></i>Atualizar
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            <input type="text" class="form-control" id="captcha" name="captcha" required 
-                                   placeholder="Digite o código acima" maxlength="5" style="text-transform: uppercase;">
+                            <div class="ms-3">
+                                <input type="text" class="form-control" id="captcha" name="captcha" required 
+                                       placeholder="Digite os 4 números" maxlength="4" pattern="[0-9]{4}">
+                                <div class="mt-2 text-center">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Digite os 4 números que aparecem na imagem
+                                    </small>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-text">
-                        <i class="fas fa-info-circle me-1"></i>
-                        Digite os caracteres que aparecem na imagem acima
                     </div>
                 </div>
                 
@@ -335,6 +346,21 @@
                 this.parentElement.style.transform = 'scale(1)';
             });
         });
+        
+        // Função para atualizar CAPTCHA
+        function refreshCaptcha() {
+            fetch('/api/refresh-captcha')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.querySelector('.captcha-image').src = data.captcha_image;
+                        document.getElementById('captcha').value = '';
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao atualizar CAPTCHA:', error);
+                });
+        }
     </script>
 </body>
 </html>
